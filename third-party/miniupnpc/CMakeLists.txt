@@ -9,6 +9,12 @@ option (UPNPC_BUILD_STATIC "Build static library" TRUE)
 option (UPNPC_BUILD_SHARED "Build shared library" TRUE)
 option (UPNPC_BUILD_TESTS "Build test executables" TRUE)
 option (UPNPC_BUILD_SAMPLE "Build sample executables" TRUE)
+
+# iOS builds only need the library; do not create command-line sample targets.
+if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
+  set(UPNPC_BUILD_TESTS OFF CACHE BOOL "Build test executables" FORCE)
+  set(UPNPC_BUILD_SAMPLE OFF CACHE BOOL "Build sample executables" FORCE)
+endif ()
 option (NO_GETADDRINFO "Define NO_GETADDRINFO" FALSE)
 option (UPNPC_NO_INSTALL "Disable installation" FALSE)
 
@@ -29,7 +35,7 @@ if (NOT WIN32)
   target_compile_definitions(miniupnpc-private INTERFACE
     MINIUPNPC_SET_SOCKET_TIMEOUT
     _BSD_SOURCE _DEFAULT_SOURCE)
-  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" AND NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS" AND NOT CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" AND NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     # add_definitions (-D_POSIX_C_SOURCE=200112L)
     target_compile_definitions(miniupnpc-private INTERFACE _XOPEN_SOURCE=600)
   endif ()
@@ -37,7 +43,7 @@ else ()
   target_compile_definitions(miniupnpc-private INTERFACE _WIN32_WINNT=0x0501) # XP or higher for getnameinfo and friends
 endif ()
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
   target_compile_definitions(miniupnpc-private INTERFACE _DARWIN_C_SOURCE)
 endif ()
 
