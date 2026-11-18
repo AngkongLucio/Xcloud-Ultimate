@@ -13,8 +13,8 @@ if ! command -v xcodebuild >/dev/null 2>&1 || ! command -v xcrun >/dev/null 2>&1
   echo "Error: Xcode command-line tools are required." >&2
   exit 2
 fi
-if ! command -v cmake >/dev/null 2>&1 || ! command -v protoc >/dev/null 2>&1 || ! command -v python3 >/dev/null 2>&1; then
-  echo "Error: install CMake, protobuf (protoc), and Python 3 first." >&2
+if ! command -v cmake >/dev/null 2>&1 || ! command -v protoc >/dev/null 2>&1 || ! command -v python3 >/dev/null 2>&1 || ! command -v lipo >/dev/null 2>&1; then
+  echo "Error: install CMake, protobuf (protoc), Python 3, and Xcode command-line tools first." >&2
   exit 2
 fi
 if [[ -z "$IOS_DEPS_PREFIX" || ! -d "$IOS_DEPS_PREFIX" ]]; then
@@ -57,7 +57,7 @@ while IFS= read -r archive; do
     echo "Error: archive has no arm64 slice: $archive" >&2
     exit 2
   fi
-done < <(find "$IOS_DEPS_PREFIX" -type f \\( -name libcrypto.a -o -name libssl.a -o -name libcurl.a \\) -print)
+done < <(find "$IOS_DEPS_PREFIX" -type f \( -name libcrypto.a -o -name libssl.a -o -name libcurl.a \) -print)
 
 cmake -S "$ROOT_DIR" -B "$BUILD_DIR" -G Xcode \
   -DCMAKE_TOOLCHAIN_FILE="$ROOT_DIR/cmake/ios-arm64.toolchain.cmake" \
