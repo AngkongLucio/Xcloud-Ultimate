@@ -116,7 +116,11 @@ function App() {
   }
 
   // console.log('bind_usb_device:', settings.bind_usb_device);
-  if (settings.bind_usb_device !== undefined) {
+  // USB rumble binding is Android-native; keep the shared app safe on iOS.
+  if (
+    settings.bind_usb_device !== undefined &&
+    typeof UsbRumbleManager?.setBindUsbDevice === 'function'
+  ) {
     UsbRumbleManager.setBindUsbDevice(settings.bind_usb_device);
   }
 
