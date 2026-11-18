@@ -89,3 +89,7 @@ The detailed platform mapping, CMake dependency blockers, React Native native-vi
 ## Current status
 
 The Xbox-inspired visual reskin and an initial shared-JavaScript iOS compatibility pass have been committed on the feature branch. No iOS native port, iOS build, device test or IPA exists yet. The next engineering milestone is the iOS React Native target and dependency audit; the Chiaki streaming engine port remains the critical path.
+
+## iOS stream view implementation contract
+
+The exact React Native native-view command/event contract and iOS lifecycle requirements are documented in [IOS_STREAM_NATIVE_CONTRACT.md](./IOS_STREAM_NATIVE_CONTRACT.md). This is the next native implementation boundary; it is a specification, not an implemented stream engine.
