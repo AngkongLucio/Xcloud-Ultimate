@@ -23,8 +23,14 @@ if [[ -z "$IOS_DEPS_PREFIX" || ! -d "$IOS_DEPS_PREFIX" ]]; then
 fi
 
 SDK_PATH="$(xcrun --sdk iphoneos --show-sdk-path)"
-if [[ ! -d "$SDK_PATH" ]]; then
-  echo "Error: the iPhoneOS SDK is unavailable." >&2
+SDK_PLATFORM_PATH="$(xcrun --sdk iphoneos --show-sdk-platform-path)"
+if [[ ! -d "$SDK_PATH" || ! -d "$SDK_PLATFORM_PATH" ]]; then
+  echo "Error: the iPhoneOS SDK or platform is unavailable." >&2
+  exit 2
+fi
+IOS_CLANG="$(xcrun --sdk iphoneos --find clang)"
+if [[ ! -x "$IOS_CLANG" ]]; then
+  echo "Error: the iPhoneOS clang compiler is unavailable." >&2
   exit 2
 fi
 
@@ -51,13 +57,14 @@ while IFS= read -r archive; do
     echo "Error: archive has no arm64 slice: $archive" >&2
     exit 2
   fi
-done < <(find "$IOS_DEPS_PREFIX" -type f -name libcrypto.a -o -type f -name libssl.a -o -type f -name libcurl.a)
+done < <(find "$IOS_DEPS_PREFIX" -type f \\( -name libcrypto.a -o -name libssl.a -o -name libcurl.a \\) -print)
 
 cmake -S "$ROOT_DIR" -B "$BUILD_DIR" -G Xcode \
   -DCMAKE_TOOLCHAIN_FILE="$ROOT_DIR/cmake/ios-arm64.toolchain.cmake" \
   -DCMAKE_PREFIX_PATH="$IOS_DEPS_PREFIX" \
   -DOPENSSL_ROOT_DIR="$IOS_DEPS_PREFIX" \
   -DCURL_ROOT="$IOS_DEPS_PREFIX" \
+  -DZLIB_ROOT="$IOS_DEPS_PREFIX" \
   -DCHIAKI_ENABLE_ANDROID=OFF \
   -DCHIAKI_ENABLE_TESTS=OFF \
   -DCHIAKI_ENABLE_CLI=OFF \
@@ -71,4 +78,5 @@ cmake -S "$ROOT_DIR" -B "$BUILD_DIR" -G Xcode \
   -DCHIAKI_USE_SYSTEM_JERASURE=OFF
 
 cmake --build "$BUILD_DIR" --config Release --target chiaki-lib
-echo "Built Chiaki protocol core. This is not an iOS app or IPA."
+echo "Built Chiaki protocol core with the selected iPhoneOS SDK: $SDK_PATH"
+echo "This is not an iOS app or IPA."
