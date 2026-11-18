@@ -6,7 +6,6 @@ import {
   Vibration,
   ScrollView,
   NativeModules,
-  NativeEventEmitter,
 } from 'react-native';
 import {useSelector, useDispatch} from 'react-redux';
 import {Portal, Dialog, Switch} from 'react-native-paper';
@@ -28,8 +27,6 @@ function DebugScreen({navigation, route}) {
     console.log('_settings:', _settings);
 
     setDebug(_settings.debug);
-
-    const eventEmitter = new NativeEventEmitter();
 
     // eventEmitter.addListener('onDeviceConnect', event => {
     //   Alert.alert('onDeviceConnect', JSON.stringify(event));
@@ -57,6 +54,10 @@ function DebugScreen({navigation, route}) {
         onPress={() => {
           // handleRumble(int duration, short lowFreqMotor, short highFreqMotor, short leftTrigger, short rightTrigger, int intensity)
           // GamepadManager.vibrate(60000, 100, 100, 100, 1000);
+          if (typeof GamepadManager?.vibrate !== 'function') {
+            Alert.alert('Unavailable', 'This test requires Android native controller support.');
+            return;
+          }
           GamepadManager.vibrate(60000, 255, 185, 0, 0, 3);
 
           setTimeout(() => {
@@ -73,6 +74,10 @@ function DebugScreen({navigation, route}) {
         title={'Vibration(xInput)'}
         description={'Test gamepad vibration with x-input mode'}
         onPress={() => {
+          if (typeof UsbRumbleManager?.rumble !== 'function') {
+            Alert.alert('Unavailable', 'USB controller rumble is not available on this platform.');
+            return;
+          }
           UsbRumbleManager.rumble(32767, 32767);
 
           // setTimeout(() => {
@@ -85,6 +90,10 @@ function DebugScreen({navigation, route}) {
         title={'Rumble(DualSense)'}
         description={'Test DualSense5 rumble'}
         onPress={() => {
+          if (typeof UsbRumbleManager?.setDsController !== 'function') {
+            Alert.alert('Unavailable', 'DualSense USB control is not available on this platform.');
+            return;
+          }
           console.log('setDsController');
           UsbRumbleManager.setDsController(
             255, // r
@@ -124,6 +133,10 @@ function DebugScreen({navigation, route}) {
         title={'Trigger Rumble(xbox one controller)'}
         description={'Test gamepad trigger rumble with x-input mode'}
         onPress={() => {
+          if (typeof UsbRumbleManager?.rumbleTriggers !== 'function') {
+            Alert.alert('Unavailable', 'Controller trigger rumble is not available on this platform.');
+            return;
+          }
           UsbRumbleManager.rumbleTriggers(32767, 32767);
 
           setTimeout(() => {
