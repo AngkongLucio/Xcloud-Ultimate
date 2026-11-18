@@ -3,8 +3,8 @@ import {
   StyleSheet,
   View,
   ScrollView,
+  Alert,
   NativeModules,
-  ToastAndroid,
 } from 'react-native';
 import {Button, RadioButton, Text, Divider} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
@@ -144,10 +144,10 @@ function SettingDetailScreen({navigation, route}) {
       settings.touchpad_offset_mode = value;
       settings.touchpad_offset = value2;
     } else if (currentMetas.name === 'bind_usb_device') {
-      UsbRumbleManager.setBindUsbDevice(value);
+      UsbRumbleManager?.setBindUsbDevice?.(value);
     }
     handleSaveSettings();
-    ToastAndroid.show(t('Saved'), ToastAndroid.SHORT);
+    Alert.alert('', String(t('Saved')));
     navigation.goBack();
   };
 
