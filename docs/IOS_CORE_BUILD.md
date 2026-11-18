@@ -20,10 +20,7 @@ brew install cmake protobuf
 
 export IOS_DEPS_PREFIX="$HOME/ios-deps/arm64"
 cmake -S . -B build/ios-arm64 -G Xcode \
-  -DCMAKE_SYSTEM_NAME=iOS \
-  -DCMAKE_OSX_SYSROOT=iphoneos \
-  -DCMAKE_OSX_ARCHITECTURES=arm64 \
-  -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/ios-arm64.toolchain.cmake \
   -DCMAKE_PREFIX_PATH="$IOS_DEPS_PREFIX" \
   -DCHIAKI_ENABLE_ANDROID=OFF \
   -DCHIAKI_ENABLE_TESTS=OFF \
@@ -37,7 +34,11 @@ cmake --build build/ios-arm64 --config Release --target chiaki-lib
 
 The command deliberately disables Opus until an iOS-built Opus package is available. For a complete stream audio path, build Opus for iOS and reconfigure with `-DCHIAKI_LIB_ENABLE_OPUS=ON`.
 
-## Toolchain behavior\n\n`cmake/ios-arm64.toolchain.cmake` sets the iOS device SDK, `arm64`, minimum iOS 15.0, host-tool lookup for build-time programs, target-only lookup for libraries/headers/packages, and static-library try-compiles. It does not build third-party dependencies or replace Xcode.\n\n## Expected dependency prefix
+## Toolchain behavior
+
+`cmake/ios-arm64.toolchain.cmake` sets the iOS device SDK, `arm64`, minimum iOS 15.0, host-tool lookup for build-time programs, target-only lookup for libraries/headers/packages, and static-library try-compiles. It does not build third-party dependencies or replace Xcode.
+
+## Expected dependency prefix
 
 The prefix must provide iOS arm64 builds and CMake package configs/find modules for:
 - OpenSSL (Crypto)
