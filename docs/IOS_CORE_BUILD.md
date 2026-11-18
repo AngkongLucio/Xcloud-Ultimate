@@ -2,28 +2,40 @@
 
 This is a native-core build step only. It does not create an iOS app, React Native target, stream renderer, or IPA.
 
+## Build iOS device dependencies
+
+Run on macOS with Xcode selected and an existing, bootstrapped [vcpkg](https://learn.microsoft.com/vcpkg/get_started/get-started) checkout. vcpkg verifies the source archives against the hashes recorded by its port definitions. The repository supplies an overlay triplet that targets static arm64 iOS device libraries and chainloads the repository's iOS toolchain.
+
+```sh
+export VCPKG_ROOT="$HOME/vcpkg"
+export IOS_DEPS_PREFIX="$PWD/vcpkg_installed/ios-arm64"
+chmod +x scripts/build-ios-deps.sh scripts/build-ios-core.sh
+./scripts/build-ios-deps.sh
+./scripts/build-ios-core.sh
+```
+
+The dependency helper installs OpenSSL, curl and zlib. It uses vcpkg's port versions and hashes from the checked-out vcpkg registry; for reproducible builds, pin the vcpkg checkout to a known commit and retain that commit with build logs. Do not use Homebrew's ordinary macOS libraries as iOS dependencies.
+
 ## What changed in the build system
 
 - The root CMake project adds `android/app` only when `CHIAKI_ENABLE_ANDROID=ON`. The existing Gradle configuration already passes this flag and also uses the Android NDK toolchain.
-- Android ABI-specific OpenSSL, zlib, curl and SDL2 libraries are now selected only in the Android branch of `lib/CMakeLists.txt`.
+- Android ABI-specific OpenSSL, zlib, curl and SDL2 libraries are selected only in the Android branch of `lib/CMakeLists.txt`.
 - Non-Android builds resolve OpenSSL, CURL and zlib for the active target with CMake package discovery.
 - JSON-C is built static for iOS; miniupnpc is already configured as a static target.
-- The Android Gradle flags and Android native target remain in place.
+- The Android Gradle configuration and native target remain in place.
 
-## iOS device configure command
-
-Run this on macOS with Xcode command-line tools, CMake, Python 3 and host `protoc` installed. The repository toolchain file selects the iOS device SDK, arm64 architecture and iOS 15 deployment target; it rejects non-macOS hosts. Build iOS-compatible OpenSSL and curl (and Opus if enabled) first, using the same iOS SDK, architecture and deployment target. Set `IOS_DEPS_PREFIX` to that dependency prefix; it must contain CMake package metadata and libraries built for iOS arm64, not macOS or Android.
+## iOS device core build
 
 ```sh
 xcode-select --install
 brew install cmake protobuf
-
-export IOS_DEPS_PREFIX="$HOME/ios-deps/arm64"
-chmod +x scripts/build-ios-core.sh
+export IOS_DEPS_PREFIX="$PWD/vcpkg_installed/ios-arm64"
 ./scripts/build-ios-core.sh
 ```
 
-The command deliberately disables Opus until an iOS-built Opus package is available. For a complete stream audio path, build Opus for iOS and reconfigure with `-DCHIAKI_LIB_ENABLE_OPUS=ON`.
+The repository toolchain selects the iOS device SDK, arm64 architecture and iOS 15 deployment target; it rejects non-macOS hosts. The dependency prefix must contain iOS-built headers, libraries and CMake package metadata.
+
+The core helper deliberately disables Opus until an iOS-built Opus package is available. For a complete stream audio path, build Opus for iOS and reconfigure with `-DCHIAKI_LIB_ENABLE_OPUS=ON`.
 
 ## Toolchain behavior
 
@@ -34,9 +46,9 @@ The command deliberately disables Opus until an iOS-built Opus package is availa
 The prefix must provide iOS arm64 builds and CMake package configs/find modules for:
 - OpenSSL (Crypto)
 - libcurl
-- zlib (or the iOS SDK's compatible zlib package)
+- zlib
 
-The repository builds nanopb, jerasure/gf-complete, JSON-C and miniupnpc from source. The protobuf descriptor generation also needs host `protoc` and Python 3.
+The repository builds nanopb, jerasure/gf-complete, JSON-C and miniupnpc from source. Protobuf descriptor generation also needs host `protoc` and Python 3.
 
 ## Important limitations
 
@@ -51,6 +63,4 @@ The existing Android Gradle build passes `-DCHIAKI_ENABLE_ANDROID=ON`. Do not ma
 
 ## CI workflow
 
-The GitHub Actions workflow is manual and requires a configured self-hosted macOS runner with Xcode, CMake, protobuf, and `IOS_DEPS_PREFIX` exported in the runner service environment. The prefix must contain OpenSSL, libcurl and headers built for iOS device arm64. The helper checks the arm64 slice with `lipo`; this alone does not prove iOS platform provenance, so never point it at Homebrew's normal macOS libraries.
-
-The workflow does not provision third-party dependencies. No CI build result is claimed until a run completes successfully.
+The manual GitHub Actions workflow requires a configured self-hosted macOS runner with Xcode, CMake, protobuf, a pinned vcpkg checkout, and `IOS_DEPS_PREFIX` exported in the runner service environment. Run `scripts/build-ios-deps.sh` before `scripts/build-ios-core.sh`. No CI build result is claimed until a run completes successfully.
