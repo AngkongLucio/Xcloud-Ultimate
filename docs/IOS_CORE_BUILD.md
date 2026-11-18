@@ -19,17 +19,8 @@ xcode-select --install
 brew install cmake protobuf
 
 export IOS_DEPS_PREFIX="$HOME/ios-deps/arm64"
-cmake -S . -B build/ios-arm64 -G Xcode \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/ios-arm64.toolchain.cmake \
-  -DCMAKE_PREFIX_PATH="$IOS_DEPS_PREFIX" \
-  -DCHIAKI_ENABLE_ANDROID=OFF \
-  -DCHIAKI_ENABLE_TESTS=OFF \
-  -DCHIAKI_ENABLE_CLI=OFF \
-  -DCHIAKI_ENABLE_GUI=OFF \
-  -DCHIAKI_LIB_OPENSSL_EXTERNAL_PROJECT=OFF \
-  -DCHIAKI_LIB_ENABLE_OPUS=OFF
-
-cmake --build build/ios-arm64 --config Release --target chiaki-lib
+chmod +x scripts/build-ios-core.sh
+./scripts/build-ios-core.sh
 ```
 
 The command deliberately disables Opus until an iOS-built Opus package is available. For a complete stream audio path, build Opus for iOS and reconfigure with `-DCHIAKI_LIB_ENABLE_OPUS=ON`.
