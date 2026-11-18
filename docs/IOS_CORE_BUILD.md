@@ -8,7 +8,7 @@ Run on macOS with Xcode selected and an existing, bootstrapped [vcpkg](https://l
 
 ```sh
 export VCPKG_ROOT="$HOME/vcpkg"
-export IOS_DEPS_PREFIX="$PWD/vcpkg_installed/ios-arm64"
+export IOS_DEPS_PREFIX="$PWD/vcpkg_installed/arm64-ios"
 chmod +x scripts/build-ios-deps.sh scripts/build-ios-core.sh
 ./scripts/build-ios-deps.sh
 ./scripts/build-ios-core.sh
@@ -29,7 +29,7 @@ The dependency helper installs OpenSSL, curl and zlib. It uses vcpkg's port vers
 ```sh
 xcode-select --install
 brew install cmake protobuf
-export IOS_DEPS_PREFIX="$PWD/vcpkg_installed/ios-arm64"
+export IOS_DEPS_PREFIX="$PWD/vcpkg_installed/arm64-ios"
 ./scripts/build-ios-core.sh
 ```
 
