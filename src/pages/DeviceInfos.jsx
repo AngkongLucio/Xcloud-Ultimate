@@ -12,11 +12,25 @@ function DeviceInfosScreen({navigation, route}) {
   const rumblingRef = React.useRef(false);
 
   React.useEffect(() => {
-    const _infos = FullScreenManager.getDeviceInfos();
-    setInfos(_infos);
+    if (typeof FullScreenManager?.getDeviceInfos === 'function') {
+      setInfos(FullScreenManager.getDeviceInfos());
+    } else {
+      setInfos({
+        factor: '',
+        model: 'iOS',
+        androidVer: '—',
+        apiVer: '—',
+        kernelVer: '—',
+        webviewVer: '—',
+        devVibrator: false,
+        devs: [],
+      });
+    }
 
     return () => {
-      GamepadManager.vibrate(0, 0, 0, 0, 0, 3);
+      if (typeof GamepadManager?.vibrate === 'function') {
+        GamepadManager.vibrate(0, 0, 0, 0, 0, 3);
+      }
     };
   }, []);
 
@@ -27,10 +41,15 @@ function DeviceInfosScreen({navigation, route}) {
           <Button
             mode="contained"
             onPress={() => {
+              if (typeof GamepadManager?.vibrate !== 'function') {
+                return;
+              }
               GamepadManager.vibrate(60000, 100, 100, 100, 1000, 5);
 
               setTimeout(() => {
-                GamepadManager.vibrate(0, 0, 0, 0, 0, 3);
+                if (typeof GamepadManager?.vibrate === 'function') {
+                  GamepadManager.vibrate(0, 0, 0, 0, 0, 3);
+                }
               }, 1000);
             }}>
             {t('Rumble1s')}
@@ -59,8 +78,9 @@ function DeviceInfosScreen({navigation, route}) {
           <Button
             mode="contained"
             onPress={() => {
-              const _infos = FullScreenManager.getDeviceInfos();
-              setInfos(_infos);
+              if (typeof FullScreenManager?.getDeviceInfos === 'function') {
+                setInfos(FullScreenManager.getDeviceInfos());
+              }
             }}>
             {t('Refresh')}
           </Button>
