@@ -60,6 +60,9 @@ function DeviceInfosScreen({navigation, route}) {
           <Button
             mode="contained"
             onPress={() => {
+              if (typeof GamepadManager?.vibrate !== 'function') {
+                return;
+              }
               if (rumblingRef.current) {
                 GamepadManager.vibrate(0, 0, 0, 0, 0, 3);
                 rumblingRef.current = false;
