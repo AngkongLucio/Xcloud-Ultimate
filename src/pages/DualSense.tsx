@@ -15,12 +15,13 @@ import ColorPicker from 'react-native-wheel-color-picker';
 import DS5Controller from '../components/DS5Controller';
 import {CONTROLLERS} from '../common/controller';
 
-const eventEmitter = new NativeEventEmitter();
+const {UsbRumbleManager} = NativeModules;
+const eventEmitter = UsbRumbleManager
+  ? new NativeEventEmitter(UsbRumbleManager)
+  : null;
 const ACTIVITY = '#DF6069';
 const NORMAL = '#ccc';
 const MAX_RANGE = 1000;
-
-const {UsbRumbleManager} = NativeModules;
 
 function hexToRgb(hex: string): [number, number, number] {
   const hexCode = hex.replace(/^#/, '');
@@ -177,10 +178,12 @@ function DsScreen({navigation}) {
       // setTouch1x(states.touch1x);
       // setTouch1y(states.touch1y);
     }, 16);
-    usbGpEventListener.current = eventEmitter.addListener(
-      'onDsGamepadReport',
-      handleGamepadReport,
-    );
+    if (eventEmitter) {
+      usbGpEventListener.current = eventEmitter.addListener(
+        'onDsGamepadReport',
+        handleGamepadReport,
+      );
+    }
 
     return () => {
       usbGpEventListener.current && usbGpEventListener.current.remove();
@@ -285,6 +288,9 @@ function DsScreen({navigation}) {
       rightTriggerParams = [20, 255, 10, 0, 0, 0, 0, 0, 0, 0, 0];
     }
 
+    if (typeof UsbRumbleManager?.setDsController !== 'function') {
+      return;
+    }
     UsbRumbleManager.setDsController(
       r,
       g,
