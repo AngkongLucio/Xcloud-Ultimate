@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, ScrollView, ToastAndroid} from 'react-native';
+import {StyleSheet, View, ScrollView, Alert} from 'react-native';
 import ColorPicker from 'react-native-wheel-color-picker';
 
 import {Button, Text} from 'react-native-paper';
@@ -30,7 +30,7 @@ function RgbScreen({navigation}) {
   const handleSave = () => {
     settings.rgb = currentColor;
     saveSettings(settings);
-    ToastAndroid.show(t('Saved'), ToastAndroid.SHORT);
+    Alert.alert('', t('Saved'));
     navigation.goBack();
   };
 
