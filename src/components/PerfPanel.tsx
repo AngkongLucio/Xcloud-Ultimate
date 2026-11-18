@@ -26,6 +26,10 @@ const PerfPanel: React.FC<Props> = ({
 
   React.useEffect(() => {
     const getBattery = () => {
+      if (typeof BatteryModule?.getBatteryLevel !== 'function') {
+        setBattery(-1);
+        return;
+      }
       BatteryModule.getBatteryLevel()
         .then(level => {
           if (level) {
