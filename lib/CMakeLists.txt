@@ -151,7 +151,11 @@ else()
 endif()
 
 # Shared protocol dependencies built from the repository's source tree.
-target_link_libraries(chiaki-lib json-c)
+if(APPLE AND CMAKE_SYSTEM_NAME STREQUAL "iOS")
+	target_link_libraries(chiaki-lib json-c-static)
+else()
+	target_link_libraries(chiaki-lib json-c)
+endif()
 target_link_libraries(chiaki-lib Miniupnpc::miniupnpc)
 target_include_directories(chiaki-lib PRIVATE ${CMAKE_SOURCE_DIR}/third-party/miniupnpc)
 target_link_libraries(chiaki-lib Nanopb::nanopb)
