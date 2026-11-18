@@ -10,7 +10,7 @@ const { WifiPerformanceModule } = NativeModules;
 export const useWifiPerformanceMode = () => {
   useEffect(() => {
     // 组件挂载时启用 WiFi 性能模式
-    if (WifiPerformanceModule) {
+    if (typeof WifiPerformanceModule?.enableWifiPerformanceMode === 'function') {
       WifiPerformanceModule.enableWifiPerformanceMode()
         .then(() => {
           console.log('WiFi performance mode enabled');
@@ -22,7 +22,7 @@ export const useWifiPerformanceMode = () => {
 
     // 组件卸载时禁用 WiFi 性能模式
     return () => {
-      if (WifiPerformanceModule) {
+      if (typeof WifiPerformanceModule?.disableWifiPerformanceMode === 'function') {
         WifiPerformanceModule.disableWifiPerformanceMode()
           .then(() => {
             console.log('WiFi performance mode disabled');
