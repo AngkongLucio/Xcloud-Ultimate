@@ -69,6 +69,18 @@ The current codebase is PeaSyo/Pixiu v1: a PlayStation 4/5 Remote Play client us
 - Unsupported Android-only features are clearly unavailable rather than silently broken.
 - The delivered IPA is produced by CI and its build artifact is downloadable and verified.
 
+## Shared JavaScript compatibility work completed on the feature branch
+
+- Replaced Home screen `ToastAndroid` calls with React Native cross-platform alerts.
+- Added safe capability adapters for the Android-only registry credential and USB-rumble modules in Home.
+- Guarded the root app's USB-rumble setup so the app does not call a missing native module on iOS.
+- Replaced Android toast calls in Registry, Settings and SettingDetail with cross-platform alerts.
+- Added an explicit capability check before PS console registration when the native registry bridge is unavailable.
+- Guarded USB-rumble calls in settings and made the Wi-Fi performance hook check for individual native methods.
+- Added an iOS Stream screen fallback so the Android JNI-backed streaming view is not mounted on iOS before an iOS implementation exists.
+
+These changes improve safe platform handling; they do not implement the missing native features.
+
 ## Current status
 
-Only the Xbox-inspired visual reskin has been applied on the feature branch. No iOS native port, iOS build, device test or IPA exists yet. The next engineering milestone is Phase 1 plus the JavaScript platform audit; the streaming engine port remains the main blocker.
+The Xbox-inspired visual reskin and an initial shared-JavaScript iOS compatibility pass have been committed on the feature branch. No iOS native port, iOS build, device test or IPA exists yet. The next engineering milestone is the iOS React Native target and dependency audit; the Chiaki streaming engine port remains the critical path.
