@@ -51,6 +51,6 @@ The existing Android Gradle build passes `-DCHIAKI_ENABLE_ANDROID=ON`. Do not ma
 
 ## CI workflow
 
-The GitHub Actions workflow is intentionally manual until a reproducible iOS dependency bundle is available. It requires an iOS-device dependency prefix containing OpenSSL, libcurl, headers and CMake package metadata, and inspects the static archives with `lipo`. A matching `arm64` architecture alone does not prove that an archive was built for iOS; dependencies must be built with the iPhoneOS SDK and the same deployment target. Do not point this workflow at Homebrew's normal macOS OpenSSL or curl prefix.
+The GitHub Actions workflow is manual and requires a configured self-hosted macOS runner with Xcode, CMake, protobuf, and `IOS_DEPS_PREFIX` exported in the runner service environment. The prefix must contain OpenSSL, libcurl and headers built for iOS device arm64. The helper checks the arm64 slice with `lipo`; this alone does not prove iOS platform provenance, so never point it at Homebrew's normal macOS libraries.
 
-The workflow does not build the dependency bundle yet. It only attempts the Chiaki core build after the user supplies a valid iOS-target prefix. No CI build result is claimed until a run completes successfully.
+The workflow does not provision third-party dependencies. No CI build result is claimed until a run completes successfully.
