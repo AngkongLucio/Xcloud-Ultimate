@@ -1,13 +1,15 @@
 name: iOS Chiaki Core Build
 
+# Manual until an iOS-arm64 dependency bundle is available.
+# Homebrew OpenSSL/CURL binaries are macOS host libraries and MUST NOT be
+# linked into an iOS device target.
 on:
-  push:
-    branches:
-      - feature/xbox-dashboard-ios-prep
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
+    inputs:
+      ios_deps_prefix:
+        description: Absolute path to an iOS-arm64 dependency prefix on the runner (must contain OpenSSL, libcurl and CMake package metadata)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -23,25 +25,33 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Select Xcode
+      - name: Select Xcode and install host tools
         run: |
           xcode-select -p
           xcodebuild -version
+          brew install cmake protobuf
 
-      - name: Install build tools and target dependencies
+      - name: Validate iOS dependency prefix
+        env:
+          IOS_DEPS_PREFIX: ${{ inputs.ios_deps_prefix }}
         run: |
-          brew update
-          brew install cmake protobuf openssl@3 curl
-          echo "OPENSSL_PREFIX=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
-          echo "CURL_PREFIX=$(brew --prefix curl)" >> "$GITHUB_ENV"
+          test -d "$IOS_DEPS_PREFIX"
+          test -f "$IOS_DEPS_PREFIX/include/openssl/ssl.h"
+          test -f "$IOS_DEPS_PREFIX/include/curl/curl.h"
+          find "$IOS_DEPS_PREFIX" -name 'libcrypto.a' -o -name 'libssl.a' -o -name 'libcurl.a'
+          for lib in $(find "$IOS_DEPS_PREFIX" -name 'libcrypto.a' -o -name 'libssl.a' -o -name 'libcurl.a'); do
+            lipo -info "$lib"
+          done
 
       - name: Configure iOS device core
+        env:
+          IOS_DEPS_PREFIX: ${{ inputs.ios_deps_prefix }}
         run: |
           cmake -S . -B build/ios-arm64 -G Xcode \
             -DCMAKE_TOOLCHAIN_FILE=cmake/ios-arm64.toolchain.cmake \
-            -DCMAKE_PREFIX_PATH="$OPENSSL_PREFIX;$CURL_PREFIX" \
-            -DOPENSSL_ROOT_DIR="$OPENSSL_PREFIX" \
-            -DCURL_ROOT="$CURL_PREFIX" \
+            -DCMAKE_PREFIX_PATH="$IOS_DEPS_PREFIX" \
+            -DOPENSSL_ROOT_DIR="$IOS_DEPS_PREFIX" \
+            -DCURL_ROOT="$IOS_DEPS_PREFIX" \
             -DCHIAKI_ENABLE_ANDROID=OFF \
             -DCHIAKI_ENABLE_TESTS=OFF \
             -DCHIAKI_ENABLE_CLI=OFF \
