@@ -1,7 +1,7 @@
 name: iOS Chiaki Core Build
 
-# Requires a configured self-hosted macOS runner with Xcode and an iOS-arm64
-# dependency prefix exported as IOS_DEPS_PREFIX in the runner environment.
+# Requires a self-hosted macOS runner with Xcode, Homebrew, and a bootstrapped
+# vcpkg checkout available through VCPKG_ROOT.
 on:
   workflow_dispatch:
 
@@ -10,23 +10,30 @@ permissions:
 
 jobs:
   ios-arm64-core:
-    name: Configure and build iOS arm64 protocol core
+    name: Build iOS arm64 dependencies and Chiaki protocol core
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Install host build tools
+      - name: Verify host toolchain
         run: |
           xcode-select -p
           xcodebuild -version
           brew install cmake protobuf
+          test -n "$VCPKG_ROOT"
+          test -x "$VCPKG_ROOT/vcpkg"
 
-      - name: Build iOS device protocol core
+      - name: Build iOS device dependencies
         run: |
-          test -n "$IOS_DEPS_PREFIX"
+          chmod +x scripts/build-ios-deps.sh
+          ./scripts/build-ios-deps.sh
+
+      - name: Build Chiaki protocol core
+        run: |
+          export IOS_DEPS_PREFIX="$GITHUB_WORKSPACE/vcpkg_installed/arm64-ios"
           chmod +x scripts/build-ios-core.sh
           ./scripts/build-ios-core.sh
