@@ -1,0 +1,58 @@
+name: iOS Chiaki Core Build
+
+on:
+  push:
+    branches:
+      - feature/xbox-dashboard-ios-prep
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-arm64-core:
+    name: Configure and build iOS arm64 protocol core
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Select Xcode
+        run: |
+          xcode-select -p
+          xcodebuild -version
+
+      - name: Install build tools and target dependencies
+        run: |
+          brew update
+          brew install cmake protobuf openssl@3 curl
+          echo "OPENSSL_PREFIX=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
+          echo "CURL_PREFIX=$(brew --prefix curl)" >> "$GITHUB_ENV"
+
+      - name: Configure iOS device core
+        run: |
+          cmake -S . -B build/ios-arm64 -G Xcode \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/ios-arm64.toolchain.cmake \
+            -DCMAKE_PREFIX_PATH="$OPENSSL_PREFIX;$CURL_PREFIX" \
+            -DOPENSSL_ROOT_DIR="$OPENSSL_PREFIX" \
+            -DCURL_ROOT="$CURL_PREFIX" \
+            -DCHIAKI_ENABLE_ANDROID=OFF \
+            -DCHIAKI_ENABLE_TESTS=OFF \
+            -DCHIAKI_ENABLE_CLI=OFF \
+            -DCHIAKI_ENABLE_GUI=OFF \
+            -DCHIAKI_ENABLE_SETSU=OFF \
+            -DCHIAKI_ENABLE_FFMPEG_DECODER=OFF \
+            -DCHIAKI_ENABLE_PI_DECODER=OFF \
+            -DCHIAKI_LIB_OPENSSL_EXTERNAL_PROJECT=OFF \
+            -DCHIAKI_LIB_ENABLE_OPUS=OFF \
+            -DCHIAKI_USE_SYSTEM_NANOPB=OFF \
+            -DCHIAKI_USE_SYSTEM_JERASURE=OFF
+
+      - name: Build shared protocol core
+        run: cmake --build build/ios-arm64 --config Release --target chiaki-lib
