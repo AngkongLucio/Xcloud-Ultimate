@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet, FlatList, ToastAndroid} from 'react-native';
+import {View, StyleSheet, FlatList, Alert} from 'react-native';
 import {Button} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
 import {getSettings, saveSettings} from '../store/settingStore';
@@ -125,7 +125,7 @@ function NativeGameMap({navigation, route}) {
     settings.gamepad_maping = maping;
     setSettings(settings);
     saveSettings(settings);
-    ToastAndroid.show(t('Saved'), ToastAndroid.SHORT);
+    Alert.alert('', t('Saved'));
     navigation.goBack();
   };
 
