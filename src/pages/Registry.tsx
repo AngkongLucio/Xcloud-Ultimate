@@ -5,7 +5,6 @@ import {
   Alert,
   ScrollView,
   NativeModules,
-  ToastAndroid,
   Pressable,
 } from 'react-native';
 import {
@@ -86,23 +85,27 @@ function RegistryScreen({navigation}) {
   }, [navigation, t]);
 
   const handleConfirm = () => {
+    if (typeof RegistryManager?.registry !== 'function') {
+      Alert.alert('Unavailable on iOS', 'Console registration requires the native streaming bridge, which has not been ported to iOS yet.');
+      return;
+    }
     if (!host.trim()) {
-      ToastAndroid.show(t('HostError'), ToastAndroid.SHORT);
+      Alert.alert('', String(t('HostError')));
       return;
     }
     if (!pin.trim()) {
-      ToastAndroid.show(t('PINError'), ToastAndroid.SHORT);
+      Alert.alert('', String(t('PINError')));
       return;
     }
     if (pin.trim().length < 8) {
-      ToastAndroid.show(t('PINLenError'), ToastAndroid.SHORT);
+      Alert.alert('', String(t('PINLenError')));
       return;
     }
     const ts = new TokenStore();
     ts.load();
     const tokens = ts.getToken();
     if (tokens.length === 0) {
-      ToastAndroid.show(t('TokenisEmpty'), ToastAndroid.SHORT);
+      Alert.alert('', String(t('TokenisEmpty')));
       return;
     }
 
@@ -114,7 +117,7 @@ function RegistryScreen({navigation}) {
     });
 
     if (!currentUser) {
-      ToastAndroid.show(t('TokenisEmpty'), ToastAndroid.SHORT);
+      Alert.alert('', String(t('TokenisEmpty')));
       return;
     }
 
@@ -150,7 +153,7 @@ function RegistryScreen({navigation}) {
       _consoles.push(registedConsole);
 
       saveConsoles(_consoles);
-      ToastAndroid.show(t('RegistrySuccess'), ToastAndroid.SHORT);
+      Alert.alert('', String(t('RegistrySuccess')));
       navigation.navigate({
         name: 'Home',
       });
