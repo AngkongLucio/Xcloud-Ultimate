@@ -60,6 +60,16 @@ The existing JS stream wrapper expects commands for session start/stop, focus, b
 
 These references are research leads, not dependencies copied into this project.
 
+
+## Build-system work committed
+
+- The root CMake file now adds the Android native frontend only when `CHIAKI_ENABLE_ANDROID=ON`; the repository's Gradle configuration already passes this flag with the Android NDK toolchain.
+- The Chiaki library now keeps its Android ABI-specific prebuilt OpenSSL/zlib/curl/SDL2 branch under `CHIAKI_ENABLE_ANDROID`. The non-Android branch resolves OpenSSL, CURL and zlib for the active target.
+- JSON-C is configured as a static library for iOS; miniupnpc remains static.
+- See [IOS_CORE_BUILD.md](./IOS_CORE_BUILD.md) for the arm64 configure/build command and dependency requirements.
+
+This is source-level build-system preparation only. No Xcode/iOS SDK compile or Android regression build has been run in this environment, so the CMake changes are not yet build-verified.
+
 ## Required implementation sequence
 
 1. **Dependency and licensing audit:** pin an upstream Chiaki-ng baseline or document why the embedded core remains; inventory all transitive dependencies and licenses.
