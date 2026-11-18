@@ -3,7 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VCPKG_ROOT="${VCPKG_ROOT:-}"
-IOS_DEPS_PREFIX="${IOS_DEPS_PREFIX:-$ROOT_DIR/vcpkg_installed/ios-arm64}"
+VCPKG_INSTALL_ROOT="${VCPKG_INSTALL_ROOT:-$ROOT_DIR/vcpkg_installed}"
+IOS_DEPS_PREFIX="${IOS_DEPS_PREFIX:-$VCPKG_INSTALL_ROOT/arm64-ios}"
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "Error: iOS device dependencies must be built on macOS with Xcode." >&2
@@ -26,11 +27,11 @@ if [[ ! -f "$TRIPLET_FILE" ]]; then
   exit 2
 fi
 
-mkdir -p "$IOS_DEPS_PREFIX"
+mkdir -p "$VCPKG_INSTALL_ROOT"
 "$VCPKG_ROOT/vcpkg" install openssl curl zlib \
   --triplet arm64-ios \
   --overlay-triplets="$OVERLAY_DIR" \
-  --x-install-root="$IOS_DEPS_PREFIX"
+  --x-install-root="$VCPKG_INSTALL_ROOT"
 
 echo
 echo "iOS dependency installation finished."
