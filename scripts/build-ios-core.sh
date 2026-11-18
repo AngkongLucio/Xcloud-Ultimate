@@ -51,7 +51,7 @@ while IFS= read -r archive; do
     echo "Error: archive has no arm64 slice: $archive" >&2
     exit 2
   fi
-done < <(find "$IOS_DEPS_PREFIX" -type f \\( -name libcrypto.a -o -name libssl.a -o -name libcurl.a \\))
+done < <(find "$IOS_DEPS_PREFIX" -type f -name libcrypto.a -o -type f -name libssl.a -o -type f -name libcurl.a)
 
 cmake -S "$ROOT_DIR" -B "$BUILD_DIR" -G Xcode \
   -DCMAKE_TOOLCHAIN_FILE="$ROOT_DIR/cmake/ios-arm64.toolchain.cmake" \
