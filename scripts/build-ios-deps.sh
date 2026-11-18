@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VCPKG_ROOT="${VCPKG_ROOT:-}"
 VCPKG_INSTALL_ROOT="${VCPKG_INSTALL_ROOT:-$ROOT_DIR/vcpkg_installed}"
-IOS_DEPS_PREFIX="${IOS_DEPS_PREFIX:-$VCPKG_INSTALL_ROOT/arm64-ios}"
+IOS_DEPS_PREFIX="$VCPKG_INSTALL_ROOT/arm64-ios"
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "Error: iOS device dependencies must be built on macOS with Xcode." >&2
