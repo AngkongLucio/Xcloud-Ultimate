@@ -18,3 +18,7 @@
 ## Important
 
 This branch only applies the Xbox-inspired green/dark visual theme to the existing React Native UI. It does not claim to provide an iOS port or a working IPA. Do not install an artifact until an actual iOS build has been produced and tested.
+
+## Detailed implementation checklist
+
+See [IOS_PORT_PLAN.md](./IOS_PORT_PLAN.md) for the phased port plan, native module inventory, streaming-engine requirements, acceptance criteria, and release validation checklist.
