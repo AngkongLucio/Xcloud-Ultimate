@@ -5,7 +5,6 @@ import {
   Alert,
   View,
   NativeModules,
-  ToastAndroid,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {Text} from 'react-native-paper';
@@ -111,13 +110,16 @@ function SettingsScreen({navigation}) {
           style: 'default',
           onPress: () => {
             resetSettings();
-            ToastAndroid.show('设置重置成功', ToastAndroid.LONG);
+            Alert.alert('', String('设置重置成功'));
           },
         },
       ]);
     } else if (id === 'maping') {
       const settings = getSettings();
-      const hasValidUsbDevice = await UsbRumbleManager.getHasValidUsbDevice();
+      const hasValidUsbDevice =
+        typeof UsbRumbleManager?.getHasValidUsbDevice === 'function'
+          ? await UsbRumbleManager.getHasValidUsbDevice()
+          : false;
       const isUsbMode = settings.bind_usb_device && hasValidUsbDevice;
       if (isUsbMode) {
         Alert.alert(t('UsbMappingDisable'));
