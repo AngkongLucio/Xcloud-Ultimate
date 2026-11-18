@@ -1,7 +1,7 @@
 # iOS device toolchain for the shared Chiaki protocol core.
 # Invoke from macOS with Xcode selected (xcode-select -p).
-if(NOT APPLE)
-    message(FATAL_ERROR "The iOS toolchain requires macOS and Xcode.")
+if(NOT CMAKE_HOST_APPLE)
+    message(FATAL_ERROR "The iOS toolchain must be configured on a macOS host with Xcode.")
 endif()
 
 set(CMAKE_SYSTEM_NAME iOS)
