@@ -1,15 +1,9 @@
 name: iOS Chiaki Core Build
 
-# Manual until an iOS-arm64 dependency bundle is available.
-# Homebrew OpenSSL/CURL binaries are macOS host libraries and MUST NOT be
-# linked into an iOS device target.
+# Requires a configured self-hosted macOS runner with Xcode and an iOS-arm64
+# dependency prefix exported as IOS_DEPS_PREFIX in the runner environment.
 on:
   workflow_dispatch:
-    inputs:
-      ios_deps_prefix:
-        description: Absolute path to an iOS-arm64 dependency prefix on the runner (must contain OpenSSL, libcurl and CMake package metadata)
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -17,54 +11,24 @@ permissions:
 jobs:
   ios-arm64-core:
     name: Configure and build iOS arm64 protocol core
-    runs-on: macos-14
-    timeout-minutes: 45
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 60
     steps:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Select Xcode and install host tools
+      - name: Install host build tools
         run: |
           xcode-select -p
           xcodebuild -version
           brew install cmake protobuf
 
-      - name: Validate iOS dependency prefix
+      - name: Build iOS device protocol core
         env:
-          IOS_DEPS_PREFIX: ${{ inputs.ios_deps_prefix }}
+          IOS_DEPS_PREFIX: ${{ runner.environment == 'github-hosted' && '' || vars.IOS_DEPS_PREFIX }}
         run: |
-          test -d "$IOS_DEPS_PREFIX"
-          test -f "$IOS_DEPS_PREFIX/include/openssl/ssl.h"
-          test -f "$IOS_DEPS_PREFIX/include/curl/curl.h"
-          find "$IOS_DEPS_PREFIX" -name 'libcrypto.a' -o -name 'libssl.a' -o -name 'libcurl.a'
-          for lib in $(find "$IOS_DEPS_PREFIX" \\( -name 'libcrypto.a' -o -name 'libssl.a' -o -name 'libcurl.a' \\)); do
-            info="$(lipo -info "$lib")"
-            echo "$info"
-            echo "$info" | grep -q 'arm64' || { echo "Missing arm64 slice: $lib"; exit 1; }
-          done
-
-      - name: Configure iOS device core
-        env:
-          IOS_DEPS_PREFIX: ${{ inputs.ios_deps_prefix }}
-        run: |
-          cmake -S . -B build/ios-arm64 -G Xcode \
-            -DCMAKE_TOOLCHAIN_FILE=cmake/ios-arm64.toolchain.cmake \
-            -DCMAKE_PREFIX_PATH="$IOS_DEPS_PREFIX" \
-            -DOPENSSL_ROOT_DIR="$IOS_DEPS_PREFIX" \
-            -DCURL_ROOT="$IOS_DEPS_PREFIX" \
-            -DCHIAKI_ENABLE_ANDROID=OFF \
-            -DCHIAKI_ENABLE_TESTS=OFF \
-            -DCHIAKI_ENABLE_CLI=OFF \
-            -DCHIAKI_ENABLE_GUI=OFF \
-            -DCHIAKI_ENABLE_SETSU=OFF \
-            -DCHIAKI_ENABLE_FFMPEG_DECODER=OFF \
-            -DCHIAKI_ENABLE_PI_DECODER=OFF \
-            -DCHIAKI_LIB_OPENSSL_EXTERNAL_PROJECT=OFF \
-            -DCHIAKI_LIB_ENABLE_OPUS=OFF \
-            -DCHIAKI_USE_SYSTEM_NANOPB=OFF \
-            -DCHIAKI_USE_SYSTEM_JERASURE=OFF
-
-      - name: Build shared protocol core
-        run: cmake --build build/ios-arm64 --config Release --target chiaki-lib
+          test -n "$IOS_DEPS_PREFIX"
+          chmod +x scripts/build-ios-core.sh
+          ./scripts/build-ios-core.sh
