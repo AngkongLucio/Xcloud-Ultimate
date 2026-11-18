@@ -26,8 +26,6 @@ jobs:
           brew install cmake protobuf
 
       - name: Build iOS device protocol core
-        env:
-          IOS_DEPS_PREFIX: ${{ runner.environment == 'github-hosted' && '' || vars.IOS_DEPS_PREFIX }}
         run: |
           test -n "$IOS_DEPS_PREFIX"
           chmod +x scripts/build-ios-core.sh
