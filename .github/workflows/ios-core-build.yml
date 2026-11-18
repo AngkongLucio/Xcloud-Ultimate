@@ -39,8 +39,10 @@ jobs:
           test -f "$IOS_DEPS_PREFIX/include/openssl/ssl.h"
           test -f "$IOS_DEPS_PREFIX/include/curl/curl.h"
           find "$IOS_DEPS_PREFIX" -name 'libcrypto.a' -o -name 'libssl.a' -o -name 'libcurl.a'
-          for lib in $(find "$IOS_DEPS_PREFIX" -name 'libcrypto.a' -o -name 'libssl.a' -o -name 'libcurl.a'); do
-            lipo -info "$lib"
+          for lib in $(find "$IOS_DEPS_PREFIX" \\( -name 'libcrypto.a' -o -name 'libssl.a' -o -name 'libcurl.a' \\)); do
+            info="$(lipo -info "$lib")"
+            echo "$info"
+            echo "$info" | grep -q 'arm64' || { echo "Missing arm64 slice: $lib"; exit 1; }
           done
 
       - name: Configure iOS device core
