@@ -685,7 +685,27 @@ function HomeScreen({navigation, route}) {
   };
 
   return (
-    <>
+    <View style={styles.screenShell}>
+      <View style={styles.dashboardHeader}>
+        <View style={styles.brandMark}>
+          <Text style={styles.brandMarkText}>X</Text>
+        </View>
+        <View style={styles.headerCopy}>
+          <Text variant="titleLarge" style={styles.dashboardTitle}>
+            XBOX ULTIMATE
+          </Text>
+          <Text variant="labelSmall" style={styles.dashboardSubtitle}>
+            REMOTE PLAY DASHBOARD
+          </Text>
+        </View>
+        <IconButton
+          icon="cog-outline"
+          size={24}
+          iconColor="#D9E8D9"
+          onPress={() => navigation.navigate('Options')}
+          accessibilityLabel={t('Options')}
+        />
+      </View>
       <Portal>
         <Dialog visible={showRemoteModal} onDismiss={handleCloseRemoteModal}>
           <Dialog.Content>
@@ -756,7 +776,7 @@ function HomeScreen({navigation, route}) {
       <Spinner
         visible={loading}
         cancelable={true}
-        color={'#DF6069'}
+        color={'#107C10'}
         textContent={loadingText}
         textStyle={styles.spinnerTextStyle}
       />
@@ -764,11 +784,54 @@ function HomeScreen({navigation, route}) {
       {renderContent()}
 
       {renderGuide()}
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenShell: {
+    flex: 1,
+    backgroundColor: '#0A0E0B',
+  },
+  dashboardHeader: {
+    minHeight: 76,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#263629',
+    backgroundColor: '#101711',
+  },
+  brandMark: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#107C10',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  brandMarkText: {
+    color: '#FFFFFF',
+    fontSize: 25,
+    fontWeight: '900',
+    fontStyle: 'italic',
+  },
+  headerCopy: {
+    flex: 1,
+  },
+  dashboardTitle: {
+    color: '#F2F7F2',
+    fontWeight: '900',
+    letterSpacing: 1.2,
+  },
+  dashboardSubtitle: {
+    color: '#8EAA91',
+    letterSpacing: 1.6,
+    marginTop: 2,
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -788,7 +851,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   spinnerTextStyle: {
-    color: '#DF6069',
+    color: '#107C10',
     textAlign: 'center',
   },
   listContainer: {},
