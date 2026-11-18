@@ -5,6 +5,7 @@ import {
   View,
   ScrollView,
   AppState,
+  Platform,
   ToastAndroid,
   Dimensions,
   NativeModules,
@@ -93,7 +94,7 @@ const gpState = {
   DPAD_RIGHT: false,
 };
 
-function StreamScreen({navigation, route}) {
+function AndroidStreamScreen({navigation, route}) {
   const {t} = useTranslation();
 
   // 启用 WiFi 性能模式（在组件挂载时启用，卸载时禁用）
@@ -1865,5 +1866,29 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
+
+// The current stream renderer is an Android native view backed by JNI/Chiaki.
+// Do not mount it on iOS until a real iOS renderer and session module are ported.
+function StreamScreen(props) {
+  if (Platform.OS === 'ios') {
+    return (
+      <View style={styles.iosUnavailable}>
+        <Text variant="titleLarge" style={styles.iosUnavailableTitle}>
+          iOS streaming is not ready yet
+        </Text>
+        <Text style={styles.iosUnavailableBody}>
+          The current streaming engine uses Android native components. The iOS
+          streaming engine, controller bridge, and audio/video pipeline still
+          need to be implemented.
+        </Text>
+        <Button mode="contained" onPress={() => props.navigation.goBack()}>
+          Back to dashboard
+        </Button>
+      </View>
+    );
+  }
+
+  return <AndroidStreamScreen {...props} />;
+}
 
 export default StreamScreen;
