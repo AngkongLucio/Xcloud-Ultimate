@@ -55,7 +55,11 @@ if(NOT CHIAKI_USE_SYSTEM_JERASURE)
 	add_library(Jerasure::Jerasure ALIAS jerasure)
 endif()
 
-# JSON-C
+# JSON-C must be static when embedded in an iOS application.
+if(APPLE AND CMAKE_SYSTEM_NAME STREQUAL "iOS")
+	set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static JSON-C for iOS" FORCE)
+	set(BUILD_STATIC_LIBS ON CACHE BOOL "Build static JSON-C for iOS" FORCE)
+endif()
 add_subdirectory(json-c)
 
 if(NOT CHIAKI_USE_SYSTEM_MINIUPNPC)
