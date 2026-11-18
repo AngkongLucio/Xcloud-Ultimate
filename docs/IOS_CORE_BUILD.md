@@ -12,7 +12,7 @@ This is a native-core build step only. It does not create an iOS app, React Nati
 
 ## iOS device configure command
 
-Run this on macOS with Xcode command-line tools, CMake, Python 3 and host `protoc` installed. Build iOS-compatible OpenSSL and curl (and Opus if enabled) first, using the same iOS SDK, architecture and deployment target. Set `IOS_DEPS_PREFIX` to that dependency prefix; it must contain CMake package metadata and libraries built for iOS arm64, not macOS or Android.
+Run this on macOS with Xcode command-line tools, CMake, Python 3 and host `protoc` installed. The repository toolchain file selects the iOS device SDK, arm64 architecture and iOS 15 deployment target; it rejects non-macOS hosts. Build iOS-compatible OpenSSL and curl (and Opus if enabled) first, using the same iOS SDK, architecture and deployment target. Set `IOS_DEPS_PREFIX` to that dependency prefix; it must contain CMake package metadata and libraries built for iOS arm64, not macOS or Android.
 
 ```sh
 xcode-select --install
@@ -37,7 +37,7 @@ cmake --build build/ios-arm64 --config Release --target chiaki-lib
 
 The command deliberately disables Opus until an iOS-built Opus package is available. For a complete stream audio path, build Opus for iOS and reconfigure with `-DCHIAKI_LIB_ENABLE_OPUS=ON`.
 
-## Expected dependency prefix
+## Toolchain behavior\n\n`cmake/ios-arm64.toolchain.cmake` sets the iOS device SDK, `arm64`, minimum iOS 15.0, host-tool lookup for build-time programs, target-only lookup for libraries/headers/packages, and static-library try-compiles. It does not build third-party dependencies or replace Xcode.\n\n## Expected dependency prefix
 
 The prefix must provide iOS arm64 builds and CMake package configs/find modules for:
 - OpenSSL (Crypto)
