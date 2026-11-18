@@ -93,3 +93,7 @@ An iOS shell or IPA is not a streaming release. Mark the port ready only after:
 ## Current status
 
 The shared JavaScript safety changes and iOS fallback are committed on the feature branch. The native audit confirms that a real iOS port needs a platform-specific media stack and a portable build of the Chiaki core. No iOS native session module, iOS project, build, device test or IPA has been produced yet.
+
+## iOS device toolchain
+
+A dedicated `cmake/ios-arm64.toolchain.cmake` now selects the iOS device SDK, arm64 architecture and iOS 15.0 deployment target, keeps build-time tools on the host, and restricts target dependency discovery to the iOS SDK/dependency prefix. `IOS_CORE_BUILD.md` uses this file. This is build configuration only; it has not been executed with Xcode in this environment.
