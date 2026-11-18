@@ -57,3 +57,9 @@ The repository builds nanopb, jerasure/gf-complete, JSON-C and miniupnpc from so
 ## Android regression configure
 
 The existing Android Gradle build passes `-DCHIAKI_ENABLE_ANDROID=ON`. Do not manually disable this flag in Android builds. Build with the repository's Gradle wrapper and configured Android SDK/NDK.
+
+## CI workflow
+
+The GitHub Actions workflow is intentionally manual until a reproducible iOS dependency bundle is available. It requires an iOS-device dependency prefix containing OpenSSL, libcurl, headers and CMake package metadata, and inspects the static archives with `lipo`. A matching `arm64` architecture alone does not prove that an archive was built for iOS; dependencies must be built with the iPhoneOS SDK and the same deployment target. Do not point this workflow at Homebrew's normal macOS OpenSSL or curl prefix.
+
+The workflow does not build the dependency bundle yet. It only attempts the Chiaki core build after the user supplies a valid iOS-target prefix. No CI build result is claimed until a run completes successfully.
