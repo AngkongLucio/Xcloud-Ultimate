@@ -6,7 +6,6 @@ import {
   FlatList,
   Dimensions,
   NativeModules,
-  ToastAndroid,
   Pressable,
 } from 'react-native';
 import {
@@ -44,6 +43,19 @@ import {wakeup} from '../wakeup';
 import {DOMAIN_REGEX} from '../common';
 
 const {RegistryManager, UsbRumbleManager} = NativeModules;
+
+// Android-only native modules are optional until equivalent iOS modules exist.
+const getRegistryCredential = key =>
+  typeof RegistryManager?.getCredential === 'function'
+    ? RegistryManager.getCredential(key)
+    : null;
+
+const hasValidUsbDevice = () =>
+  typeof UsbRumbleManager?.getHasValidUsbDevice === 'function'
+    ? Boolean(UsbRumbleManager.getHasValidUsbDevice())
+    : false;
+
+const showMessage = message => Alert.alert('', String(message ?? ''));
 
 const log = debugFactory('HomeScreen');
 
@@ -167,30 +179,21 @@ function HomeScreen({navigation, route}) {
                     ts.save();
                   }
 
-                  ToastAndroid.show(t('Login Successful'), ToastAndroid.SHORT);
+                  showMessage(t('Login Successful'));
                   setLoading(false);
                   setIsLogined(true);
                 })
                 .catch(e => {
-                  ToastAndroid.show(
-                    t('Unable to Fetch User Information') + ':' + e,
-                    ToastAndroid.LONG,
-                  );
+                  showMessage(t('Unable to Fetch User Information') + ':' + e);
                   setLoading(false);
                 });
             } else {
-              ToastAndroid.show(
-                t('LoginFailWithAccessTokenIsNull'),
-                ToastAndroid.LONG,
-              );
+              showMessage(t('LoginFailWithAccessTokenIsNull'));
               setLoading(false);
             }
           })
           .catch(e => {
-            ToastAndroid.show(
-              t('Get access_token failed') + ':' + e,
-              ToastAndroid.LONG,
-            );
+            showMessage(t('Get access_token failed') + ':' + e);
           });
       }
     }
@@ -352,10 +355,10 @@ function HomeScreen({navigation, route}) {
 
   const handleWakeConsole = item => {
     try {
-      const credential = RegistryManager.getCredential(item.rpRegistKey);
+      const credential = getRegistryCredential(item.rpRegistKey);
       const isPS5 = item.apName.indexOf('PS5') > -1;
       wakeup(item.host, credential, isPS5);
-      ToastAndroid.show(t('WakePacketSent'), ToastAndroid.SHORT);
+      showMessage(t('WakePacketSent'));
     } catch (e) {}
   };
 
@@ -383,11 +386,11 @@ function HomeScreen({navigation, route}) {
               if (res.status === 'STANDBY') {
                 setLoadingText(t('Waking'));
 
-                const credential = RegistryManager.getCredential(
+                const credential = getRegistryCredential(
                   item.rpRegistKey,
                 );
                 if (!credential) {
-                  ToastAndroid.show(t('CredentialIsEmpty'), ToastAndroid.SHORT);
+                  showMessage(t('CredentialIsEmpty'));
                   return;
                 }
                 // Send wake packet
@@ -424,13 +427,13 @@ function HomeScreen({navigation, route}) {
         }
       })
       .catch(e => {
-        ToastAndroid.show(e, ToastAndroid.LONG);
+        showMessage(e);
         setLoading(false);
       });
   };
 
   const handleToLocalStream = item => {
-    const hasValidUsbDevice = UsbRumbleManager.getHasValidUsbDevice();
+    const hasValidUsbDevice = hasValidUsbDevice();
     const isUsbMode = settings.bind_usb_device && hasValidUsbDevice;
 
     setLoading(false);
@@ -557,7 +560,7 @@ function HomeScreen({navigation, route}) {
 
   const handleSaveRemoteHost = () => {
     if (!remoteHost) {
-      ToastAndroid.show(t('RemoteAddressCannotEmpty'), ToastAndroid.SHORT);
+      showMessage(t('RemoteAddressCannotEmpty'));
       return;
     }
     consoles.forEach(item => {
@@ -579,7 +582,7 @@ function HomeScreen({navigation, route}) {
 
   const handleOnlyConnect = () => {
     setShowWakeModal(false);
-    const hasValidUsbDevice = UsbRumbleManager.getHasValidUsbDevice();
+    const hasValidUsbDevice = hasValidUsbDevice();
     const isUsbMode = settings.bind_usb_device && hasValidUsbDevice;
     navigation.navigate({
       name: 'Stream',
@@ -594,15 +597,15 @@ function HomeScreen({navigation, route}) {
   const handleWakeAndConnect = () => {
     setShowWakeModal(false);
     setLoading(true);
-    const credential = RegistryManager.getCredential(
+    const credential = getRegistryCredential(
       currentConsole.rpRegistKey,
     );
     if (!credential) {
-      ToastAndroid.show(t('CredentialIsEmpty'), ToastAndroid.SHORT);
+      showMessage(t('CredentialIsEmpty'));
       return;
     }
     if (!currentConsole.remoteHost) {
-      ToastAndroid.show(t('RemoteAddressCannotEmpty'), ToastAndroid.SHORT);
+      showMessage(t('RemoteAddressCannotEmpty'));
       return;
     }
     // Parse domain
@@ -639,7 +642,7 @@ function HomeScreen({navigation, route}) {
   const handleWakeAndToStream = (host, credential) => {
     const isPS5 = currentConsole.apName.indexOf('PS5') > -1;
     log.info('handleWakeAndToStream', host, credential);
-    const hasValidUsbDevice = UsbRumbleManager.getHasValidUsbDevice();
+    const hasValidUsbDevice = hasValidUsbDevice();
     const isUsbMode = settings.bind_usb_device && hasValidUsbDevice;
 
     wakeup(host, credential, isPS5);
