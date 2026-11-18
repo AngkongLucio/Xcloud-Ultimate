@@ -41,7 +41,7 @@ fi
 cp -R "$TMP_DIR/Peasyo/ios" "$IOS_DIR"
 
 # Match the existing Android application ID and AppRegistry name.
-find "$IOS_DIR" -type f \\( -name '*.pbxproj' -o -name '*.plist' -o -name '*.mm' -o -name '*.h' -o -name '*.m' -o -name 'Podfile' \\) -print0 |
+find "$IOS_DIR" -type f \( -name '*.pbxproj' -o -name '*.plist' -o -name '*.mm' -o -name '*.h' -o -name '*.m' -o -name 'Podfile' \\) -print0 |
 while IFS= read -r -d '' file; do
   /usr/bin/sed -i '' 's/org\.reactjs\.native\.example\.Peasyo/com.peasyo/g' "$file"
   /usr/bin/sed -i '' 's/self\.moduleName = @"Peasyo";/self.moduleName = @"peasyo";/' "$file"
@@ -55,7 +55,7 @@ echo
 echo "Next steps:"
 echo "  1. cd \"$ROOT_DIR\""
 echo "  2. yarn install"
-echo "  3. cd ios && bundle exec pod install"
+echo "  3. cd ios && pod install"
 echo "  4. Open ios/Peasyo.xcworkspace in Xcode."
 echo
 echo "This creates only the React Native iOS shell. Chiaki, VideoToolbox,"
