@@ -81,6 +81,11 @@ The current codebase is PeaSyo/Pixiu v1: a PlayStation 4/5 Remote Play client us
 
 These changes improve safe platform handling; they do not implement the missing native features.
 
+
+## Native streaming source audit
+
+The detailed platform mapping, CMake dependency blockers, React Native native-view contract, external codebase evaluation, and iOS release gates are documented in [IOS_NATIVE_PORT_RESEARCH.md](./IOS_NATIVE_PORT_RESEARCH.md).
+
 ## Current status
 
 The Xbox-inspired visual reskin and an initial shared-JavaScript iOS compatibility pass have been committed on the feature branch. No iOS native port, iOS build, device test or IPA exists yet. The next engineering milestone is the iOS React Native target and dependency audit; the Chiaki streaming engine port remains the critical path.
