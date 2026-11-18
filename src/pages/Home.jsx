@@ -91,6 +91,7 @@ function HomeScreen({navigation, route}) {
     SplashScreen.hide();
 
     navigation.setOptions({
+      headerShown: false,
       // eslint-disable-next-line react/no-unstable-nested-components
       headerRight: () => (
         <IconButton
