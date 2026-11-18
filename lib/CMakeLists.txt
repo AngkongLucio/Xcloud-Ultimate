@@ -108,48 +108,51 @@ target_include_directories(chiaki-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/includ
 find_package(Threads REQUIRED)
 target_link_libraries(chiaki-lib Threads::Threads)
 
-# crypto
-add_library(lib_crypto STATIC IMPORTED)
-set_target_properties(lib_crypto PROPERTIES IMPORTED_LOCATION
-       ${CMAKE_SOURCE_DIR}/third-party/openssl/${ANDROID_ABI}/lib/libcrypto.a)
-target_link_libraries(chiaki-lib lib_crypto)
+if(CHIAKI_ENABLE_ANDROID)
+	# Android ABI-specific prebuilt dependencies. Keep this block unchanged for Gradle builds.
+	add_library(lib_crypto STATIC IMPORTED)
+	set_target_properties(lib_crypto PROPERTIES IMPORTED_LOCATION
+	       ${CMAKE_SOURCE_DIR}/third-party/openssl/${ANDROID_ABI}/lib/libcrypto.a)
+	target_link_libraries(chiaki-lib lib_crypto)
 
-# zlib
-add_library(lib_zlib STATIC IMPORTED)
-set_target_properties(lib_zlib PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/third-party/zlib/${ANDROID_ABI}/lib/libz.a)
-target_link_libraries(chiaki-lib lib_zlib)
+	add_library(lib_zlib STATIC IMPORTED)
+	set_target_properties(lib_zlib PROPERTIES IMPORTED_LOCATION
+	        ${CMAKE_SOURCE_DIR}/third-party/zlib/${ANDROID_ABI}/lib/libz.a)
+	target_link_libraries(chiaki-lib lib_zlib)
 
-# OpenSSL
-add_library(lib_openssl STATIC IMPORTED)
-set_target_properties(lib_openssl PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/third-party/openssl/${ANDROID_ABI}/lib/libssl.a)
-target_link_libraries(chiaki-lib lib_openssl)
+	add_library(lib_openssl STATIC IMPORTED)
+	set_target_properties(lib_openssl PROPERTIES IMPORTED_LOCATION
+	        ${CMAKE_SOURCE_DIR}/third-party/openssl/${ANDROID_ABI}/lib/libssl.a)
+	target_link_libraries(chiaki-lib lib_openssl)
 
-# CURL
-add_library(lib_curl STATIC IMPORTED)
-set_target_properties(lib_curl PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/third-party/curl/${ANDROID_ABI}/lib/libcurl.a)
-target_include_directories(chiaki-lib PRIVATE ${CMAKE_SOURCE_DIR}/third-party/curl/${ANDROID_ABI}/include)
-target_link_libraries(chiaki-lib lib_curl)
+	add_library(lib_curl STATIC IMPORTED)
+	set_target_properties(lib_curl PROPERTIES IMPORTED_LOCATION
+	        ${CMAKE_SOURCE_DIR}/third-party/curl/${ANDROID_ABI}/lib/libcurl.a)
+	target_include_directories(chiaki-lib PRIVATE ${CMAKE_SOURCE_DIR}/third-party/curl/${ANDROID_ABI}/include)
+	target_link_libraries(chiaki-lib lib_curl)
 
-# SDL2
-add_library(lib_sdl2 SHARED IMPORTED)
-set_target_properties(lib_sdl2 PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/third-party/sdl/${ANDROID_ABI}/lib/libSDL2.so)
-set_target_properties(lib_sdl2 PROPERTIES 
-        INTERFACE_INCLUDE_DIRECTORIES 
-        ${CMAKE_SOURCE_DIR}/third-party/sdl/${ANDROID_ABI}/include)
-target_link_libraries(chiaki-lib lib_sdl2)
+	add_library(lib_sdl2 SHARED IMPORTED)
+	set_target_properties(lib_sdl2 PROPERTIES IMPORTED_LOCATION
+	        ${CMAKE_SOURCE_DIR}/third-party/sdl/${ANDROID_ABI}/lib/libSDL2.so)
+	set_target_properties(lib_sdl2 PROPERTIES
+	        INTERFACE_INCLUDE_DIRECTORIES
+	        ${CMAKE_SOURCE_DIR}/third-party/sdl/${ANDROID_ABI}/include)
+	target_link_libraries(chiaki-lib lib_sdl2)
 
-# JSON-C
+	target_link_libraries(chiaki-lib OpenSSL_Crypto)
+else()
+	# Apple/non-Android builds must use libraries built for the active Apple target.
+	# Supply an iOS-compatible dependency prefix via CMAKE_PREFIX_PATH; never reuse
+	# Android ABI archives or shared objects here.
+	find_package(OpenSSL REQUIRED)
+	find_package(CURL REQUIRED)
+	find_package(ZLIB REQUIRED)
+	target_link_libraries(chiaki-lib OpenSSL::Crypto CURL::libcurl ZLIB::ZLIB)
+endif()
+
+# Shared protocol dependencies built from the repository's source tree.
 target_link_libraries(chiaki-lib json-c)
-
-# miniupnpc
 target_link_libraries(chiaki-lib Miniupnpc::miniupnpc)
 target_include_directories(chiaki-lib PRIVATE ${CMAKE_SOURCE_DIR}/third-party/miniupnpc)
-
-target_link_libraries(chiaki-lib OpenSSL_Crypto)
-
 target_link_libraries(chiaki-lib Nanopb::nanopb)
 target_link_libraries(chiaki-lib Jerasure::Jerasure)
