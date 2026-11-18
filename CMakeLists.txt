@@ -87,10 +87,17 @@ add_subdirectory(third-party)
 
 add_definitions(-DCHIAKI_VERSION_MAJOR=${CHIAKI_VERSION_MAJOR} -DCHIAKI_VERSION_MINOR=${CHIAKI_VERSION_MINOR} -DCHIAKI_VERSION_PATCH=${CHIAKI_VERSION_PATCH} -DCHIAKI_VERSION=\"${CHIAKI_VERSION}\")
 
-include(OpenSSLExternalProject)
+if(CHIAKI_LIB_OPENSSL_EXTERNAL_PROJECT)
+	include(OpenSSLExternalProject)
+endif()
 
 # 这里声明入口文件lib
 add_subdirectory(lib)
 
-# 加入android编译
-add_subdirectory(android/app)
+# Android native frontend (Gradle passes CHIAKI_ENABLE_ANDROID=ON).
+if(CHIAKI_ENABLE_ANDROID)
+	if(NOT ANDROID)
+		message(FATAL_ERROR "CHIAKI_ENABLE_ANDROID=ON requires the Android NDK toolchain.")
+	endif()
+	add_subdirectory(android/app)
+endif()
