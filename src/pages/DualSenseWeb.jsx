@@ -1,12 +1,12 @@
 import React from 'react';
-import {NativeModules, NativeEventEmitter} from 'react-native';
+import {NativeModules, NativeEventEmitter, Platform, View} from 'react-native';
 import {WebView} from 'react-native-webview';
+import {Text} from 'react-native-paper';
 import {debugFactory} from '../utils/debug';
 import {CONTROLLERS} from '../common/controller';
 
 const log = debugFactory('DStest');
 
-const eventEmitter = new NativeEventEmitter();
 const {UsbRumbleManager} = NativeModules;
 
 function GameMap({navigation, route}) {
@@ -16,7 +16,11 @@ function GameMap({navigation, route}) {
   const uri = 'file:///android_asset/web/index.html';
 
   React.useEffect(() => {
+    if (Platform.OS !== 'android' || typeof UsbRumbleManager?.addListener !== 'function') {
+      return;
+    }
     log.info('Gamemap screen show');
+    const eventEmitter = new NativeEventEmitter(UsbRumbleManager);
 
     usbGpEventListener.current = eventEmitter.addListener(
       'onDsGamepadReport',
@@ -191,6 +195,9 @@ function GameMap({navigation, route}) {
           break;
       }
 
+      if (typeof UsbRumbleManager?.setDsController !== 'function') {
+        return;
+      }
       UsbRumbleManager.setDsController(
         lightbar[0],
         lightbar[1],
@@ -207,6 +214,14 @@ function GameMap({navigation, route}) {
       );
     }
   };
+
+  if (Platform.OS !== 'android') {
+    return (
+      <View style={{flex: 1, justifyContent: 'center', padding: 24}}>
+        <Text>USB DualSense passthrough and its Android asset-based test page are not available on iOS.</Text>
+      </View>
+    );
+  }
 
   return (
     <>
