@@ -5473,9 +5473,16 @@ static ChiakiErrorCode get_stun_servers(Session *session)
     // hostname has max of 253 chars + 1 char for colon : + port has max of 4 chars + 1 char for null termination
     char server_strings[10][259];
     char *ptr = strtok(response_data.data, "\n");
-    while(ptr != NULL && session->num_stun_servers <= 9)
+    while(ptr != NULL && session->num_stun_servers < 10)
     {
-        strcpy(server_strings[session->num_stun_servers], ptr);
+        size_t line_len = strlen(ptr);
+        if(line_len == 0 || line_len >= sizeof(server_strings[0]))
+        {
+            CHIAKI_LOGW(session->log, "Invalid or oversized IPv4 STUN server entry");
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup;
+        }
+        memcpy(server_strings[session->num_stun_servers], ptr, line_len + 1);
         session->num_stun_servers++;
         ptr = strtok(NULL, "\n");
     }
@@ -5487,14 +5494,16 @@ static ChiakiErrorCode get_stun_servers(Session *session)
         {
             CHIAKI_LOGW(session->log, "Problem reading stun server list host");
             session->num_stun_servers = i;
-            return CHIAKI_ERR_INVALID_DATA;
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup;
         }
         session->stun_server_list[i].host = malloc((strlen(ptr) + 1) * sizeof(char));
         if(!session->stun_server_list[i].host)
         {
             CHIAKI_LOGW(session->log, "Problem allocating memory for stun server list host");
             session->num_stun_servers = i;
-            return CHIAKI_ERR_MEMORY;
+            err = CHIAKI_ERR_MEMORY;
+            goto cleanup;
         }
         strcpy(session->stun_server_list[i].host, ptr);
         ptr = strtok(NULL, ":");
@@ -5562,10 +5571,17 @@ static ChiakiErrorCode get_stun_servers(Session *session)
     // ipv6 string has max of 45 chars: 39 chars + 2 chars for [] + 1 char for colon : + port has max of 4 chars + 1 char for null termination
     char server_strings_ipv6[10][47];
     ptr = strtok(response_data.data, "\n");
-    while(ptr != NULL && session->num_stun_servers_ipv6 <= 9)
+    while(ptr != NULL && session->num_stun_servers_ipv6 < 10)
     {
-        // omit leading [
-        strcpy(server_strings_ipv6[session->num_stun_servers_ipv6], ptr + 1);
+        size_t line_len = strlen(ptr);
+        if(line_len < 4 || ptr[0] != '[' || line_len >= sizeof(server_strings_ipv6[0]))
+        {
+            CHIAKI_LOGW(session->log, "Invalid or oversized IPv6 STUN server entry");
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup;
+        }
+        /* Omit the opening bracket; retain the closing bracket for parsing. */
+        memcpy(server_strings_ipv6[session->num_stun_servers_ipv6], ptr + 1, line_len);
         session->num_stun_servers_ipv6++;
         ptr = strtok(NULL, "\n");
     }
@@ -5577,14 +5593,16 @@ static ChiakiErrorCode get_stun_servers(Session *session)
         {
             CHIAKI_LOGW(session->log, "Problem reading stun server list host");
             session->num_stun_servers_ipv6 = i;
-            return CHIAKI_ERR_INVALID_DATA;
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup;
         }
         session->stun_server_list_ipv6[i].host = malloc((strlen(ptr) + 1) * sizeof(char));
         if(!session->stun_server_list_ipv6[i].host)
         {
             CHIAKI_LOGW(session->log, "Problem allocating memory for stun server list host");
             session->num_stun_servers_ipv6 = i;
-            return CHIAKI_ERR_MEMORY;
+            err = CHIAKI_ERR_MEMORY;
+            goto cleanup;
         }
         strcpy(session->stun_server_list_ipv6[i].host, ptr);
         ptr = strtok(NULL, "]");
