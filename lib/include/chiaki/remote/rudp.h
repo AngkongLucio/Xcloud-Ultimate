@@ -157,7 +157,11 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_raw(ChiakiRudp rudp,
  * Used for initial rudp sequences.
  *
  * @param rudp Pointer to the rudp instance to use
- * @param message Pointer to the rudp message that will be filled in during the receive
+ * @param message Pointer to the rudp message that will be filled in during the receive.
+ *        It must be zero-initialized or have its previous owned pointers released
+ *        with chiaki_rudp_message_pointers_free() before reuse. On success, the
+ *        caller owns data and subMessage and must release them with that function.
+ *        On receive/validation failure, parsed allocations are released internally.
  * @param[in] buf The buf to send as part of the data of the rudp message or NULL if not used
  * @param[in] buf_size The size of the sbuf or 0 if buf not used for the message type
  * @param[in] remote_counter The remote counter of the message this message is being sent in response to or 0 if not used for the message type
@@ -177,7 +181,10 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_recv(ChiakiRudp rudp,
  *
  * @param rudp Pointer to the Rudp instance to use
  * @param[in] buf_size The size of the received message
- * @param[out] message The Rudp message returned
+ * @param[out] message The Rudp message returned. It must be zero-initialized
+ *        or have its previous owned pointers released with
+ *        chiaki_rudp_message_pointers_free() before reuse. On success, the caller
+ *        owns the returned data and subMessage.
  * @return CHIAKI_ERR_SUCCESS on success, otherwise another error code
  *
 */
@@ -188,7 +195,10 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_select_recv(ChiakiRudp rudp, size_t bu
  *
  * @param rudp Pointer to the Rudp instance to use
  * @param[in] buf_size The size of the received message
- * @param[out] message The Rudp message returned
+ * @param[out] message The Rudp message returned. It must be zero-initialized
+ *        or have its previous owned pointers released with
+ *        chiaki_rudp_message_pointers_free() before reuse. On success, the caller
+ *        owns the returned data and subMessage.
  * @return CHIAKI_ERR_SUCCESS on success, otherwise another error code
  * 
 */
