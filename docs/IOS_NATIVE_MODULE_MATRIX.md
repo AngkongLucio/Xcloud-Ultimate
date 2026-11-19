@@ -102,4 +102,6 @@ These guards prevent known missing-module crashes; they do not replace Android U
 
 - RUDP send entry points reject null handles/buffers and cap variable payload sizes to the protocol's 12-bit length field, preventing oversized stack arrays and truncated length headers.
 
+- RUDP local-counter reads now use the counter mutex, including ACK/control packet construction, avoiding unsynchronized reads while another thread advances the counter.
+
 These are source-level defensive changes only. They have not been compiled or exercised against a PlayStation console, simulator, or physical iPad. They do not implement the iOS streaming bridge or make the app IPA-ready.
