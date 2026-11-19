@@ -5,6 +5,7 @@ import {
   ScrollView,
   NativeModules,
   NativeEventEmitter,
+  Platform,
 } from 'react-native';
 import {Text} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
@@ -20,6 +21,9 @@ function GameMapDetail({navigation, route}) {
   const {t} = useTranslation();
 
   React.useEffect(() => {
+    if (Platform.OS !== 'android' || typeof GamepadManager?.setCurrentScreen !== 'function') {
+      return;
+    }
     log.info('TitleDetail button:', route.params?.button);
     GamepadManager.setCurrentScreen('stream');
     const eventEmitter = new NativeEventEmitter();
