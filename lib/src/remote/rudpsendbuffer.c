@@ -75,13 +75,13 @@ error_mutex:
 	return err;
 }
 
-CHIAKI_EXPORT void chiaki_rudp_send_buffer_fini(ChiakiRudpSendBuffer *send_buffer)
+CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_fini(ChiakiRudpSendBuffer *send_buffer)
 {
 	ChiakiErrorCode err = chiaki_mutex_lock(&send_buffer->mutex);
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
 		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer could not lock mutex during shutdown");
-		return;
+		return err;
 	}
 	send_buffer->should_stop = true;
 	err = chiaki_cond_signal(&send_buffer->cond);
@@ -89,22 +89,23 @@ CHIAKI_EXPORT void chiaki_rudp_send_buffer_fini(ChiakiRudpSendBuffer *send_buffe
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
 		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer could not signal shutdown");
-		return;
+		return err;
 	}
 
 	err = chiaki_thread_join(&send_buffer->thread, NULL);
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
 		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer thread could not be joined");
-		return;
+		return err;
 	}
 
 	for(size_t i=0; i<send_buffer->packets_count; i++)
 		free(send_buffer->packets[i].buf);
 
 	chiaki_cond_fini(&send_buffer->cond);
-	chiaki_mutex_fini(&send_buffer->mutex);
+	err = chiaki_mutex_fini(&send_buffer->mutex);
 	free(send_buffer->packets);
+	return err;
 }
 
 static void GetRudpPacketType(ChiakiRudpSendBuffer *send_buffer, uint16_t packet_type, char *ptype)
