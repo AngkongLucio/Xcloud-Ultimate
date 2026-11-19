@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, ScrollView, Alert} from 'react-native';
+import {StyleSheet, View, ScrollView, Alert, Platform} from 'react-native';
 import {
   Button,
   RadioButton,
@@ -114,9 +114,16 @@ function UsersScreen({navigation}) {
           Alert.alert('', String(t('Deleted')));
 
           if (newUsers.length === 0) {
-            setTimeout(() => {
-              RNRestart.restart();
-            }, 1000);
+            if (Platform.OS === 'android') {
+              setTimeout(() => {
+                RNRestart.restart();
+              }, 1000);
+            } else {
+              Alert.alert(
+                String(t('Warning')),
+                'All accounts were removed. Close and reopen the app to complete the reset.',
+              );
+            }
           }
         },
       },
