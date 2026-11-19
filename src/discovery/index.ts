@@ -99,6 +99,8 @@ export const discoverDevices = (
       }
     });
 
+    timeout = setTimeout(() => finish(), DISCOVERY_TIMEOUT_MS);
+
     try {
       socket.bind(0, () => {
         if (isFinished) {
@@ -125,7 +127,6 @@ export const discoverDevices = (
             },
           );
 
-          timeout = setTimeout(() => finish(), DISCOVERY_TIMEOUT_MS);
         } catch (error) {
           finish(error instanceof Error ? error : new Error(String(error)));
         }
