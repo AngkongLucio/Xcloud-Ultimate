@@ -1,6 +1,6 @@
 import React from 'react';
-import {NativeModules} from 'react-native';
-import {Button} from 'react-native-paper';
+import {NativeModules, View} from 'react-native';
+import {Button, Text} from 'react-native-paper';
 import {WebView} from 'react-native-webview';
 import Spinner from 'react-native-loading-spinner-overlay';
 import {useTranslation} from 'react-i18next';
@@ -20,10 +20,25 @@ const {HolepunchManager} = NativeModules;
 function LoginScreen({navigation}) {
   const {t} = useTranslation();
   const [loginUrl, setLoginUrl] = React.useState('');
+  const [loginError, setLoginError] = React.useState('');
 
   React.useEffect(() => {
-    const duid = HolepunchManager.getDeviceUid();
-    setLoginUrl(`${LOGIN_URL}duid=${duid}&`);
+    try {
+      if (typeof HolepunchManager?.getDeviceUid !== 'function') {
+        setLoginError(
+          'PSN sign-in is not available on iOS yet because the native device identity bridge has not been ported.',
+        );
+      } else {
+        const duid = HolepunchManager.getDeviceUid();
+        if (!duid) {
+          throw new Error('Device identity is unavailable.');
+        }
+        setLoginUrl(`${LOGIN_URL}duid=${encodeURIComponent(String(duid))}&`);
+      }
+    } catch (error) {
+      log.error('Unable to prepare PSN login:', error);
+      setLoginError('Unable to prepare PSN sign-in on this device.');
+    }
 
     navigation.setOptions({
       // eslint-disable-next-line react/no-unstable-nested-components
@@ -41,10 +56,15 @@ function LoginScreen({navigation}) {
     });
   }, [navigation, t]);
 
-  console.log('loginUrl:', loginUrl);
+  log.info('PSN login URL ready:', Boolean(loginUrl));
 
   return (
     <>
+      {loginError ? (
+        <View style={{flex: 1, justifyContent: 'center', padding: 24}}>
+          <Text>{loginError}</Text>
+        </View>
+      ) : null}
       {loginUrl && (
         <WebView
           source={{uri: loginUrl}}
