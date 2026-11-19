@@ -63,3 +63,13 @@ These changes must still pass TypeScript/lint, Android regression, and iOS Xcode
 - `auth/index.ts`: malformed redirect URLs and redirects without an authorization code now reject instead of leaving the token exchange promise pending. Removed logging of raw redirect URLs and token/user response payloads to reduce accidental credential exposure.
 
 These changes improve shared-JavaScript behavior but do not implement the missing iOS device identity, PSN registration, Chiaki streaming, or native networking bridge. The login and redirect flows still require validation against the actual iOS build and current Sony endpoints.
+
+### Further Android-only screen guards
+
+- `Logs.tsx`: log listing and sharing now check for the Android `LogsModule`; unsupported iOS builds show an explanatory message instead of dereferencing a missing native module.
+- `CustomGamepad.jsx`: immersive-mode calls are Android-only and method-guarded. The shared editor layout remains available without calling the Android fullscreen bridge.
+- `GameMapDetail.jsx`: Android gamepad screen-state and key-event subscriptions are skipped when the native `GamepadManager` is unavailable.
+- `DualSenseWeb.jsx`: the Android asset-backed USB DualSense test page is not mounted on iOS; its native event emitter is created only on Android, and the output bridge is checked before use.
+- `Users.tsx`: account deletion feedback now uses a cross-platform alert.
+
+These guards prevent known missing-module crashes; they do not replace Android USB, gamepad, fullscreen, or log-sharing implementations with iOS equivalents.
