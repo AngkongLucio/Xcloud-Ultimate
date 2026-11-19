@@ -93,22 +93,27 @@ export const wakeup = (
           `device-discovery-protocol-version:${ddpVersion}\\n`;
         const message = Buffer.from(messageText, 'utf-8');
 
-        activeSocket.send(
-          message,
-          0,
-          message.length,
-          port,
-          host,
-          error => {
-            if (error) {
-              console.warn('Wake-up message send failed:', error);
-              finish(false);
-              return;
-            }
-            console.log('Wake-up message sent successfully');
-            finish(true);
-          },
-        );
+        try {
+          activeSocket.send(
+            message,
+            0,
+            message.length,
+            port,
+            host,
+            error => {
+              if (error) {
+                console.warn('Wake-up message send failed:', error);
+                finish(false);
+                return;
+              }
+              console.log('Wake-up message sent successfully');
+              finish(true);
+            },
+          );
+        } catch (error) {
+          console.warn('Wake-up message send threw an error:', error);
+          finish(false);
+        }
       });
 
       activeSocket.bind(BIND_PORT, isIpv6 ? '::' : '0.0.0.0');
