@@ -2405,13 +2405,20 @@ static void* websocket_thread_func(void *user) {
             NotificationType type = parse_notification_type(session->log, json);
             char *json_buf = malloc(rlen);
             if(!json_buf)
+            {
+                json_object_put(json);
                 goto cleanup_json;
+            }
             memcpy(json_buf, buf, rlen);
             size_t json_buf_size = rlen;
             CHIAKI_LOGV(session->log, "Received notification of type %d", type);
             Notification *notif = newNotification(type, json, json_buf, json_buf_size);
             if(!notif)
+            {
+                json_object_put(json);
+                free(json_buf);
                 goto cleanup_json;
+            }
 
             // Automatically ACK OFFER session messages if we're not currently explicitly
             // waiting on offers
@@ -2432,27 +2439,42 @@ static void* websocket_thread_func(void *user) {
                 json_object_put(payload);
                 if (err != CHIAKI_ERR_SUCCESS)
                 {
+                    // Keep the original notification: the main session loop still
+                    // needs to observe it even if the optional automatic ACK parse fails.
                     CHIAKI_LOGE(session->log, "websocket_thread_func: Failed to parse session message for ACKing.");
-                    continue;
                 }
-                if (msg->action == SESSION_MESSAGE_ACTION_OFFER)
+                else
                 {
-                    SessionMessage ack_msg = {
-                            .action = SESSION_MESSAGE_ACTION_RESULT,
-                            .req_id = msg->req_id,
-                            .error = 0,
-                            .conn_request = NULL,
-                            .notification = NULL,
-                    };
-                    http_send_session_message(session, &ack_msg, true);
+                    if (msg->action == SESSION_MESSAGE_ACTION_OFFER)
+                    {
+                        SessionMessage ack_msg = {
+                                .action = SESSION_MESSAGE_ACTION_RESULT,
+                                .req_id = msg->req_id,
+                                .error = 0,
+                                .conn_request = NULL,
+                                .notification = NULL,
+                        };
+                        http_send_session_message(session, &ack_msg, true);
+                    }
+                    session_message_free(msg);
                 }
-                session_message_free(msg);
             }
             ChiakiErrorCode mutex_err = chiaki_mutex_lock(&session->notif_mutex);
-            assert(mutex_err == CHIAKI_ERR_SUCCESS);
+            if(mutex_err != CHIAKI_ERR_SUCCESS)
+            {
+                CHIAKI_LOGE(session->log, "websocket_thread_func: Could not lock notification queue mutex: %d", mutex_err);
+                json_object_put(notif->json);
+                free(notif->json_buf);
+                free(notif);
+                goto cleanup_json;
+            }
             enqueueNq(session->ws_notification_queue, notif);
-            chiaki_cond_signal(&session->notif_cond);
-            chiaki_mutex_unlock(&session->notif_mutex);
+            ChiakiErrorCode signal_err = chiaki_cond_signal(&session->notif_cond);
+            if(signal_err != CHIAKI_ERR_SUCCESS)
+                CHIAKI_LOGE(session->log, "websocket_thread_func: Could not signal notification condition: %d", signal_err);
+            mutex_err = chiaki_mutex_unlock(&session->notif_mutex);
+            if(mutex_err != CHIAKI_ERR_SUCCESS)
+                CHIAKI_LOGE(session->log, "websocket_thread_func: Could not unlock notification queue mutex: %d", mutex_err);
             if (notif->type == NOTIFICATION_TYPE_SESSION_DELETED)
             {
                 CHIAKI_LOGI(session->log, "websocket_thread_func: Holepunch session was deleted on PSN server, exiting....");
