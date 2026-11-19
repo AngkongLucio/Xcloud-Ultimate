@@ -36,6 +36,10 @@ static void *rudp_send_buffer_thread_func(void *user);
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_init(ChiakiRudpSendBuffer *send_buffer, ChiakiRudp rudp, ChiakiLog *log, size_t size)
 {
+	if(!send_buffer || size == 0 || size > SIZE_MAX / sizeof(ChiakiRudpSendBufferPacket))
+		return CHIAKI_ERR_INVALID_DATA;
+
+	memset(send_buffer, 0, sizeof(*send_buffer));
 	ChiakiErrorCode err = chiaki_mutex_init(&send_buffer->mutex, false);
 	if(err != CHIAKI_ERR_SUCCESS)
 		return err;
@@ -77,6 +81,9 @@ error_mutex:
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_fini(ChiakiRudpSendBuffer *send_buffer)
 {
+	if(!send_buffer || !send_buffer->packets)
+		return CHIAKI_ERR_INVALID_DATA;
+
 	ChiakiErrorCode err = chiaki_mutex_lock(&send_buffer->mutex);
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
@@ -211,6 +218,9 @@ beach:
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_ack(ChiakiRudpSendBuffer *send_buffer, ChiakiSeqNum16 seq_num, ChiakiSeqNum16 *acked_seq_nums, size_t *acked_seq_nums_count)
 {
+	if(!send_buffer || !send_buffer->packets || send_buffer->packets_size == 0)
+		return CHIAKI_ERR_INVALID_DATA;
+
 	ChiakiErrorCode err = chiaki_mutex_lock(&send_buffer->mutex);
 	if(err != CHIAKI_ERR_SUCCESS)
 		return err;
