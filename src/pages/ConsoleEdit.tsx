@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {Alert, StyleSheet, View, ScrollView, ToastAndroid} from 'react-native';
+import {Alert, StyleSheet, View, ScrollView} from 'react-native';
 import {TextInput, Button} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
 import dayjs from 'dayjs';
@@ -41,11 +41,11 @@ function ConsoleEditScreen({navigation, route}) {
 
   const handleSave = () => {
     if (!serverNickname) {
-      ToastAndroid.show(t('NicknameError'), ToastAndroid.SHORT);
+      Alert.alert('', String(t('NicknameError')));
       return;
     }
     if (!host) {
-      ToastAndroid.show(t('HostError'), ToastAndroid.SHORT);
+      Alert.alert('', String(t('HostError')));
       return;
     }
 
@@ -57,7 +57,7 @@ function ConsoleEditScreen({navigation, route}) {
 
     saveConsoles(consoles);
 
-    ToastAndroid.show(t('Saved'), ToastAndroid.SHORT);
+    Alert.alert('', String(t('Saved')));
     navigation.goBack();
   };
 
