@@ -5,6 +5,7 @@ import {
   Alert,
   View,
   NativeModules,
+  Platform,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {Text} from 'react-native-paper';
@@ -93,9 +94,17 @@ function SettingsScreen({navigation}) {
             const ts = new TokenStore();
             ts.clear();
             CookieManager.clearAll();
-            setTimeout(() => {
-              RNRestart.restart();
-            }, 1000);
+            if (Platform.OS === 'android') {
+              setTimeout(() => {
+                RNRestart.restart();
+              }, 1000);
+            } else {
+              setLoading(false);
+              Alert.alert(
+                String(t('Warning')),
+                'You have been logged out. Close and reopen the app to complete the sign-out.',
+              );
+            }
           },
         },
       ]);
