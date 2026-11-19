@@ -73,3 +73,10 @@ These changes improve shared-JavaScript behavior but do not implement the missin
 - `Users.tsx`: account deletion feedback now uses a cross-platform alert.
 
 These guards prevent known missing-module crashes; they do not replace Android USB, gamepad, fullscreen, or log-sharing implementations with iOS equivalents.
+
+### Network discovery and wake-up caveats
+
+- `src/discovery/index.ts` now starts its timeout before UDP bind, so a bind callback that never arrives cannot leave the discovery promise pending forever. Socket errors reject and the Registry screen handles them.
+- `src/wakeup/index.ts` and `src/utils/udp.js` still depend on `react-native-udp` socket binding/broadcast behavior. They have not been validated on iOS; do not assume that the Local Network usage string alone enables broadcast or wake-up.
+- The generated iOS app includes `NSLocalNetworkUsageDescription`. Physical-device testing must confirm that iOS presents the permission prompt and that the selected UDP library supports the exact bind, broadcast, and receive operations used by the app.
+- `scripts/build-ios-core.sh` and the scaffold script are preparation tools only; neither proves the iOS app compiles or can stream.
