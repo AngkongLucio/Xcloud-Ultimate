@@ -93,8 +93,10 @@ CHIAKI_EXPORT void chiaki_aligned_free(void *ptr)
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_lib_init()
 {
-	unsigned int seed;
-	chiaki_random_bytes_crypt((uint8_t *)&seed, sizeof(seed));
+	unsigned int seed = 0;
+	ChiakiErrorCode random_err = chiaki_random_bytes_crypt((uint8_t *)&seed, sizeof(seed));
+	if(random_err != CHIAKI_ERR_SUCCESS)
+		return random_err;
 	srand(seed); // doesn't necessarily need to be secure for crypto
 
 	int galois_r = galois_init_default_field(CHIAKI_FEC_WORDSIZE);
