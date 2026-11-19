@@ -62,7 +62,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     stopSession: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -74,7 +74,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     requestFocus: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -86,7 +86,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     pressButton: (buttonMask: number, isPressed: boolean) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -98,7 +98,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     pressTrigger: (name: string, value: number) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -110,7 +110,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     moveStick: (name: string, x: number, y: number) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -122,7 +122,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     sensorStick: (x: number, y: number) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -134,7 +134,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     tap: (isPressed: boolean, nextId: number, touches: any[]) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -146,7 +146,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     touch: (mask: number, nextId: number, touches: any[]) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -158,7 +158,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     getPerformance: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -170,7 +170,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     usbController: (states: any) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const {
           flags,
           leftTrigger,
@@ -199,7 +199,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     usbDsController: (states: any) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const {
           flags,
           leftTrigger,
@@ -252,7 +252,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     sleep: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -264,7 +264,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     startSensor: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -276,7 +276,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     stopSensor: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -288,7 +288,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     sendText: (text: string) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -300,7 +300,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     switchKb: (isReject: boolean) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -312,7 +312,7 @@ const StreamFsrView: ForwardRefRenderFunction<
       }
     },
     setLoginPin: (pin: string) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
