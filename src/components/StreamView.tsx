@@ -39,7 +39,9 @@ interface StreamViewRef {
   switchKb: (isReject: boolean) => void;
 }
 
-const StreamViewNative: any = Platform.OS === 'android'\n  ? requireNativeComponent<StreamViewProps>('StreamView')\n  : View;
+const StreamViewNative: any = Platform.OS === 'android'
+  ? requireNativeComponent<StreamViewProps>('StreamView')
+  : View;
 
 const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
   {style, streamInfo, onStreamStateChange},
@@ -330,6 +332,10 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       onStreamStateChange(state);
     }
   };
+
+  if (Platform.OS !== 'android') {
+    return <View ref={streamViewRef} style={style} />;
+  }
 
   return (
     <StreamViewNative
