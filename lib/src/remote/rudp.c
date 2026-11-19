@@ -340,7 +340,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_switch_to_stream_connection_messa
     const size_t buf_size = 16;
     uint8_t buf[buf_size];
     const uint8_t before_buf[8] = { 0x00, 0x00, 0x00, 0x10, 0x00, 0x0D, 0x00, 0x00 };
-    chiaki_random_bytes_crypt(buf, buf_size);
+    ChiakiErrorCode random_err = chiaki_random_bytes_crypt(buf, buf_size);
+    if(random_err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(rudp->log, "Could not generate random RUDP stream-switch token: %d", random_err);
+        free(serialized_msg);
+        return random_err;
+    }
     *(chiaki_unaligned_uint16_t *)(data) = htons(counter);
     memcpy(data + 2, before_buf, sizeof(before_buf));
     memcpy(data + 10, buf, buf_size);
