@@ -5,6 +5,7 @@ import {
   ScrollView,
   Alert,
   NativeModules,
+  Platform,
 } from 'react-native';
 import {Button, RadioButton, Text, Divider} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
@@ -152,9 +153,18 @@ function SettingDetailScreen({navigation, route}) {
   };
 
   const restart = () => {
-    setTimeout(() => {
-      RNRestart.restart();
-    }, 500);
+    if (Platform.OS === 'android') {
+      setTimeout(() => {
+        RNRestart.restart();
+      }, 500);
+      return;
+    }
+
+    // iOS does not provide a public API for programmatically restarting an app.
+    Alert.alert(
+      String(t('Saved')),
+      'Close and reopen the app to apply the language change.',
+    );
   };
 
   const renderOptions = () => {
