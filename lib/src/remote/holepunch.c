@@ -3743,7 +3743,12 @@ static ChiakiErrorCode check_candidates(
     // send CHECK_CANDIDATES_REQUEST_NUMBER requests for connection pairing with ps
     for(int i = 0; i < CHECK_CANDIDATES_REQUEST_NUMBER; i++)
     {
-        chiaki_random_bytes_crypt(request_id[i], sizeof(request_id[i]));
+        err = chiaki_random_bytes_crypt(request_id[i], sizeof(request_id[i]));
+        if(err != CHIAKI_ERR_SUCCESS)
+        {
+            CHIAKI_LOGE(session->log, "Could not generate candidate check request ID: %d", err);
+            return err;
+        }
         *(uint32_t*)&request_buf[i][0x00] = htonl(MSG_TYPE_REQ);
         memcpy(&request_buf[i][0x04], session->hashed_id_local, sizeof(session->hashed_id_local));
         memcpy(&request_buf[i][0x24], session->hashed_id_console, sizeof(session->hashed_id_console));
