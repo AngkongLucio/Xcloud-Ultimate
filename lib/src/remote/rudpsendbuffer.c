@@ -96,14 +96,18 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_fini(ChiakiRudpSendBuffer 
 		return err;
 	}
 	send_buffer->should_stop = true;
-	err = chiaki_cond_signal(&send_buffer->cond);
-	chiaki_mutex_unlock(&send_buffer->mutex);
-	if(err != CHIAKI_ERR_SUCCESS)
+	ChiakiErrorCode signal_err = chiaki_cond_signal(&send_buffer->cond);
+	ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&send_buffer->mutex);
+	if(unlock_err != CHIAKI_ERR_SUCCESS)
 	{
-		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer could not signal shutdown");
-		return err;
+		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer could not unlock mutex during shutdown");
+		return unlock_err;
 	}
 
+	/*
+	 * The worker uses a timed wait even while the queue is empty, so it will
+	 * observe should_stop if signaling fails. Always join before freeing state.
+	 */
 	err = chiaki_thread_join(&send_buffer->thread, NULL);
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
@@ -111,13 +115,24 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_fini(ChiakiRudpSendBuffer 
 		return err;
 	}
 
-	for(size_t i=0; i<send_buffer->packets_count; i++)
+	for(size_t i = 0; i < send_buffer->packets_count; i++)
 		free(send_buffer->packets[i].buf);
 
-	chiaki_cond_fini(&send_buffer->cond);
-	err = chiaki_mutex_fini(&send_buffer->mutex);
+	ChiakiErrorCode cond_err = chiaki_cond_fini(&send_buffer->cond);
+	ChiakiErrorCode mutex_err = chiaki_mutex_fini(&send_buffer->mutex);
 	free(send_buffer->packets);
-	return err;
+	send_buffer->packets = NULL;
+	send_buffer->packets_count = 0;
+	send_buffer->packets_size = 0;
+
+	if(signal_err != CHIAKI_ERR_SUCCESS)
+	{
+		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer shutdown signal failed: %d", signal_err);
+		return signal_err;
+	}
+	if(cond_err != CHIAKI_ERR_SUCCESS)
+		return cond_err;
+	return mutex_err;
 }
 
 static void GetRudpPacketType(ChiakiRudpSendBuffer *send_buffer, uint16_t packet_type, char *ptype)
@@ -312,8 +327,8 @@ static void *rudp_send_buffer_thread_func(void *user)
 	{
 		if(send_buffer->packets_count) // if there are packets, wait with timeout
 			err = chiaki_cond_timedwait_pred(&send_buffer->cond, &send_buffer->mutex, RUDP_DATA_RESEND_WAKEUP_TIMEOUT_MS, rudp_send_buffer_check_pred_packets, send_buffer);
-		else // if not, wait without timeout, but also wakeup if packets become available
-			err = chiaki_cond_wait_pred(&send_buffer->cond, &send_buffer->mutex, rudp_send_buffer_check_pred_no_packets, send_buffer);
+		else // poll periodically so shutdown remains possible if condition signaling fails
+			err = chiaki_cond_timedwait_pred(&send_buffer->cond, &send_buffer->mutex, RUDP_DATA_RESEND_WAKEUP_TIMEOUT_MS, rudp_send_buffer_check_pred_no_packets, send_buffer);
 
 		if(err != CHIAKI_ERR_SUCCESS && err != CHIAKI_ERR_TIMEOUT)
 			break;
