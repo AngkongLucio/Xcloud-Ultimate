@@ -6,6 +6,7 @@ import {
   FlatList,
   Dimensions,
   NativeModules,
+  Platform,
   Pressable,
 } from 'react-native';
 import {
@@ -467,9 +468,16 @@ function HomeScreen({navigation, route}) {
         onPress: () => {
           ts.clear();
           CookieManager.clearAll();
-          setTimeout(() => {
-            RNRestart.restart();
-          }, 1000);
+          if (Platform.OS === 'android') {
+            setTimeout(() => {
+              RNRestart.restart();
+            }, 1000);
+          } else {
+            Alert.alert(
+              String(t('Warning')),
+              'Your expired account session was cleared. Close and reopen the app to sign in again.',
+            );
+          }
         },
       },
     ]);
