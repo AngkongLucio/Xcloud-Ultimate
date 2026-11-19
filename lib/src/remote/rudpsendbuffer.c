@@ -191,6 +191,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_push(ChiakiRudpSendBuffer 
 		return err;
 	}
 
+	bool packet_queued = false;
 	if(send_buffer->packets_count >= send_buffer->packets_size)
 	{
 		CHIAKI_LOGE(send_buffer->log, "Rudp Send Buffer overflow");
@@ -214,6 +215,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_push(ChiakiRudpSendBuffer 
 	packet->last_send_ms = chiaki_time_now_monotonic_ms();
 	packet->buf = buf;
 	packet->buf_size = buf_size;
+	packet_queued = true;
 
 	CHIAKI_LOGV(send_buffer->log, "Pushed seq num %#lx into Rudp Send Buffer", (unsigned long)seq_num);
 
@@ -225,14 +227,20 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_push(ChiakiRudpSendBuffer 
 		{
 			send_buffer->packets_count--;
 			memset(packet, 0, sizeof(*packet));
+			packet_queued = false;
 			goto beach;
 		}
 	}
 
 beach:
-	if(err != CHIAKI_ERR_SUCCESS)
+	if(!packet_queued)
 		free(buf);
-	chiaki_mutex_unlock(&send_buffer->mutex);
+	ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&send_buffer->mutex);
+	if(unlock_err != CHIAKI_ERR_SUCCESS)
+	{
+		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer could not unlock mutex after push: %d", unlock_err);
+		return unlock_err;
+	}
 	return err;
 }
 
