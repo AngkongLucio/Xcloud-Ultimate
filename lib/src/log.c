@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 
 CHIAKI_EXPORT char chiaki_log_level_char(ChiakiLogLevel level)
 {
