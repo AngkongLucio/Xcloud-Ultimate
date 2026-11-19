@@ -100,4 +100,6 @@ These guards prevent known missing-module crashes; they do not replace Android U
 - RUDP parsing now checks the protocol magic value; receive paths use bounded heap buffers instead of variable-length stack arrays, validate receive arguments, and free buffers on every return path.
 - Retransmission packet-type reads use memcpy rather than potentially unaligned integer dereferences; send-buffer insertion rejects packets shorter than the RUDP header.
 
+- RUDP send entry points reject null handles/buffers and cap variable payload sizes to the protocol's 12-bit length field, preventing oversized stack arrays and truncated length headers.
+
 These are source-level defensive changes only. They have not been compiled or exercised against a PlayStation console, simulator, or physical iPad. They do not implement the iOS streaming bridge or make the app IPA-ready.
