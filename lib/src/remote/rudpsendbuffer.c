@@ -163,7 +163,7 @@ static void GetRudpPacketType(ChiakiRudpSendBuffer *send_buffer, uint16_t packet
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_push(ChiakiRudpSendBuffer *send_buffer, ChiakiSeqNum16 seq_num, uint8_t *buf, size_t buf_size)
 {
-	if(!send_buffer || !buf || buf_size < 8)
+	if(!send_buffer || !send_buffer->packets || send_buffer->packets_size == 0 || !buf || buf_size < 8)
 	{
 		free(buf);
 		return CHIAKI_ERR_INVALID_DATA;
