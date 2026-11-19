@@ -81,9 +81,19 @@ CHIAKI_EXPORT void chiaki_rudp_reset_counter_header(RudpInstance *rudp)
 {
     if(!rudp)
         return;
-    chiaki_mutex_lock(&rudp->counter_mutex);
-    rudp->counter = chiaki_random_32()%0x5E00 + 0x1FF;
-    chiaki_mutex_unlock(&rudp->counter_mutex);
+    ChiakiErrorCode err = chiaki_mutex_lock(&rudp->counter_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(rudp->log, "Could not lock RUDP counter mutex while resetting counters: %d", err);
+        return;
+    }
+    rudp->counter = chiaki_random_32() % 0x5E00 + 0x1FF;
+    err = chiaki_mutex_unlock(&rudp->counter_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(rudp->log, "Could not unlock RUDP counter mutex after resetting counters: %d", err);
+        return;
+    }
     rudp->header = chiaki_random_32() + 0x8000;
 }
 
