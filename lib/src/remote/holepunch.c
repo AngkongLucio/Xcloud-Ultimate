@@ -525,10 +525,10 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_list_devices(
     if(res != CURLE_OK)
         CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
 
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -1230,10 +1230,10 @@ static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
     res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -1385,10 +1385,10 @@ static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
     res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -1920,10 +1920,10 @@ static ChiakiErrorCode get_websocket_fqdn(Session *session, char **fqdn)
     res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -2110,10 +2110,10 @@ static void* websocket_thread_func(void *user) {
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_CONNECT_ONLY failed with CURL error %s", curl_easy_strerror(res));
 
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -2864,10 +2864,10 @@ static ChiakiErrorCode http_create_session(Session *session)
     res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -2992,10 +2992,10 @@ static ChiakiErrorCode http_check_session(Session *session, bool viewurl)
     res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_check_session: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_check_session: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_check_session: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -3123,10 +3123,10 @@ static ChiakiErrorCode http_start_session(Session *session)
     res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_start_session: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_start_session: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_start_session: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -3249,10 +3249,10 @@ static ChiakiErrorCode http_send_session_message(Session *session, SessionMessag
     res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -3335,10 +3335,10 @@ static ChiakiErrorCode deleteSession(Session *session)
     res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -5435,10 +5435,10 @@ static ChiakiErrorCode get_stun_servers(Session *session)
     res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "get_stun_servers: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "get_stun_servers: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "get_stun_servers: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
@@ -5524,10 +5524,10 @@ static ChiakiErrorCode get_stun_servers(Session *session)
     res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "get_stun_servers: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "get_stun_servers: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "get_stun_servers: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
