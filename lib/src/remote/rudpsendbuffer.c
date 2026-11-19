@@ -331,8 +331,11 @@ static void rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
 				CHIAKI_LOGI(send_buffer->log, "Hit max retries of %d tries giving up on packet with seqnum %#lx", RUDP_DATA_RESEND_TRIES_MAX, (unsigned long)packet->seq_num);
 				ChiakiSeqNum16 ack_seq_nums[RUDP_SEND_BUFFER_SIZE];
 				size_t ack_seq_nums_count;
+				// Copy the sequence number before releasing the mutex. The ACK path
+				// compacts the packet array, so packet may no longer be valid after unlock.
+				ChiakiSeqNum16 seq_num = packet->seq_num;
 				chiaki_mutex_unlock(&send_buffer->mutex);
-				chiaki_rudp_send_buffer_ack(send_buffer, packet->seq_num, ack_seq_nums, &ack_seq_nums_count);
+				chiaki_rudp_send_buffer_ack(send_buffer, seq_num, ack_seq_nums, &ack_seq_nums_count);
 				chiaki_mutex_lock(&send_buffer->mutex);
 				if(i > 0)
 					i-= 1;
