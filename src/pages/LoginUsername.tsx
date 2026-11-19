@@ -3,8 +3,8 @@ import {
   StyleSheet,
   View,
   ScrollView,
-  ToastAndroid,
   Pressable,
+  Alert,
 } from 'react-native';
 import {Button, Text, HelperText, TextInput} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
@@ -27,7 +27,7 @@ function LoginUsernameScreen({navigation, route}) {
     const _username = username.trim();
     setLoading(true);
     axios
-      .get(`${LOGIN_URL}?username=${_username}`)
+      .get(`${LOGIN_URL}?username=${encodeURIComponent(_username)}`)
       .then(res => {
         // console.log(res.data);
         // {"encoded_id": "xxxxx=", "online_id": "xxx", "user_id": "1234567890"}
@@ -57,24 +57,25 @@ function LoginUsernameScreen({navigation, route}) {
           }
           ts.setToken(tokens);
           ts.save();
-          ToastAndroid.show(t('Login Successful'), ToastAndroid.SHORT);
+          Alert.alert('', String(t('Login Successful')));
           if (route.params?.from === 'add') {
             navigation.navigate('Settings');
           } else {
             navigation.goBack();
           }
         } else {
-          ToastAndroid.show(`Login failed: ${res}`, ToastAndroid.LONG);
+          Alert.alert(String(t('Warning')), 'Login failed. The username lookup service returned no account.');
         }
       })
       .catch(e => {
         const {message} = e;
-        if (message.indexOf('404') > -1) {
-          ToastAndroid.show(`${t('User_not_found')}`, ToastAndroid.LONG);
+        if (String(message).indexOf('404') > -1) {
+          Alert.alert(String(t('Warning')), String(t('User_not_found')));
         } else {
-          ToastAndroid.show('Error:' + message, ToastAndroid.LONG);
+          Alert.alert(String(t('Warning')), 'Login failed: ' + String(message || 'Unknown network error'));
         }
-      });
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
