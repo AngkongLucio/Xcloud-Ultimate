@@ -506,11 +506,16 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_select_recv(RudpInstance *rudp, size_t
     if(err != CHIAKI_ERR_SUCCESS)
         return err;
 
-    uint8_t *buf = malloc(buf_size);
+    /*
+     * Read one byte beyond the caller's limit. UDP recv() otherwise silently
+     * truncates oversized datagrams, which could make a partial RUDP packet
+     * look valid if its declared length fits the truncated buffer.
+     */
+    uint8_t *buf = malloc(buf_size + 1);
     if(!buf)
         return CHIAKI_ERR_MEMORY;
 
-    CHIAKI_SSIZET_TYPE received_sz = recv(rudp->sock, (CHIAKI_SOCKET_BUF_TYPE)buf, buf_size, 0);
+    CHIAKI_SSIZET_TYPE received_sz = recv(rudp->sock, (CHIAKI_SOCKET_BUF_TYPE)buf, buf_size + 1, 0);
     if(received_sz <= 8)
     {
         if(received_sz < 0)
@@ -519,6 +524,12 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_select_recv(RudpInstance *rudp, size_t
             CHIAKI_LOGE(rudp->log, "Rudp recv returned less than the required 8 byte RUDP header");
         free(buf);
         return CHIAKI_ERR_NETWORK;
+    }
+    if((size_t)received_sz > buf_size)
+    {
+        CHIAKI_LOGE(rudp->log, "Rudp recv discarded an oversized datagram (%zu bytes; limit %zu)", (size_t)received_sz, buf_size);
+        free(buf);
+        return CHIAKI_ERR_INVALID_DATA;
     }
 
     CHIAKI_LOGV(rudp->log, "Receiving message:");
@@ -535,11 +546,12 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_recv_only(RudpInstance *rudp, size_t b
     if(buf_size <= 8 || buf_size > UINT16_MAX)
         return CHIAKI_ERR_INVALID_DATA;
 
-    uint8_t *buf = malloc(buf_size);
+    /* Detect UDP truncation by reading one byte beyond the requested limit. */
+    uint8_t *buf = malloc(buf_size + 1);
     if(!buf)
         return CHIAKI_ERR_MEMORY;
 
-    CHIAKI_SSIZET_TYPE received_sz = recv(rudp->sock, (CHIAKI_SOCKET_BUF_TYPE)buf, buf_size, 0);
+    CHIAKI_SSIZET_TYPE received_sz = recv(rudp->sock, (CHIAKI_SOCKET_BUF_TYPE)buf, buf_size + 1, 0);
     if(received_sz <= 8)
     {
         if(received_sz < 0)
@@ -548,6 +560,12 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_recv_only(RudpInstance *rudp, size_t b
             CHIAKI_LOGE(rudp->log, "Rudp recv returned less than the required 8 byte RUDP header");
         free(buf);
         return CHIAKI_ERR_NETWORK;
+    }
+    if((size_t)received_sz > buf_size)
+    {
+        CHIAKI_LOGE(rudp->log, "Rudp recv discarded an oversized datagram (%zu bytes; limit %zu)", (size_t)received_sz, buf_size);
+        free(buf);
+        return CHIAKI_ERR_INVALID_DATA;
     }
 
     CHIAKI_LOGV(rudp->log, "Receiving message:");
