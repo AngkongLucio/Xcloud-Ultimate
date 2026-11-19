@@ -238,7 +238,8 @@ beach:
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_ack(ChiakiRudpSendBuffer *send_buffer, ChiakiSeqNum16 seq_num, ChiakiSeqNum16 *acked_seq_nums, size_t *acked_seq_nums_count)
 {
-	if(!send_buffer || !send_buffer->packets || send_buffer->packets_size == 0)
+	if(!send_buffer || !send_buffer->packets || send_buffer->packets_size == 0
+		|| (acked_seq_nums && !acked_seq_nums_count))
 		return CHIAKI_ERR_INVALID_DATA;
 
 	ChiakiErrorCode err = chiaki_mutex_lock(&send_buffer->mutex);
@@ -297,7 +298,12 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_ack(ChiakiRudpSendBuffer *
 
 	CHIAKI_LOGV(send_buffer->log, "Acked seq num %#lx from Rudp Send Buffer", (unsigned long)seq_num);
 
-	chiaki_mutex_unlock(&send_buffer->mutex);
+	ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&send_buffer->mutex);
+	if(unlock_err != CHIAKI_ERR_SUCCESS)
+	{
+		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer could not unlock mutex after ACK processing: %d", unlock_err);
+		return unlock_err;
+	}
 	return err;
 }
 
