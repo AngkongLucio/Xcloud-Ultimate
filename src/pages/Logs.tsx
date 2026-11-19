@@ -5,6 +5,7 @@ import {
   ScrollView,
   NativeModules,
   Pressable,
+  Platform,
 } from 'react-native';
 import {HelperText, List, Icon} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
@@ -14,12 +15,16 @@ const {LogsModule} = NativeModules;
 function LogsScreen({navigation}) {
   const {t} = useTranslation();
   const [logs, setLogs] = React.useState([]);
+  const [unavailable, setUnavailable] = React.useState(false);
 
   React.useEffect(() => {
-    LogsModule.getLogFiles().then(res => {
-      setLogs(res);
-    });
-    return () => {};
+    if (Platform.OS !== 'android' || typeof LogsModule?.getLogFiles !== 'function') {
+      setUnavailable(true);
+      return;
+    }
+    LogsModule.getLogFiles()
+      .then(res => setLogs(Array.isArray(res) ? res : []))
+      .catch(() => setUnavailable(true));
   }, [navigation, t]);
 
   return (
@@ -29,6 +34,9 @@ function LogsScreen({navigation}) {
           {t('LogsTips')}
         </HelperText>
       </View>
+      {unavailable ? (
+        <HelperText type="info">System log export is currently supported on Android only.</HelperText>
+      ) : null}
       <View>
         {logs.map((log: any) => {
           return (
@@ -40,7 +48,9 @@ function LogsScreen({navigation}) {
               <View style={styles.listItemRight}>
                 <Pressable
                   onPress={() => {
-                    LogsModule.shareLogFile(log.filename);
+                    if (typeof LogsModule?.shareLogFile === 'function') {
+                      LogsModule.shareLogFile(log.filename);
+                    }
                   }}>
                   <Icon source="share-variant" size={30} />
                 </Pressable>
