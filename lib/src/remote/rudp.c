@@ -119,7 +119,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_init_message(RudpInstance *rudp)
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_cookie_message(RudpInstance *rudp, uint8_t *response_buf, size_t response_size)
 {
-    if(!rudp || (response_size && !response_buf))
+    if(!rudp || (response_size && !response_buf) || response_size > 0x0FFF - 22)
         return CHIAKI_ERR_INVALID_DATA;
     RudpMessage message;
     uint16_t local_counter = get_then_increase_counter(rudp);
@@ -152,7 +152,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_cookie_message(RudpInstance *rudp
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_session_message(RudpInstance *rudp, uint16_t remote_counter, uint8_t *session_msg, size_t session_msg_size)
 {
-    if(!rudp || (session_msg_size && !session_msg))
+    if(!rudp || (session_msg_size && !session_msg) || session_msg_size > 0x0FFF - 10)
         return CHIAKI_ERR_INVALID_DATA;
     RudpMessage subMessage;
     uint16_t local_counter = get_then_increase_counter(rudp);
@@ -220,7 +220,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_ack_message(RudpInstance *rudp, u
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_ctrl_message(RudpInstance *rudp, uint8_t *ctrl_message, size_t ctrl_message_size)
 {
-    if(!rudp || (ctrl_message_size && !ctrl_message))
+    if(!rudp || (ctrl_message_size && !ctrl_message) || ctrl_message_size > 0x0FFF - 10)
         return CHIAKI_ERR_INVALID_DATA;
     RudpMessage message;
     uint16_t counter = get_then_increase_counter(rudp);
