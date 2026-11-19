@@ -335,8 +335,15 @@ static void rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
 				// compacts the packet array, so packet may no longer be valid after unlock.
 				ChiakiSeqNum16 seq_num = packet->seq_num;
 				chiaki_mutex_unlock(&send_buffer->mutex);
-				chiaki_rudp_send_buffer_ack(send_buffer, seq_num, ack_seq_nums, &ack_seq_nums_count);
-				chiaki_mutex_lock(&send_buffer->mutex);
+				ChiakiErrorCode ack_err = chiaki_rudp_send_buffer_ack(send_buffer, seq_num, ack_seq_nums, &ack_seq_nums_count);
+				if(ack_err != CHIAKI_ERR_SUCCESS)
+					CHIAKI_LOGE(send_buffer->log, "Failed to retire exhausted RUDP packet: %d", ack_err);
+				ChiakiErrorCode lock_err = chiaki_mutex_lock(&send_buffer->mutex);
+				if(lock_err != CHIAKI_ERR_SUCCESS)
+				{
+					CHIAKI_LOGE(send_buffer->log, "RUDP resend thread could not reacquire send buffer mutex: %d", lock_err);
+					return;
+				}
 				// ACK compacts the array and other threads may have changed it
 				// while the mutex was released. Restart the scan from index zero.
 				i = (size_t)-1;
@@ -355,8 +362,10 @@ static void rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
 			GetRudpPacketType(send_buffer, packet_type_value, packet_type);
 			CHIAKI_LOGI(send_buffer->log, "rudp Send Buffer re-sending packet with seqnum %#lx and type %s, tries: %llu", (unsigned long)packet->seq_num, packet_type, (unsigned long long)packet->tries);
 			packet->last_send_ms = now;
-			chiaki_rudp_send_raw(send_buffer->rudp, packet->buf, packet->buf_size);
+			ChiakiErrorCode send_err = chiaki_rudp_send_raw(send_buffer->rudp, packet->buf, packet->buf_size);
 			packet->tries++;
+			if(send_err != CHIAKI_ERR_SUCCESS)
+				CHIAKI_LOGW(send_buffer->log, "RUDP retransmission failed for seqnum %#lx: %d", (unsigned long)packet->seq_num, send_err);
 		}
 	}
 }
