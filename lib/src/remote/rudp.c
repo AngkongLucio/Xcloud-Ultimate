@@ -321,6 +321,9 @@ static ChiakiErrorCode chiaki_rudp_message_parse(
         return CHIAKI_ERR_INVALID_DATA;
 
     message->size = ntohs(*(chiaki_unaligned_uint16_t *)(serialized_msg));
+    if(ntohl(*(chiaki_unaligned_uint32_t *)(serialized_msg + 2)) != RUDP_CONSTANT)
+        return CHIAKI_ERR_INVALID_DATA;
+
     message->type = ntohs(*(chiaki_unaligned_uint16_t *)(serialized_msg + 6));
     message->subtype = serialized_msg[6] & 0xFF;
     message->remote_counter = 0;
