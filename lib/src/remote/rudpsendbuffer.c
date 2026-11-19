@@ -337,8 +337,9 @@ static void rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
 				chiaki_mutex_unlock(&send_buffer->mutex);
 				chiaki_rudp_send_buffer_ack(send_buffer, seq_num, ack_seq_nums, &ack_seq_nums_count);
 				chiaki_mutex_lock(&send_buffer->mutex);
-				if(i > 0)
-					i-= 1;
+				// ACK compacts the array and other threads may have changed it
+				// while the mutex was released. Restart the scan from index zero.
+				i = (size_t)-1;
 				continue;
 			}
 			char packet_type[29] = {0};
