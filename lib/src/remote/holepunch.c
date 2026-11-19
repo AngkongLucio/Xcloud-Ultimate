@@ -4901,12 +4901,17 @@ static ChiakiErrorCode wait_for_notification(
         Session *session, Notification** out,
         uint16_t types, uint64_t timeout_ms)
 {
+    if(!session || !out || !session->ws_notification_queue)
+        return CHIAKI_ERR_INVALID_DATA;
+    *out = NULL;
+
     uint64_t waiting_since = chiaki_time_now_monotonic_us();
     uint64_t now = waiting_since;
     Notification *last_known = NULL;
 
-    ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
-    chiaki_mutex_lock(&session->notif_mutex);
+    ChiakiErrorCode err = chiaki_mutex_lock(&session->notif_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
     while (true) {
         while (session->ws_notification_queue->rear == last_known || session->ws_notification_queue->rear == NULL)
         {
@@ -4921,16 +4926,27 @@ static ChiakiErrorCode wait_for_notification(
                     goto cleanup;
                 }
             }
-            assert(err == CHIAKI_ERR_SUCCESS || err == CHIAKI_ERR_TIMEOUT);
-            chiaki_mutex_lock(&session->stop_mutex);
+            if(err != CHIAKI_ERR_SUCCESS && err != CHIAKI_ERR_TIMEOUT)
+                goto cleanup;
+            ChiakiErrorCode stop_err = chiaki_mutex_lock(&session->stop_mutex);
+            if(stop_err != CHIAKI_ERR_SUCCESS)
+            {
+                err = stop_err;
+                goto cleanup;
+            }
             if(session->main_should_stop)
             {
                 session->main_should_stop = false;
-                chiaki_mutex_unlock(&session->stop_mutex);
-                err = CHIAKI_ERR_CANCELED;
+                stop_err = chiaki_mutex_unlock(&session->stop_mutex);
+                err = stop_err == CHIAKI_ERR_SUCCESS ? CHIAKI_ERR_CANCELED : stop_err;
                 goto cleanup;
             }
-            chiaki_mutex_unlock(&session->stop_mutex);
+            stop_err = chiaki_mutex_unlock(&session->stop_mutex);
+            if(stop_err != CHIAKI_ERR_SUCCESS)
+            {
+                err = stop_err;
+                goto cleanup;
+            }
         }
         Notification *notif;
         if(last_known)
@@ -4952,16 +4968,24 @@ static ChiakiErrorCode wait_for_notification(
     }
 
     cleanup:
-    chiaki_mutex_unlock(&session->notif_mutex);
+    {
+        ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&session->notif_mutex);
+        if(err == CHIAKI_ERR_SUCCESS && unlock_err != CHIAKI_ERR_SUCCESS)
+            err = unlock_err;
+    }
     return err;
 }
 
 static ChiakiErrorCode clear_notification(
         Session *session, Notification *notification)
 {
+    if(!session || !notification || !session->ws_notification_queue)
+        return CHIAKI_ERR_INVALID_DATA;
     bool found = false;
     NotificationQueue *nq = session->ws_notification_queue;
-    chiaki_mutex_lock(&session->notif_mutex);
+    ChiakiErrorCode err = chiaki_mutex_lock(&session->notif_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
     while (nq->rear != NULL)
     {
         if(nq->front == notification)
@@ -4972,11 +4996,12 @@ static ChiakiErrorCode clear_notification(
         }
         dequeueNq(nq);
     }
-    chiaki_mutex_unlock(&session->notif_mutex);
-    if (found)
+    err = chiaki_mutex_unlock(&session->notif_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
+    if(found)
         return CHIAKI_ERR_SUCCESS;
-    else
-        return CHIAKI_ERR_UNKNOWN;
+    return CHIAKI_ERR_UNKNOWN;
 }
 
 /**
