@@ -53,3 +53,13 @@ The following guards are compatibility protections, not native iOS streaming imp
 - The iOS Stream screen remains an explicit unsupported-platform fallback. The empty view is not a decoder, renderer, or successful stream session.
 
 These changes must still pass TypeScript/lint, Android regression, and iOS Xcode/device validation before release.
+
+## Additional shared-JavaScript compatibility fixes
+
+- `ConsoleEdit.tsx`: replaced Android-only toast calls with cross-platform alerts for validation and save/delete feedback.
+- `LoginUsername.tsx`: replaced Android-only toasts with alerts, URL-encodes the username query parameter, and always clears the loading state after success or failure.
+- `LoginBase64Id.tsx`: replaced Android-only toast feedback with a cross-platform alert.
+- `ManualLogin.tsx`: checks whether the Android-only `HolepunchManager.getDeviceUid` bridge exists before generating a PSN login URL. On iOS, it now explains that the device identity bridge is not ported instead of crashing or displaying an endless spinner.
+- `auth/index.ts`: malformed redirect URLs and redirects without an authorization code now reject instead of leaving the token exchange promise pending. Removed logging of raw redirect URLs and token/user response payloads to reduce accidental credential exposure.
+
+These changes improve shared-JavaScript behavior but do not implement the missing iOS device identity, PSN registration, Chiaki streaming, or native networking bridge. The login and redirect flows still require validation against the actual iOS build and current Sony endpoints.
