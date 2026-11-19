@@ -549,7 +549,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_recv(RudpInstance *rudp, RudpMess
         if(err != CHIAKI_ERR_SUCCESS)
             return err;
 
-        err = chiaki_rudp_select_recv(rudp, 1500, message);
+        err = chiaki_rudp_select_recv(rudp, 0x0FFF, message);
         if(err == CHIAKI_ERR_TIMEOUT)
             continue;
         if(err != CHIAKI_ERR_SUCCESS)
