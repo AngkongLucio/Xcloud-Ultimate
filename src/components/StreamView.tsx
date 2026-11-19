@@ -9,6 +9,8 @@ import {
   ViewStyle,
   UIManager,
   findNodeHandle,
+  Platform,
+  View,
 } from 'react-native';
 
 interface StreamViewProps {
@@ -37,7 +39,7 @@ interface StreamViewRef {
   switchKb: (isReject: boolean) => void;
 }
 
-const StreamViewNative = requireNativeComponent<StreamViewProps>('StreamView');
+const StreamViewNative: any = Platform.OS === 'android'\n  ? requireNativeComponent<StreamViewProps>('StreamView')\n  : View;
 
 const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
   {style, streamInfo, onStreamStateChange},
@@ -47,7 +49,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
 
   useImperativeHandle(ref, () => ({
     startSession: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
