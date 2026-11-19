@@ -1898,7 +1898,15 @@ static ChiakiErrorCode make_oauth2_header(char** out, const char* token)
 
 static ChiakiErrorCode make_session_id_header(char **out, const char* session_id)
 {
-    size_t session_id_header_len = sizeof(session_id_header_fmt) + strlen(session_id) + 1;
+    if(!out || !session_id || !*session_id)
+        return CHIAKI_ERR_INVALID_DATA;
+
+    *out = NULL;
+    size_t session_id_len = strlen(session_id);
+    if(session_id_len > (size_t)-1 - sizeof(session_id_header_fmt) - 1)
+        return CHIAKI_ERR_OVERFLOW;
+
+    size_t session_id_header_len = sizeof(session_id_header_fmt) + session_id_len + 1;
     *out = malloc(session_id_header_len);
     if(!(*out))
         return CHIAKI_ERR_MEMORY;
@@ -2978,7 +2986,12 @@ static ChiakiErrorCode http_create_session(Session *session)
         goto cleanup_json;
     }
     memcpy(session->session_id, json_object_get_string(session_id_json), 36);
-    make_session_id_header(&session->session_id_header, session->session_id);
+    err = make_session_id_header(&session->session_id_header, session->session_id);
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(session->log, "Could not allocate PSN session ID header: %d", err);
+        goto cleanup_json;
+    }
 
     session->account_id = json_object_get_int64(account_id_json);
 
