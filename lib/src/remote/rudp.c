@@ -751,22 +751,32 @@ CHIAKI_EXPORT void chiaki_rudp_message_pointers_free(RudpMessage *message)
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_fini(RudpInstance *rudp)
 {
-    ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
-    if(rudp)
+    if(!rudp)
+        return CHIAKI_ERR_SUCCESS;
+
+    ChiakiErrorCode err = chiaki_rudp_send_buffer_fini(&rudp->send_buffer);
+    /*
+     * A non-NULL packet array means the worker could not be joined or the
+     * shutdown mutex could not be released. Keep the parent instance alive
+     * because the worker may still reference it.
+     */
+    if(err != CHIAKI_ERR_SUCCESS && rudp->send_buffer.packets)
+        return err;
+
+    ChiakiErrorCode cleanup_err = err;
+    if(!CHIAKI_SOCKET_IS_INVALID(rudp->sock))
     {
-        err = chiaki_rudp_send_buffer_fini(&rudp->send_buffer);
-        if(err != CHIAKI_ERR_SUCCESS)
-            return err;
-        if (!CHIAKI_SOCKET_IS_INVALID(rudp->sock))
-        {
-            CHIAKI_SOCKET_CLOSE(rudp->sock);
-            rudp->sock = CHIAKI_INVALID_SOCKET;
-        }
-        err = chiaki_mutex_fini(&rudp->counter_mutex);
-        chiaki_stop_pipe_fini(&rudp->stop_pipe);
-        free(rudp);
+        CHIAKI_SOCKET_CLOSE(rudp->sock);
+        rudp->sock = CHIAKI_INVALID_SOCKET;
     }
-    return err;
+
+    err = chiaki_mutex_fini(&rudp->counter_mutex);
+    if(cleanup_err == CHIAKI_ERR_SUCCESS && err != CHIAKI_ERR_SUCCESS)
+        cleanup_err = err;
+
+    chiaki_stop_pipe_fini(&rudp->stop_pipe);
+    free(rudp);
+    return cleanup_err;
 }
 
 /**
