@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, ScrollView, Alert, ToastAndroid} from 'react-native';
+import {StyleSheet, View, ScrollView, Alert} from 'react-native';
 import {
   Button,
   RadioButton,
@@ -111,7 +111,7 @@ function UsersScreen({navigation}) {
           ts.setToken(newUsers);
           ts.save();
 
-          ToastAndroid.show(t('Deleted'), ToastAndroid.SHORT);
+          Alert.alert('', String(t('Deleted')));
 
           if (newUsers.length === 0) {
             setTimeout(() => {
