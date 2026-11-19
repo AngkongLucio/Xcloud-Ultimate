@@ -77,11 +77,27 @@ error_mutex:
 
 CHIAKI_EXPORT void chiaki_rudp_send_buffer_fini(ChiakiRudpSendBuffer *send_buffer)
 {
+	ChiakiErrorCode err = chiaki_mutex_lock(&send_buffer->mutex);
+	if(err != CHIAKI_ERR_SUCCESS)
+	{
+		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer could not lock mutex during shutdown");
+		return;
+	}
 	send_buffer->should_stop = true;
-	ChiakiErrorCode err = chiaki_cond_signal(&send_buffer->cond);
-	assert(err == CHIAKI_ERR_SUCCESS);
+	err = chiaki_cond_signal(&send_buffer->cond);
+	chiaki_mutex_unlock(&send_buffer->mutex);
+	if(err != CHIAKI_ERR_SUCCESS)
+	{
+		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer could not signal shutdown");
+		return;
+	}
+
 	err = chiaki_thread_join(&send_buffer->thread, NULL);
-	assert(err == CHIAKI_ERR_SUCCESS);
+	if(err != CHIAKI_ERR_SUCCESS)
+	{
+		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer thread could not be joined");
+		return;
+	}
 
 	for(size_t i=0; i<send_buffer->packets_count; i++)
 		free(send_buffer->packets[i].buf);
