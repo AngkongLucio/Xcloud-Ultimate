@@ -62,7 +62,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     stopSession: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -74,7 +74,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     requestFocus: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -86,7 +86,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     pressButton: (buttonMask: number, isPressed: boolean) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -98,7 +98,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     pressTrigger: (name: string, value: number) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -110,7 +110,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     moveStick: (name: string, x: number, y: number) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -122,7 +122,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     sensorStick: (x: number, y: number) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -134,7 +134,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     tap: (isPressed: boolean, nextId: number, touches: any[]) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -146,7 +146,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     touch: (mask: number, nextId: number, touches: any[]) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -158,7 +158,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     getPerformance: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -170,7 +170,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     usbController: (states: any) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const {
           flags,
           leftTrigger,
@@ -199,7 +199,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     usbDsController: (states: any) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const {
           flags,
           leftTrigger,
@@ -252,7 +252,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     sleep: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -264,7 +264,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     startSensor: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -276,7 +276,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     stopSensor: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -288,7 +288,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     sendText: (text: string) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -300,7 +300,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     switchKb: (isReject: boolean) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -312,7 +312,7 @@ const StreamTextureView: ForwardRefRenderFunction<
       }
     },
     setLoginPin: (pin: string) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
