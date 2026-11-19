@@ -258,7 +258,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_switch_to_stream_connection_messa
         return CHIAKI_ERR_INVALID_DATA;
     RudpMessage message;
     uint16_t counter = get_then_increase_counter(rudp);
-    uint16_t counter_ack = rudp->counter;
+    uint16_t counter_ack = chiaki_rudp_get_local_counter(rudp);
     message.type = CTRL_MESSAGE;
     message.subMessage = NULL;
     message.data_size = 26;
