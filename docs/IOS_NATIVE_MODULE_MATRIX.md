@@ -84,3 +84,4 @@ These guards prevent known missing-module crashes; they do not replace Android U
 - `Login.jsx`: checks for the Android-only `HolepunchManager.getDeviceUid` before opening the embedded PSN login flow. On iOS it explains that the identity bridge is missing rather than throwing during screen initialization.
 - `Settings.jsx` and `Users.tsx`: app-process restart calls after logout or deleting the final account are Android-only. iOS now asks the user to close and reopen the app after clearing the account state.
 - `ConsoleEdit.tsx`: all validation and save/delete feedback uses cross-platform alerts; no Android toast API remains in this screen.
+- `Home.jsx`: expired-session cleanup no longer attempts to restart the iOS process. Android retains its existing restart behavior; iOS receives close/reopen guidance after the stored session and cookies are cleared.
