@@ -41,7 +41,7 @@ typedef struct chiaki_rudp_send_buffer_t
  * @param size number of packet slots
  */
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_init(ChiakiRudpSendBuffer *send_buffer, ChiakiRudp rudp, ChiakiLog *log, size_t size);
-CHIAKI_EXPORT void chiaki_rudp_send_buffer_fini(ChiakiRudpSendBuffer *send_buffer);
+CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_fini(ChiakiRudpSendBuffer *send_buffer);
 
 /**
  * @param buf ownership of this is taken by the ChiakiRudpSendBuffer, which will free it automatically later!
