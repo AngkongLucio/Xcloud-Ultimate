@@ -75,7 +75,7 @@ function ConsoleEditScreen({navigation, route}) {
           consoles.splice(idx, 1);
 
           saveConsoles(consoles);
-          ToastAndroid.show(t('Saved'), ToastAndroid.SHORT);
+          Alert.alert('', String(t('Saved')));
           navigation.goBack();
         },
       },
