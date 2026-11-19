@@ -47,6 +47,18 @@ while IFS= read -r -d '' file; do
   /usr/bin/sed -i '' 's/self\.moduleName = @"Peasyo";/self.moduleName = @"peasyo";/' "$file"
 done
 
+APP_INFO_PLIST="$IOS_DIR/Peasyo/Info.plist"
+if [[ ! -f "$APP_INFO_PLIST" ]]; then
+  echo "Error: expected app Info.plist was not generated at $APP_INFO_PLIST." >&2
+  exit 3
+fi
+
+# UDP console discovery needs iOS Local Network authorization. Do not add
+# Bonjour service declarations unless the final implementation uses Bonjour.
+if ! /usr/libexec/PlistBuddy -c 'Print :NSLocalNetworkUsageDescription' "$APP_INFO_PLIST" >/dev/null 2>&1; then
+  /usr/libexec/PlistBuddy -c 'Add :NSLocalNetworkUsageDescription string "Allow Peasyo to find and connect to PlayStation consoles on your local network."' "$APP_INFO_PLIST"
+fi
+
 echo
 echo "Created $IOS_DIR from the official React Native 0.72.14 template."
 echo "Bundle identifier: com.peasyo"
