@@ -3,8 +3,8 @@ import {
   StyleSheet,
   View,
   ScrollView,
-  ToastAndroid,
   Pressable,
+  Alert,
 } from 'react-native';
 import {Button, Text, TextInput} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
@@ -49,7 +49,7 @@ function LoginBase64IdScreen({navigation, route}) {
     ts.setToken(tokens);
     ts.save();
     setLoading(false);
-    ToastAndroid.show(t('Login Successful'), ToastAndroid.SHORT);
+    Alert.alert('', String(t('Login Successful')));
     if (route.params?.from === 'add') {
       navigation.navigate('Settings');
     } else {
