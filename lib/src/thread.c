@@ -108,13 +108,17 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_mutex_init(ChiakiMutex *mutex, bool rec)
 	if(r != 0)
 		return CHIAKI_ERR_UNKNOWN;
 
-	pthread_mutexattr_settype(&attr, rec ? PTHREAD_MUTEX_RECURSIVE : PTHREAD_MUTEX_DEFAULT);
+	r = pthread_mutexattr_settype(&attr, rec ? PTHREAD_MUTEX_RECURSIVE : PTHREAD_MUTEX_DEFAULT);
+	if(r != 0)
+	{
+		pthread_mutexattr_destroy(&attr);
+		return CHIAKI_ERR_UNKNOWN;
+	}
 
 	r = pthread_mutex_init(&mutex->mutex, &attr);
+	int destroy_result = pthread_mutexattr_destroy(&attr);
 
-	pthread_mutexattr_destroy(&attr);
-
-	if(r != 0)
+	if(r != 0 || destroy_result != 0)
 		return CHIAKI_ERR_UNKNOWN;
 #endif
 	return CHIAKI_ERR_SUCCESS;
