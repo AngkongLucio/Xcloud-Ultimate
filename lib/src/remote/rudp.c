@@ -339,8 +339,9 @@ static ChiakiErrorCode rudp_message_serialize(
 {
     if(!message || !serialized_msg || !msg_size ||
         (message->data_size && !message->data) ||
-        message->data_size > SIZE_MAX - 8 ||
-        message->size != 8 + message->data_size ||
+        message->data_size > 0x0FFF - 8 ||
+        (message->size & 0xF000) != 0xC000 ||
+        (size_t)(message->size & 0x0FFF) != 8 + message->data_size ||
         *msg_size > SIZE_MAX - 8 - message->data_size)
         return CHIAKI_ERR_INVALID_DATA;
 
