@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, Alert, ScrollView, NativeModules} from 'react-native';
+import {StyleSheet, View, Alert, ScrollView, NativeModules, Platform} from 'react-native';
 import {Button, Text, HelperText, Divider} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
 import RNFS from 'react-native-fs';
@@ -44,10 +44,20 @@ function TransferScreen({navigation}) {
 
   const exportConfig = async configData => {
     try {
+      if (Platform.OS !== 'android') {
+        return {
+          success: false,
+          message: 'Folder export is currently supported on Android only. iOS file export needs a native document export/share implementation.',
+        };
+      }
+
       const dir = await DocumentPicker.pickDirectory();
       if (!dir) return;
 
       const path = decodeURIComponent(dir.uri).split(':')[2];
+      if (!path) {
+        throw new Error('Could not resolve the selected Android folder.');
+      }
       const fullPath = '/storage/emulated/0/' + path;
 
       const fileName = `peasyo_export_${new Date().getTime()}.json`;
@@ -99,16 +109,27 @@ function TransferScreen({navigation}) {
       return;
     }
 
+    if (typeof LogsModule?.createAndShareConfigFile !== 'function') {
+      Alert.alert(
+        t('Warning'),
+        'Native config sharing is not available on this platform yet.',
+      );
+      return;
+    }
+
     LogsModule.createAndShareConfigFile(encryptStr);
   };
 
   const importConfig = async () => {
     try {
       const result = await DocumentPicker.pick({
-        type: ['application/json'],
+        type: [DocumentPicker.types.json],
+        copyTo: 'cachesDirectory',
       });
 
-      const fileContent = await RNFS.readFile(result[0].uri, 'utf8');
+      const selectedFile = result[0];
+      const readableUri = selectedFile.fileCopyUri || selectedFile.uri;
+      const fileContent = await RNFS.readFile(readableUri, 'utf8');
 
       const configStr = decrypt(fileContent);
       if (!configStr) {
@@ -171,6 +192,14 @@ function TransferScreen({navigation}) {
     const result = await importConfig();
     if (result.success) {
       const configs = result.data;
+      if (
+        !configs ||
+        !Array.isArray(configs.tokens) ||
+        !Array.isArray(configs.consoles)
+      ) {
+        Alert.alert(t('Warning'), 'The selected backup file has an invalid format.');
+        return;
+      }
       const {tokens, consoles} = configs;
 
       // Save token
@@ -181,9 +210,16 @@ function TransferScreen({navigation}) {
       // Save consoles
       saveConsoles(consoles);
       Alert.alert(t('Warning'), result.message);
-      setTimeout(() => {
-        RNRestart.restart();
-      }, 1000);
+      if (Platform.OS === 'android') {
+        setTimeout(() => {
+          RNRestart.restart();
+        }, 1000);
+      } else {
+        Alert.alert(
+          t('ImportSuccess'),
+          'Your backup was restored. Close and reopen the app to refresh all screens.',
+        );
+      }
     } else {
       Alert.alert(t('Warning'), result.message);
     }
