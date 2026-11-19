@@ -5422,6 +5422,12 @@ static bool parse_stun_port(const char *text, uint16_t *port)
     if(!text || !*text || !port)
         return false;
 
+    for(const unsigned char *p = (const unsigned char *)text; *p; p++)
+    {
+        if(!isdigit(*p))
+            return false;
+    }
+
     errno = 0;
     char *end = NULL;
     long value = strtol(text, &end, 10);
@@ -5441,15 +5447,33 @@ static bool valid_stun_hostname(const char *host)
     if(len == 0 || len > 253)
         return false;
 
-    for(size_t i = 0; i < len; i++)
+    size_t label_len = 0;
+    bool label_starts_with_alphanumeric = false;
+    unsigned char previous = 0;
+    for(size_t i = 0; i <= len; i++)
     {
         unsigned char c = (unsigned char)host[i];
-        if(!(isalnum(c) || c == '.' || c == '-'))
+        if(c == '.' || c == '\0')
+        {
+            if(label_len == 0 || label_len > 63 ||
+                    !label_starts_with_alphanumeric ||
+                    !isalnum(previous))
+                return false;
+            label_len = 0;
+            label_starts_with_alphanumeric = false;
+            previous = 0;
+            continue;
+        }
+
+        if(!(isalnum(c) || c == '-') || (label_len == 0 && !isalnum(c)))
             return false;
+        if(label_len == 0)
+            label_starts_with_alphanumeric = true;
+        label_len++;
+        previous = c;
     }
 
-    return host[0] != '.' && host[len - 1] != '.' &&
-            host[0] != '-' && host[len - 1] != '-';
+    return true;
 }
 
 static ChiakiErrorCode parse_ipv4_stun_entry(char *line, StunServer *server)
