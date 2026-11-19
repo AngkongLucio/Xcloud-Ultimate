@@ -111,18 +111,17 @@ function UsersScreen({navigation}) {
           ts.setToken(newUsers);
           ts.save();
 
-          Alert.alert('', String(t('Deleted')));
-
-          if (newUsers.length === 0) {
-            if (Platform.OS === 'android') {
+          if (newUsers.length === 0 && Platform.OS !== 'android') {
+            Alert.alert(
+              String(t('Warning')),
+              'All accounts were removed. Close and reopen the app to complete the reset.',
+            );
+          } else {
+            Alert.alert('', String(t('Deleted')));
+            if (newUsers.length === 0) {
               setTimeout(() => {
                 RNRestart.restart();
               }, 1000);
-            } else {
-              Alert.alert(
-                String(t('Warning')),
-                'All accounts were removed. Close and reopen the app to complete the reset.',
-              );
             }
           }
         },
