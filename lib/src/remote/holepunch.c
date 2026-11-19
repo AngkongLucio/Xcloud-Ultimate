@@ -2374,7 +2374,16 @@ static void* websocket_thread_func(void *user) {
                     goto cleanup_json;
                 }
                 else
+                {
+                    err = chiaki_mutex_lock(&session->stop_mutex);
+                    if(err != CHIAKI_ERR_SUCCESS)
+                    {
+                        CHIAKI_LOGE(session->log, "websocket_thread_func: Could not reacquire stop mutex after select: %d", err);
+                        goto cleanup_json;
+                    }
+                    stop_mutex_locked = true;
                     continue;
+                }
             } else
             {
                 CHIAKI_LOGE(session->log, "websocket_thread_func: Receiving WebSocket frame failed with CURL error %s", curl_easy_strerror(res));
@@ -2412,6 +2421,13 @@ static void* websocket_thread_func(void *user) {
             {
                 CHIAKI_LOGE(session->log, "websocket_thread_func: Parsing JSON from payload failed");
                 CHIAKI_LOGV(session->log, "websocket_thread_func: Payload was:\n%s", buf);
+                err = chiaki_mutex_lock(&session->stop_mutex);
+                if(err != CHIAKI_ERR_SUCCESS)
+                {
+                    CHIAKI_LOGE(session->log, "websocket_thread_func: Could not reacquire stop mutex after invalid JSON: %d", err);
+                    goto cleanup_json;
+                }
+                stop_mutex_locked = true;
                 continue;
             }
             CHIAKI_LOGV(session->log, json_object_to_json_string_ext(json, JSON_C_TO_STRING_PRETTY));
