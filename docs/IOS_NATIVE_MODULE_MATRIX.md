@@ -97,4 +97,7 @@ These guards prevent known missing-module crashes; they do not replace Android U
 - RUDP retransmission-buffer shutdown now sets its stop flag under the buffer mutex, checks condition signaling and thread joining, and propagates shutdown errors so the parent RUDP instance is not freed while its worker may still be running.
 - RUDP send-buffer insertion now honors its documented buffer-ownership contract on mutex failures and validates the queued payload; a failed initial worker wake-up rolls back the queued packet.
 
+- RUDP parsing now checks the protocol magic value; receive paths use bounded heap buffers instead of variable-length stack arrays, validate receive arguments, and free buffers on every return path.
+- Retransmission packet-type reads use memcpy rather than potentially unaligned integer dereferences; send-buffer insertion rejects packets shorter than the RUDP header.
+
 These are source-level defensive changes only. They have not been compiled or exercised against a PlayStation console, simulator, or physical iPad. They do not implement the iOS streaming bridge or make the app IPA-ready.
