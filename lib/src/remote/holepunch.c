@@ -344,6 +344,7 @@ typedef struct session_t
     char* ws_fqdn;
     ChiakiThread ws_thread;
     NotificationQueue* ws_notification_queue;
+    bool ws_thread_started;
     bool ws_thread_should_stop;
     bool ws_open;
 
@@ -966,6 +967,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_create(Session* session)
     err = chiaki_thread_create(&session->ws_thread, websocket_thread_func, session);
     if (err != CHIAKI_ERR_SUCCESS)
         return err;
+    session->ws_thread_started = true;
     chiaki_thread_set_name(&session->ws_thread, "Chiaki Holepunch WS");
     CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Created websocket thread");
 
@@ -1860,11 +1862,23 @@ CHIAKI_EXPORT void chiaki_holepunch_session_fini(Session* session)
             }
             clear_notification(session, notif);
         }
-        chiaki_mutex_lock(&session->stop_mutex);
-        session->ws_thread_should_stop = true;
-        chiaki_mutex_unlock(&session->stop_mutex);
+    }
+    if(session->ws_thread_started)
+    {
+        ChiakiErrorCode stop_err = chiaki_mutex_lock(&session->stop_mutex);
+        if(stop_err == CHIAKI_ERR_SUCCESS)
+        {
+            session->ws_thread_should_stop = true;
+            stop_err = chiaki_mutex_unlock(&session->stop_mutex);
+        }
+        if(stop_err != CHIAKI_ERR_SUCCESS)
+            CHIAKI_LOGE(session->log, "Could not set WebSocket thread stop state: %d", stop_err);
         chiaki_stop_pipe_stop(&session->select_pipe);
-        chiaki_thread_join(&session->ws_thread, NULL);
+        ChiakiErrorCode join_err = chiaki_thread_join(&session->ws_thread, NULL);
+        if(join_err != CHIAKI_ERR_SUCCESS)
+            CHIAKI_LOGE(session->log, "Could not join WebSocket thread: %d", join_err);
+        else
+            session->ws_thread_started = false;
     }
     if(session->gw.data)
     {
