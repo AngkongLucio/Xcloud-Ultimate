@@ -395,7 +395,12 @@ static bool rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
 				// Copy the sequence number before releasing the mutex. The ACK path
 				// compacts the packet array, so packet may no longer be valid after unlock.
 				ChiakiSeqNum16 seq_num = packet->seq_num;
-				chiaki_mutex_unlock(&send_buffer->mutex);
+				ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&send_buffer->mutex);
+				if(unlock_err != CHIAKI_ERR_SUCCESS)
+				{
+					CHIAKI_LOGE(send_buffer->log, "RUDP resend thread could not release send buffer mutex before ACK: %d", unlock_err);
+					return false;
+				}
 				ChiakiErrorCode ack_err = chiaki_rudp_send_buffer_ack(send_buffer, seq_num, ack_seq_nums, &ack_seq_nums_count);
 				if(ack_err != CHIAKI_ERR_SUCCESS)
 					CHIAKI_LOGE(send_buffer->log, "Failed to retire exhausted RUDP packet: %d", ack_err);
