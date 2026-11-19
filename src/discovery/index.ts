@@ -29,10 +29,16 @@ export const discoverDevices = (
   return new Promise((resolve, reject) => {
     const version = isPS5 ? DiscoveryVersions.PS5 : DiscoveryVersions.PS4;
     const port = isPS5 ? DiscoveryPort.PS5 : DiscoveryPort.PS4;
-    const socket = dgram.createSocket({
-      type: 'udp4',
-      reusePort: true,
-    });
+    let socket: ReturnType<typeof dgram.createSocket>;
+    try {
+      socket = dgram.createSocket({
+        type: 'udp4',
+        reusePort: true,
+      });
+    } catch (error) {
+      reject(error instanceof Error ? error : new Error(String(error)));
+      return;
+    }
 
     const devices: IDiscoveredDevice[] = [];
     let isFinished = false;
