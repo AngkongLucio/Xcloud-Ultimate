@@ -393,18 +393,24 @@ CHIAKI_EXPORT uint16_t chiaki_rudp_get_local_counter(RudpInstance *rudp)
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_raw(RudpInstance *rudp, uint8_t *buf, size_t buf_size)
 {
-    if(CHIAKI_SOCKET_IS_INVALID(rudp->sock))
-    {
+    if(!rudp || CHIAKI_SOCKET_IS_INVALID(rudp->sock))
         return CHIAKI_ERR_DISCONNECTED;
-    }
+    if(!buf || buf_size == 0)
+        return CHIAKI_ERR_INVALID_DATA;
+
     CHIAKI_LOGV(rudp->log, "Sending Message:");
     chiaki_log_hexdump(rudp->log, CHIAKI_LOG_VERBOSE, buf, buf_size);
-	int sent = send(rudp->sock, (CHIAKI_SOCKET_BUF_TYPE) buf, buf_size, 0);
+	CHIAKI_SSIZET_TYPE sent = send(rudp->sock, (CHIAKI_SOCKET_BUF_TYPE) buf, buf_size, 0);
 	if(sent < 0)
 	{
 		CHIAKI_LOGE(rudp->log, "Rudp raw failed to send packet: " CHIAKI_SOCKET_ERROR_FMT, CHIAKI_SOCKET_ERROR_VALUE);
 		return CHIAKI_ERR_NETWORK;
 	}
+    if((size_t)sent != buf_size)
+    {
+        CHIAKI_LOGE(rudp->log, "Rudp raw sent an incomplete datagram (%zu of %zu bytes)", (size_t)sent, buf_size);
+        return CHIAKI_ERR_NETWORK;
+    }
 	return CHIAKI_ERR_SUCCESS;
 }
 
