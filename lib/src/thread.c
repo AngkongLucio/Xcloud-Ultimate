@@ -243,7 +243,7 @@ static void set_timeout(struct timespec *timeout, uint64_t ms_from_now)
 	clock_gettime(CLOCK_MONOTONIC, timeout);
 	timeout->tv_sec += ms_from_now / 1000;
 	timeout->tv_nsec += (ms_from_now % 1000) * 1000000;
-	if(timeout->tv_nsec > 1000000000)
+	if(timeout->tv_nsec >= 1000000000)
 	{
 		timeout->tv_sec += timeout->tv_nsec / 1000000000;
 		timeout->tv_nsec %= 1000000000;
