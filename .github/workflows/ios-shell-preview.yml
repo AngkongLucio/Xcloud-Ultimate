@@ -1,0 +1,92 @@
+name: iOS Shell Preview (TrollStore)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-shell-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build unsigned iPadOS shell IPA
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - name: Check out selected branch
+        uses: actions/checkout@v4
+
+      - name: Select Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Select Ruby and CocoaPods
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: false
+
+      - name: Install CocoaPods
+        run: gem install cocoapods -v 1.15.2 --no-document
+
+      - name: Generate React Native iOS project
+        run: bash scripts/scaffold-ios-project.sh
+
+      - name: Install JavaScript dependencies
+        run: yarn install --immutable
+
+      - name: Install iOS pods
+        working-directory: ios
+        run: pod install --repo-update
+
+      - name: Build unsigned device app
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace ios/Peasyo.xcworkspace \
+            -scheme Peasyo \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/ios-shell-derived \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tee build/ios-shell-xcodebuild.log
+
+      - name: Package TrollStore preview IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="build/ios-shell-derived/Build/Products/Release-iphoneos/Peasyo.app"
+          test -d "$APP_PATH"
+          mkdir -p build/ipa/Payload
+          ditto "$APP_PATH" build/ipa/Payload/Peasyo.app
+          cat > build/ipa/BUILD-NOTES.txt <<'NOTES'
+          Xcloud Ultimate — iOS shell preview
+          
+          This is an unsigned React Native iOS shell for UI and navigation testing.
+          It is not a completed PlayStation Remote Play client and it is not an Xbox Cloud Gaming client.
+          Chiaki iOS session integration, VideoToolbox video output, AudioUnit audio output,
+          and native controller integration are not implemented. Stream functionality is unavailable.
+          Install only on a compatible test device using TrollStore. This artifact is not App Store signed.
+          NOTES
+          cd build/ipa
+          ditto -c -k --sequesterRsrc --keepParent Payload Xcloud-Ultimate-iOS-shell.ipa
+          cp BUILD-NOTES.txt Xcloud-Ultimate-iOS-shell-BUILD-NOTES.txt
+
+      - name: Upload unsigned IPA preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcloud-ultimate-ios-shell-ipa
+          path: |
+            build/ipa/Xcloud-Ultimate-iOS-shell.ipa
+            build/ipa/Xcloud-Ultimate-iOS-shell-BUILD-NOTES.txt
+            build/ios-shell-xcodebuild.log
+          if-no-files-found: error
+          retention-days: 7
