@@ -423,53 +423,66 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_raw(RudpInstance *rudp, uint8_t *
 	return CHIAKI_ERR_SUCCESS;
 }
 
-CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_select_recv(RudpInstance *rudp, size_t buf_size,  RudpMessage *message)
+CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_select_recv(RudpInstance *rudp, size_t buf_size, RudpMessage *message)
 {
-    uint8_t buf[buf_size]; 
-	ChiakiErrorCode err = chiaki_stop_pipe_select_single(&rudp->stop_pipe, rudp->sock, false, RUDP_EXPECT_TIMEOUT_MS);
-	if(err == CHIAKI_ERR_TIMEOUT || err == CHIAKI_ERR_CANCELED)
-		return err;
-	if(err != CHIAKI_ERR_SUCCESS)
-	{
-		CHIAKI_LOGE(rudp->log, "Rudp select failed: " CHIAKI_SOCKET_ERROR_FMT, CHIAKI_SOCKET_ERROR_VALUE);
-		return err;
-	}
+    if(!rudp || !message || CHIAKI_SOCKET_IS_INVALID(rudp->sock))
+        return CHIAKI_ERR_DISCONNECTED;
+    if(buf_size <= 8 || buf_size > UINT16_MAX)
+        return CHIAKI_ERR_INVALID_DATA;
 
-	CHIAKI_SSIZET_TYPE received_sz = recv(rudp->sock, (CHIAKI_SOCKET_BUF_TYPE) buf, buf_size, 0);
-	if(received_sz <= 8)
-	{
-		if(received_sz < 0)
-			CHIAKI_LOGE(rudp->log, "Rudp recv failed: " CHIAKI_SOCKET_ERROR_FMT, CHIAKI_SOCKET_ERROR_VALUE);
-		else
-			CHIAKI_LOGE(rudp->log, "Rudp recv returned less than the required 8 byte RUDP header");
-		return CHIAKI_ERR_NETWORK;
-	}
+    ChiakiErrorCode err = chiaki_stop_pipe_select_single(&rudp->stop_pipe, rudp->sock, false, RUDP_EXPECT_TIMEOUT_MS);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
+
+    uint8_t *buf = malloc(buf_size);
+    if(!buf)
+        return CHIAKI_ERR_MEMORY;
+
+    CHIAKI_SSIZET_TYPE received_sz = recv(rudp->sock, (CHIAKI_SOCKET_BUF_TYPE)buf, buf_size, 0);
+    if(received_sz <= 8)
+    {
+        if(received_sz < 0)
+            CHIAKI_LOGE(rudp->log, "Rudp recv failed: " CHIAKI_SOCKET_ERROR_FMT, CHIAKI_SOCKET_ERROR_VALUE);
+        else
+            CHIAKI_LOGE(rudp->log, "Rudp recv returned less than the required 8 byte RUDP header");
+        free(buf);
+        return CHIAKI_ERR_NETWORK;
+    }
+
     CHIAKI_LOGV(rudp->log, "Receiving message:");
-    chiaki_log_hexdump(rudp->log, CHIAKI_LOG_VERBOSE, buf, received_sz);
-
-    err = chiaki_rudp_message_parse(buf, received_sz, message);
-    
-	return err;
+    chiaki_log_hexdump(rudp->log, CHIAKI_LOG_VERBOSE, buf, (size_t)received_sz);
+    err = chiaki_rudp_message_parse(buf, (size_t)received_sz, message);
+    free(buf);
+    return err;
 }
 
-CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_recv_only(RudpInstance *rudp, size_t buf_size,  RudpMessage *message)
+CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_recv_only(RudpInstance *rudp, size_t buf_size, RudpMessage *message)
 {
-    uint8_t buf[buf_size];
-	CHIAKI_SSIZET_TYPE received_sz = recv(rudp->sock, (CHIAKI_SOCKET_BUF_TYPE) buf, buf_size, 0);
-	if(received_sz <= 8)
-	{
-		if(received_sz < 0)
-			CHIAKI_LOGE(rudp->log, "Rudp recv failed: " CHIAKI_SOCKET_ERROR_FMT, CHIAKI_SOCKET_ERROR_VALUE);
-		else
-			CHIAKI_LOGE(rudp->log, "Rudp recv returned less than the required 8 byte RUDP header");
-		return CHIAKI_ERR_NETWORK;
-	}
+    if(!rudp || !message || CHIAKI_SOCKET_IS_INVALID(rudp->sock))
+        return CHIAKI_ERR_DISCONNECTED;
+    if(buf_size <= 8 || buf_size > UINT16_MAX)
+        return CHIAKI_ERR_INVALID_DATA;
+
+    uint8_t *buf = malloc(buf_size);
+    if(!buf)
+        return CHIAKI_ERR_MEMORY;
+
+    CHIAKI_SSIZET_TYPE received_sz = recv(rudp->sock, (CHIAKI_SOCKET_BUF_TYPE)buf, buf_size, 0);
+    if(received_sz <= 8)
+    {
+        if(received_sz < 0)
+            CHIAKI_LOGE(rudp->log, "Rudp recv failed: " CHIAKI_SOCKET_ERROR_FMT, CHIAKI_SOCKET_ERROR_VALUE);
+        else
+            CHIAKI_LOGE(rudp->log, "Rudp recv returned less than the required 8 byte RUDP header");
+        free(buf);
+        return CHIAKI_ERR_NETWORK;
+    }
+
     CHIAKI_LOGV(rudp->log, "Receiving message:");
-    chiaki_log_hexdump(rudp->log, CHIAKI_LOG_VERBOSE, buf, received_sz);
-
-    ChiakiErrorCode err = chiaki_rudp_message_parse(buf, received_sz, message);
-
-	return err;
+    chiaki_log_hexdump(rudp->log, CHIAKI_LOG_VERBOSE, buf, (size_t)received_sz);
+    ChiakiErrorCode err = chiaki_rudp_message_parse(buf, (size_t)received_sz, message);
+    free(buf);
+    return err;
 }
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_stop_pipe_select_single(RudpInstance *rudp, ChiakiStopPipe *stop_pipe, uint64_t timeout)
