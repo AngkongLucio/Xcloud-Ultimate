@@ -18,16 +18,25 @@ const REDIRECT_URI =
   'https://remoteplay.dl.playstation.net/remoteplay/redirect';
 
 export const getTokenFromRedirectUri = (redirectUri: string): Promise<any> => {
-  console.log('getTokenFromRedirectUri redirectUri:', redirectUri);
   return new Promise((resolve, reject) => {
     let accessToken = '';
     let refreshToken = '';
     let tokenExpiry = 0;
 
-    const url = new URL(redirectUri);
-    const code = url.searchParams.get('code');
+    let code: string | null;
+    try {
+      code = new URL(redirectUri).searchParams.get('code');
+    } catch (error) {
+      reject(new Error('Invalid PSN redirect URL.'));
+      return;
+    }
 
-    if (code) {
+    if (!code) {
+      reject(new Error('PSN authorization code is missing from the redirect URL.'));
+      return;
+    }
+
+    {
       const auth = {
         username: CLIENT_ID,
         password: CLIENT_SECRET,
@@ -68,7 +77,7 @@ export const getTokenFromRedirectUri = (redirectUri: string): Promise<any> => {
           });
         })
         .catch(e => {
-          console.log('[getTokenFromRedirectUri] error:', e);
+          console.log('[getTokenFromRedirectUri] token exchange failed.');
           reject(e);
         });
     }
@@ -118,7 +127,6 @@ export const getUserInfoFromToken = (
         },
       )
       .then(res => {
-        console.log('[getUserInfoFromToken] res:', res.data);
         if (res.data) {
           const userInfo = res.data as UserInfo;
           const accountId = extractAccountId(userInfo) || '';
@@ -161,7 +169,6 @@ export const refreshAccessToken = (token: string): Promise<any> => {
         },
       )
       .then(res => {
-        console.log('[refreshToken] res:', res.data);
         if (res.data && res.data.access_token) {
           resolve(res.data);
         } else {
@@ -169,7 +176,7 @@ export const refreshAccessToken = (token: string): Promise<any> => {
         }
       })
       .catch(e => {
-        console.log('[refreshToken] error:', e);
+        console.log('[refreshToken] refresh request failed.');
         reject(e);
       });
   });
