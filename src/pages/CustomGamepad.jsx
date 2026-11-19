@@ -3,6 +3,7 @@ import Orientation from 'react-native-orientation-locker';
 import {
   SafeAreaView,
   StyleSheet,
+  Platform,
   NativeModules,
   Dimensions,
   View,
@@ -56,7 +57,9 @@ function CustomGamepadScreen({navigation, route}) {
     }
 
     // console.log('_settings:', _settings);
-    FullScreenManager.immersiveModeOn();
+    if (Platform.OS === 'android' && typeof FullScreenManager?.immersiveModeOn === 'function') {
+      FullScreenManager.immersiveModeOn();
+    }
     Orientation.lockToLandscape();
     setTimeout(() => {
       const {width, height} = Dimensions.get('window');
@@ -260,7 +263,9 @@ function CustomGamepadScreen({navigation, route}) {
 
     return () => {
       Orientation.unlockAllOrientations();
-      FullScreenManager.immersiveModeOff();
+      if (Platform.OS === 'android' && typeof FullScreenManager?.immersiveModeOff === 'function') {
+        FullScreenManager.immersiveModeOff();
+      }
     };
   }, [navigation, route.params?.name]);
 
