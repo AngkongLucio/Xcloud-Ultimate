@@ -84,7 +84,9 @@ function TransferScreen({navigation}) {
     } catch (error: any) {
       return {
         success: false,
-        message: t('ExportFail') + ':' + error.message,
+        message: DocumentPicker.isCancel(error)
+          ? t('UserCancel')
+          : t('ExportFail') + ':' + error.message,
       };
     }
   };
@@ -178,8 +180,14 @@ function TransferScreen({navigation}) {
     //   return;
     // }
 
-    const result: any = await exportConfig(configs);
-    Alert.alert('Warning', result.message);
+    try {
+      const result: any = await exportConfig(configs);
+      if (result?.message) {
+        Alert.alert(t('Warning'), result.message);
+      }
+    } catch (error: any) {
+      Alert.alert(t('Warning'), t('ExportFail') + ':' + error.message);
+    }
   };
 
   const handleImport = async () => {
@@ -209,8 +217,8 @@ function TransferScreen({navigation}) {
 
       // Save consoles
       saveConsoles(consoles);
-      Alert.alert(t('Warning'), result.message);
       if (Platform.OS === 'android') {
+        Alert.alert(t('Warning'), result.message);
         setTimeout(() => {
           RNRestart.restart();
         }, 1000);
