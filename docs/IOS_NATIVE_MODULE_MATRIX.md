@@ -80,3 +80,7 @@ These guards prevent known missing-module crashes; they do not replace Android U
 - `src/wakeup/index.ts` and `src/utils/udp.js` still depend on `react-native-udp` socket binding/broadcast behavior. They have not been validated on iOS; do not assume that the Local Network usage string alone enables broadcast or wake-up.
 - The generated iOS app includes `NSLocalNetworkUsageDescription`. Physical-device testing must confirm that iOS presents the permission prompt and that the selected UDP library supports the exact bind, broadcast, and receive operations used by the app.
 - `scripts/build-ios-core.sh` and the scaffold script are preparation tools only; neither proves the iOS app compiles or can stream.
+
+- `Login.jsx`: checks for the Android-only `HolepunchManager.getDeviceUid` before opening the embedded PSN login flow. On iOS it explains that the identity bridge is missing rather than throwing during screen initialization.
+- `Settings.jsx` and `Users.tsx`: app-process restart calls after logout or deleting the final account are Android-only. iOS now asks the user to close and reopen the app after clearing the account state.
+- `ConsoleEdit.tsx`: all validation and save/delete feedback uses cross-platform alerts; no Android toast API remains in this screen.
