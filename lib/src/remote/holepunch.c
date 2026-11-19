@@ -1900,6 +1900,8 @@ CHIAKI_EXPORT void chiaki_holepunch_session_fini(Session* session)
         chiaki_mutex_lock(&session->notif_mutex);
         notification_queue_free(session->ws_notification_queue);
         chiaki_mutex_unlock(&session->notif_mutex);
+        free(session->ws_notification_queue);
+        session->ws_notification_queue = NULL;
     }
     for(int i=0; i < session->num_stun_servers; i++)
     {
@@ -1915,6 +1917,7 @@ CHIAKI_EXPORT void chiaki_holepunch_session_fini(Session* session)
     chiaki_cond_fini(&session->notif_cond);
     chiaki_mutex_fini(&session->state_mutex);
     chiaki_cond_fini(&session->state_cond);
+    chiaki_mutex_fini(&session->stop_mutex);
 }
 
 CHIAKI_EXPORT void chiaki_holepunch_main_thread_cancel(Session *session, bool stop_thread)
@@ -1935,6 +1938,8 @@ CHIAKI_EXPORT void chiaki_holepunch_main_thread_cancel(Session *session, bool st
 
 void notification_queue_free(NotificationQueue *nq)
 {
+    if(!nq)
+        return;
     while(nq->front != NULL)
     {
         dequeueNq(nq);
