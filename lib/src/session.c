@@ -232,7 +232,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_session_init_v6(ChiakiSession *session, Chi
     const uint8_t did_prefix[] = { 0x00, 0x18, 0x00, 0x00, 0x00, 0x07, 0x00, 0x40, 0x00, 0x80 };
     const uint8_t did_suffix[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
     memcpy(session->connect_info.did, did_prefix, sizeof(did_prefix));
-    chiaki_random_bytes_crypt(session->connect_info.did + sizeof(did_prefix), sizeof(session->connect_info.did) - sizeof(did_prefix) - sizeof(did_suffix));
+    err = chiaki_random_bytes_crypt(session->connect_info.did + sizeof(did_prefix), sizeof(session->connect_info.did) - sizeof(did_prefix) - sizeof(did_suffix));
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+    	CHIAKI_LOGE(session->log, "Could not generate session device identifier: %d", err);
+    	chiaki_session_fini(session);
+    	return err;
+    }
     memcpy(session->connect_info.did + sizeof(session->connect_info.did) - sizeof(did_suffix), did_suffix, sizeof(did_suffix));
 
     session->connect_info.video_profile = connect_info->video_profile;
@@ -333,7 +339,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_session_init(ChiakiSession *session, Chiaki
 	const uint8_t did_prefix[] = { 0x00, 0x18, 0x00, 0x00, 0x00, 0x07, 0x00, 0x40, 0x00, 0x80 };
 	const uint8_t did_suffix[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	memcpy(session->connect_info.did, did_prefix, sizeof(did_prefix));
-	chiaki_random_bytes_crypt(session->connect_info.did + sizeof(did_prefix), sizeof(session->connect_info.did) - sizeof(did_prefix) - sizeof(did_suffix));
+	err = chiaki_random_bytes_crypt(session->connect_info.did + sizeof(did_prefix), sizeof(session->connect_info.did) - sizeof(did_prefix) - sizeof(did_suffix));
+	if(err != CHIAKI_ERR_SUCCESS)
+	{
+		CHIAKI_LOGE(session->log, "Could not generate session device identifier: %d", err);
+		chiaki_session_fini(session);
+		return err;
+	}
 	memcpy(session->connect_info.did + sizeof(session->connect_info.did) - sizeof(did_suffix), did_suffix, sizeof(did_suffix));
 
 	session->connect_info.video_profile = connect_info->video_profile;
