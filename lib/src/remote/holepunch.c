@@ -497,7 +497,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_list_devices(
             .size = 0,
     };
 
-    CHIAKI_LOGE(log, "holepunch chiaki_holepunch_list_devices headers: %s", oauth_header);
+    /* Never log OAuth authorization headers or access tokens. */
 
     struct curl_slist *headers = NULL;
     headers = curl_slist_append(headers, "Host: web.np.playstation.com");
@@ -1991,25 +1991,37 @@ static ChiakiErrorCode get_websocket_fqdn(Session *session, char **fqdn)
  * @param[in] userdata Pointer to a HttpResponseData struct
  * @return Number of bytes written
 */
+#define HTTP_RESPONSE_MAX_SIZE (4u * 1024u * 1024u)
+
 static inline size_t curl_write_cb(
         void* ptr, size_t size, size_t nmemb, void* userdata)
 {
+    if(!userdata || (!ptr && size && nmemb))
+        return 0;
+
+    if(size && nmemb > SIZE_MAX / size)
+        return 0;
+
     size_t realsize = size * nmemb;
     HttpResponseData* response_data = (HttpResponseData*) userdata;
-    char* tmp = NULL;
-    tmp = realloc(response_data->data, response_data->size + realsize + 1);
-    if (tmp)
-        response_data->data = tmp;
-    else
+    if(realsize > HTTP_RESPONSE_MAX_SIZE ||
+        response_data->size > HTTP_RESPONSE_MAX_SIZE - realsize ||
+        response_data->size > SIZE_MAX - realsize - 1)
+        return 0;
+
+    char* tmp = realloc(response_data->data, response_data->size + realsize + 1);
+    if(!tmp)
     {
-        free(response_data->data);
-        // TODO: Use Chiaki logger!
-        fprintf(stderr, "curl_write_cb: realloc failed\n");
+        /* Keep the original allocation intact for the caller's cleanup path. */
+        fprintf(stderr, "curl_write_cb: realloc failed\\n");
         return 0;
     }
-    memcpy(&(response_data->data[response_data->size]), ptr, realsize);
+
+    response_data->data = tmp;
+    if(realsize)
+        memcpy(response_data->data + response_data->size, ptr, realsize);
     response_data->size += realsize;
-    response_data->data[response_data->size] = 0;
+    response_data->data[response_data->size] = '\\0';
 
     return realsize;
 }
