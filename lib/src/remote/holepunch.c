@@ -2013,7 +2013,7 @@ static inline size_t curl_write_cb(
     if(!tmp)
     {
         /* Keep the original allocation intact for the caller's cleanup path. */
-        fprintf(stderr, "curl_write_cb: realloc failed\\n");
+        fprintf(stderr, "curl_write_cb: realloc failed\n");
         return 0;
     }
 
@@ -2021,7 +2021,7 @@ static inline size_t curl_write_cb(
     if(realsize)
         memcpy(response_data->data + response_data->size, ptr, realsize);
     response_data->size += realsize;
-    response_data->data[response_data->size] = '\\0';
+    response_data->data[response_data->size] = '\0';
 
     return realsize;
 }
