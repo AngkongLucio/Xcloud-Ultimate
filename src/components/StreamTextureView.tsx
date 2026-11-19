@@ -332,6 +332,10 @@ const StreamTextureView: ForwardRefRenderFunction<
     }
   };
 
+  if (Platform.OS !== 'android') {
+    return <View ref={streamViewRef} style={style} />;
+  }
+
   return (
     <StreamTextureViewNative
       ref={streamViewRef}
