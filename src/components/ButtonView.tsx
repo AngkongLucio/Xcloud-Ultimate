@@ -6,7 +6,9 @@ type RNButtonViewProps = ViewProps & {
   onPressOut?: () => void;
 };
 
-const RNButtonView: any = Platform.OS === 'android'\n  ? requireNativeComponent<RNButtonViewProps>('ButtonView')\n  : Pressable;
+const RNButtonView: any = Platform.OS === 'android'
+  ? requireNativeComponent<RNButtonViewProps>('ButtonView')
+  : Pressable;
 
 interface ButtonViewProps extends RNButtonViewProps {
   buttonName: string;
@@ -23,9 +25,20 @@ const ButtonView: React.FC<ButtonViewProps> = props => {
     onPressOut?.();
   }, [onPressOut]);
 
+  if (Platform.OS !== 'android') {
+    return (
+      <Pressable
+        {...rest}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      />
+    );
+  }
+
   return (
     <RNButtonView
       {...rest}
+      buttonName={buttonName}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
     />
