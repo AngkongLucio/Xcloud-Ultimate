@@ -112,6 +112,9 @@ class Udp {
         this.messageSocket,
         this.isReceiver ? MESSAGE_PORT : 0,
       );
+      if (this.isReceiver) {
+        this.discoverySocket.setBroadcast(true);
+      }
       if (this.isClosed) {
         throw new Error('UDP helper was closed during initialization');
       }
