@@ -22,7 +22,8 @@ CHIAKI_EXPORT uint64_t chiaki_time_now_monotonic_us()
 	return v.QuadPart;
 #else
 	struct timespec time;
-	clock_gettime(CLOCK_MONOTONIC, &time);
-	return time.tv_sec * 1000000 + time.tv_nsec / 1000;
+	if(clock_gettime(CLOCK_MONOTONIC, &time) != 0)
+		return 0;
+	return (uint64_t)time.tv_sec * 1000000ULL + (uint64_t)time.tv_nsec / 1000ULL;
 #endif
 }
