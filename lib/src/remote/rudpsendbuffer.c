@@ -271,7 +271,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_ack(ChiakiRudpSendBuffer *
 	return err;
 }
 
-static void rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer);
+static bool rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer);
 
 static bool rudp_send_buffer_check_pred_packets(void *user)
 {
@@ -306,7 +306,8 @@ static void *rudp_send_buffer_thread_func(void *user)
 		if(send_buffer->should_stop)
 			break;
 
-		rudp_send_buffer_resend(send_buffer);
+		if(!rudp_send_buffer_resend(send_buffer))
+			return NULL;
 	}
 
 	chiaki_mutex_unlock(&send_buffer->mutex);
@@ -314,10 +315,10 @@ static void *rudp_send_buffer_thread_func(void *user)
 	return NULL;
 }
 
-static void rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
+static bool rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
 {
 	if(!send_buffer->rudp)
-		return;
+		return true;
 
 	uint64_t now = chiaki_time_now_monotonic_ms();
 
@@ -342,7 +343,7 @@ static void rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
 				if(lock_err != CHIAKI_ERR_SUCCESS)
 				{
 					CHIAKI_LOGE(send_buffer->log, "RUDP resend thread could not reacquire send buffer mutex: %d", lock_err);
-					return;
+					return false;
 				}
 				// ACK compacts the array and other threads may have changed it
 				// while the mutex was released. Restart the scan from index zero.
@@ -368,6 +369,7 @@ static void rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
 				CHIAKI_LOGW(send_buffer->log, "RUDP retransmission failed for seqnum %#lx: %d", (unsigned long)packet->seq_num, send_err);
 		}
 	}
+	return true;
 }
 
 #endif
