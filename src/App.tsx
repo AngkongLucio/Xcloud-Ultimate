@@ -293,7 +293,9 @@ function App() {
           </PaperProvider>
         </A11yProvider>
       </Provider>
-      {Platform.OS === 'android' ? (\n        <SystemBars style="light" hidden={false} />\n      ) : null}
+      {Platform.OS === 'android' ? (
+        <SystemBars style="light" hidden={false} />
+      ) : null}
     </>
   );
 }
