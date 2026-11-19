@@ -122,56 +122,54 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stop_pipe_select_single(ChiakiStopPipe *sto
 			return CHIAKI_ERR_UNKNOWN;
 	}
 #else
-	fd_set rfds;
-	FD_ZERO(&rfds);
+	int stop_fd;
 #if defined(__SWITCH__)
-	// push udp local socket as fd
-	int stop_fd = stop_pipe->fd;
+	stop_fd = stop_pipe->fd;
 #else
-	int stop_fd = stop_pipe->fds[0];
+	stop_fd = stop_pipe->fds[0];
 #endif
-	FD_SET(stop_fd, &rfds);
-	int nfds = stop_fd;
-
-	fd_set wfds;
-	FD_ZERO(&wfds);
-	if(!CHIAKI_SOCKET_IS_INVALID(fd))
-	{
-		FD_SET(fd, write ? &wfds : &rfds);
-		if(fd > nfds)
-			nfds = fd;
-	}
-	nfds++;
-
-	struct timeval timeout_s;
-	struct timeval *timeout = NULL;
-	if(timeout_ms != UINT64_MAX)
-	{
-		timeout_s.tv_sec = timeout_ms / 1000;
-		timeout_s.tv_usec = (timeout_ms % 1000) * 1000;
-		timeout = &timeout_s;
-	}
 
 	int r;
-	do
+	for(;;)
 	{
+		fd_set rfds;
+		FD_ZERO(&rfds);
+		FD_SET(stop_fd, &rfds);
+
+		fd_set wfds;
+		FD_ZERO(&wfds);
+		int nfds = stop_fd;
+		if(!CHIAKI_SOCKET_IS_INVALID(fd))
+		{
+			FD_SET(fd, write ? &wfds : &rfds);
+			if(fd > nfds)
+				nfds = fd;
+		}
+		nfds++;
+
+		struct timeval timeout_s;
+		struct timeval *timeout = NULL;
+		if(timeout_ms != UINT64_MAX)
+		{
+			timeout_s.tv_sec = (time_t)(timeout_ms / 1000);
+			timeout_s.tv_usec = (suseconds_t)((timeout_ms % 1000) * 1000);
+			timeout = &timeout_s;
+		}
+
 		r = select(nfds, &rfds, write ? &wfds : NULL, NULL, timeout);
-#ifdef _WIN32
-	} while(r < 0 && WSAGetLastError() == WSAEINTR)
-#else
-	} while(r < 0 && errno == EINTR);
-#endif
+		if(r < 0 && errno == EINTR)
+			continue;
+		if(r < 0)
+			return CHIAKI_ERR_UNKNOWN;
 
-	if(r < 0)
-		return CHIAKI_ERR_UNKNOWN;
+		if(FD_ISSET(stop_fd, &rfds))
+			return CHIAKI_ERR_CANCELED;
 
-	if(FD_ISSET(stop_fd, &rfds))
-		return CHIAKI_ERR_CANCELED;
+		if(!CHIAKI_SOCKET_IS_INVALID(fd) && FD_ISSET(fd, write ? &wfds : &rfds))
+			return CHIAKI_ERR_SUCCESS;
 
-	if(!CHIAKI_SOCKET_IS_INVALID(fd) && FD_ISSET(fd, write ? &wfds : &rfds))
-		return CHIAKI_ERR_SUCCESS;
-
-	return CHIAKI_ERR_TIMEOUT;
+		return CHIAKI_ERR_TIMEOUT;
+	}
 #endif
 }
 
