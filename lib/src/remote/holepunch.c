@@ -803,33 +803,73 @@ CHIAKI_EXPORT Session* chiaki_holepunch_session_init(
     session->gw.data = NULL;
     session->gw_status = GATEWAY_STATUS_UNKNOWN;
 
+    bool notif_mutex_initialized = false;
+    bool notif_cond_initialized = false;
+    bool notif_pipe_initialized = false;
+    bool select_pipe_initialized = false;
+    bool state_mutex_initialized = false;
+    bool stop_mutex_initialized = false;
+    bool state_cond_initialized = false;
+
     err = chiaki_mutex_init(&session->notif_mutex, false);
-    assert(err == CHIAKI_ERR_SUCCESS);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
+    notif_mutex_initialized = true;
+
     err = chiaki_cond_init(&session->notif_cond);
-    assert(err == CHIAKI_ERR_SUCCESS);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
+    notif_cond_initialized = true;
+
     err = chiaki_stop_pipe_init(&session->notif_pipe);
-    assert(err == CHIAKI_ERR_SUCCESS);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
+    notif_pipe_initialized = true;
+
     err = chiaki_stop_pipe_init(&session->select_pipe);
-    assert(err == CHIAKI_ERR_SUCCESS);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
+    select_pipe_initialized = true;
+
     err = chiaki_mutex_init(&session->state_mutex, false);
-    assert(err == CHIAKI_ERR_SUCCESS);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
+    state_mutex_initialized = true;
+
     err = chiaki_mutex_init(&session->stop_mutex, false);
-    assert(err == CHIAKI_ERR_SUCCESS);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
+    stop_mutex_initialized = true;
+
     err = chiaki_cond_init(&session->state_cond);
-    assert(err == CHIAKI_ERR_SUCCESS);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
+    state_cond_initialized = true;
 
     session->curl_share = curl_share_init();
-    assert(session->curl_share != NULL);
+    if(!session->curl_share)
+    {
+        err = CHIAKI_ERR_MEMORY;
+        goto init_failed;
+    }
 
-    chiaki_mutex_lock(&session->stop_mutex);
+    err = chiaki_mutex_lock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
     session->main_should_stop = false;
     session->ws_thread_should_stop = false;
-    chiaki_mutex_unlock(&session->stop_mutex);
+    err = chiaki_mutex_unlock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
 
-    chiaki_mutex_lock(&session->state_mutex);
+    err = chiaki_mutex_lock(&session->state_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
     session->state = SESSION_STATE_INIT;
     log_session_state(session);
-    chiaki_mutex_unlock(&session->state_mutex);
+    err = chiaki_mutex_unlock(&session->state_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto init_failed;
 
     err = random_uuidv4(session->pushctx_id);
     if(err == CHIAKI_ERR_SUCCESS)
@@ -854,6 +894,30 @@ CHIAKI_EXPORT Session* chiaki_holepunch_session_init(
     }
 
     return session;
+
+init_failed:
+    CHIAKI_LOGE(session->log, "Could not initialize Holepunch session resources: %d", err);
+    if(session->curl_share)
+        curl_share_cleanup(session->curl_share);
+    if(state_cond_initialized)
+        chiaki_cond_fini(&session->state_cond);
+    if(stop_mutex_initialized)
+        chiaki_mutex_fini(&session->stop_mutex);
+    if(state_mutex_initialized)
+        chiaki_mutex_fini(&session->state_mutex);
+    if(select_pipe_initialized)
+        chiaki_stop_pipe_fini(&session->select_pipe);
+    if(notif_pipe_initialized)
+        chiaki_stop_pipe_fini(&session->notif_pipe);
+    if(notif_cond_initialized)
+        chiaki_cond_fini(&session->notif_cond);
+    if(notif_mutex_initialized)
+        chiaki_mutex_fini(&session->notif_mutex);
+    notification_queue_free(session->ws_notification_queue);
+    free(session->ws_notification_queue);
+    free(session->oauth_header);
+    free(session);
+    return NULL;
 }
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_upnp_discover(Session *session)
