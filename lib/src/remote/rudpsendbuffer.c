@@ -151,9 +151,18 @@ static void GetRudpPacketType(ChiakiRudpSendBuffer *send_buffer, uint16_t packet
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_push(ChiakiRudpSendBuffer *send_buffer, ChiakiSeqNum16 seq_num, uint8_t *buf, size_t buf_size)
 {
+	if(!send_buffer || !buf || buf_size == 0)
+	{
+		free(buf);
+		return CHIAKI_ERR_INVALID_DATA;
+	}
+
 	ChiakiErrorCode err = chiaki_mutex_lock(&send_buffer->mutex);
 	if(err != CHIAKI_ERR_SUCCESS)
+	{
+		free(buf);
 		return err;
+	}
 
 	if(send_buffer->packets_count >= send_buffer->packets_size)
 	{
@@ -184,7 +193,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_push(ChiakiRudpSendBuffer 
 	if(send_buffer->packets_count == 1)
 	{
 		// buffer was empty before, so it will sleep without timeout => WAKE UP!!
-		chiaki_cond_signal(&send_buffer->cond);
+		err = chiaki_cond_signal(&send_buffer->cond);
+		if(err != CHIAKI_ERR_SUCCESS)
+		{
+			send_buffer->packets_count--;
+			memset(packet, 0, sizeof(*packet));
+			goto beach;
+		}
 	}
 
 beach:
