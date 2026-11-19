@@ -45,7 +45,9 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_fini(ChiakiRudpSendBuffer 
 
 /**
  * @param buf ownership of this is taken by the ChiakiRudpSendBuffer, which will free it automatically later!
- * On error, buf is freed immediately.
+ * On validation, lock, capacity, duplicate-sequence, or signal failure, buf is freed.
+ * If insertion succeeds but mutex unlock fails, the buffer retains ownership of buf
+ * and returns the unlock error; the send buffer must not be destroyed while locked.
  */
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_push(ChiakiRudpSendBuffer *send_buffer, ChiakiSeqNum16 seq_num, uint8_t *buf, size_t buf_size);
 
