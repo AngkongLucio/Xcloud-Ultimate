@@ -151,7 +151,7 @@ static void GetRudpPacketType(ChiakiRudpSendBuffer *send_buffer, uint16_t packet
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_push(ChiakiRudpSendBuffer *send_buffer, ChiakiSeqNum16 seq_num, uint8_t *buf, size_t buf_size)
 {
-	if(!send_buffer || !buf || buf_size == 0)
+	if(!send_buffer || !buf || buf_size < 8)
 	{
 		free(buf);
 		return CHIAKI_ERR_INVALID_DATA;
@@ -343,6 +343,8 @@ static void rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
 			if(!packet->buf || packet->buf_size < 8)
 			{
 				CHIAKI_LOGE(send_buffer->log, "RUDP resend buffer contains an invalid packet");
+				packet->tries = RUDP_DATA_RESEND_TRIES_MAX;
+				packet->last_send_ms = 0;
 				continue;
 			}
 			memcpy(&packet_type_value, packet->buf + 6, sizeof(packet_type_value));
