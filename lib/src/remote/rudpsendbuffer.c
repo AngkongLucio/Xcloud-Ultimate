@@ -43,7 +43,12 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_init(ChiakiRudpSendBuffer 
 	ChiakiErrorCode err = chiaki_mutex_init(&send_buffer->mutex, false);
 	if(err != CHIAKI_ERR_SUCCESS)
 		return err;
-	chiaki_mutex_lock(&send_buffer->mutex);
+	err = chiaki_mutex_lock(&send_buffer->mutex);
+	if(err != CHIAKI_ERR_SUCCESS)
+	{
+		chiaki_mutex_fini(&send_buffer->mutex);
+		return err;
+	}
 	send_buffer->rudp = rudp;
 	send_buffer->log = log;
 
