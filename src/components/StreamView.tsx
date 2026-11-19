@@ -63,7 +63,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     stopSession: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -75,7 +75,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     requestFocus: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -87,7 +87,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     pressButton: (buttonMask: number, isPressed: boolean) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -99,7 +99,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     pressTrigger: (name: string, value: number) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -111,7 +111,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     moveStick: (name: string, x: number, y: number) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -123,7 +123,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     sensorStick: (x: number, y: number) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -135,7 +135,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     tap: (isPressed: boolean, nextId: number, touches: any[]) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -147,7 +147,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     touch: (mask: number, nextId: number, touches: any[]) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -159,7 +159,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     getPerformance: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -171,7 +171,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     usbController: (states: any) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const {
           flags,
           leftTrigger,
@@ -200,7 +200,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     usbDsController: (states: any) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const {
           flags,
           leftTrigger,
@@ -253,7 +253,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     sleep: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -265,7 +265,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     startSensor: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -277,7 +277,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     stopSensor: () => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -289,7 +289,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     sendText: (text: string) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -301,7 +301,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     switchKb: (isReject: boolean) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
@@ -313,7 +313,7 @@ const StreamView: ForwardRefRenderFunction<StreamViewRef, StreamViewProps> = (
       }
     },
     setLoginPin: (pin: string) => {
-      if (streamViewRef.current) {
+      if (Platform.OS === 'android' && streamViewRef.current) {
         const viewId = findNodeHandle(streamViewRef.current);
 
         UIManager.dispatchViewManagerCommand(
