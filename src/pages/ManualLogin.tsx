@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
-  Platform,
 } from 'react-native';
 import {Button, Text, TextInput, Divider} from 'react-native-paper';
 import Spinner from 'react-native-loading-spinner-overlay';
