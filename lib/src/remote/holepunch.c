@@ -2240,6 +2240,11 @@ static void* websocket_thread_func(void *user) {
     res = curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0L);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_TIMEOUT failed with CURL error %s", curl_easy_strerror(res));
+    // Bound DNS/TCP/TLS connection setup so session cleanup cannot wait forever
+    // for a WebSocket that never finishes connecting.
+    res = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, 15000L);
+    if(res != CURLE_OK)
+        CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_CONNECTTIMEOUT_MS failed with CURL error %s", curl_easy_strerror(res));
     res = curl_easy_setopt(curl, CURLOPT_URL, ws_url);
     if(res != CURLE_OK)
         CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_URL failed with CURL error %s", curl_easy_strerror(res));
