@@ -85,3 +85,13 @@ These guards prevent known missing-module crashes; they do not replace Android U
 - `Settings.jsx` and `Users.tsx`: app-process restart calls after logout or deleting the final account are Android-only. iOS now asks the user to close and reopen the app after clearing the account state.
 - `ConsoleEdit.tsx`: all validation and save/delete feedback uses cross-platform alerts; no Android toast API remains in this screen.
 - `Home.jsx`: expired-session cleanup no longer attempts to restart the iOS process. Android retains its existing restart behavior; iOS receives close/reopen guidance after the stored session and cookies are cleared.
+
+## Additional Chiaki RUDP hardening (static source changes)
+
+- RUDP nested-message parsing now validates minimum header size, declared packet length, and nested-message boundaries before copying payloads. Malformed/truncated nested packets return an invalid-data error and allocated message memory is released on parse failure.
+- RUDP raw sends now reject null/empty payloads, use the platform-sized socket result type, and verify that the complete datagram was accepted by the socket.
+- RUDP initialization rejects a null or invalid socket before allocating synchronization and retransmission resources.
+- RUDP request/retry handling now propagates send errors instead of waiting for a response after a failed send.
+- POSIX stop-pipe readiness polling preserves a zero-duration first poll, while retaining the monotonic deadline across interrupted select() calls.
+
+These are source-level defensive changes only. They have not been compiled or exercised against a PlayStation console, simulator, or physical iPad. They do not implement the iOS streaming bridge or make the app IPA-ready.
