@@ -55,7 +55,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_init(ChiakiRudpSendBuffer 
 	send_buffer->packets = calloc(size, sizeof(ChiakiRudpSendBufferPacket));
 	if(!send_buffer->packets)
 	{
-		chiaki_mutex_unlock(&send_buffer->mutex);
+		ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&send_buffer->mutex);
+		if(unlock_err != CHIAKI_ERR_SUCCESS)
+		{
+			CHIAKI_LOGE(log, "RUDP send buffer could not unlock mutex after allocation failure: %d", unlock_err);
+			chiaki_mutex_fini(&send_buffer->mutex);
+			return unlock_err;
+		}
 		err = CHIAKI_ERR_MEMORY;
 		goto error_mutex;
 	}
@@ -63,7 +69,17 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_buffer_init(ChiakiRudpSendBuffer 
 	send_buffer->packets_count = 0;
 
 	send_buffer->should_stop = false;
-	chiaki_mutex_unlock(&send_buffer->mutex);
+	ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&send_buffer->mutex);
+	if(unlock_err != CHIAKI_ERR_SUCCESS)
+	{
+		CHIAKI_LOGE(log, "RUDP send buffer could not unlock mutex after initialization: %d", unlock_err);
+		free(send_buffer->packets);
+		send_buffer->packets = NULL;
+		send_buffer->packets_size = 0;
+		send_buffer->packets_count = 0;
+		chiaki_mutex_fini(&send_buffer->mutex);
+		return unlock_err;
+	}
 	err = chiaki_cond_init(&send_buffer->cond);
 	if(err != CHIAKI_ERR_SUCCESS)
 		goto error_packets;
