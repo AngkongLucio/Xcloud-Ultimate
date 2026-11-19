@@ -332,6 +332,10 @@ const StreamFsrView: ForwardRefRenderFunction<
     }
   };
 
+  if (Platform.OS !== 'android') {
+    return <View ref={streamViewRef} style={style} />;
+  }
+
   return (
     <StreamViewNative
       ref={streamViewRef}
