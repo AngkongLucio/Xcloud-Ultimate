@@ -136,6 +136,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stop_pipe_select_single(ChiakiStopPipe *sto
 
 	uint64_t start_ms = timeout_ms == UINT64_MAX ? 0 : chiaki_time_now_monotonic_ms();
 	uint64_t remaining_ms = timeout_ms;
+	bool first_select = true;
 	int r;
 	for(;;)
 	{
@@ -160,14 +161,15 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stop_pipe_select_single(ChiakiStopPipe *sto
 		{
 			uint64_t now_ms = chiaki_time_now_monotonic_ms();
 			uint64_t elapsed_ms = now_ms >= start_ms ? now_ms - start_ms : timeout_ms;
-			if(elapsed_ms >= timeout_ms)
+			if(elapsed_ms >= timeout_ms && !first_select)
 				return CHIAKI_ERR_TIMEOUT;
-			remaining_ms = timeout_ms - elapsed_ms;
+			remaining_ms = elapsed_ms >= timeout_ms ? 0 : timeout_ms - elapsed_ms;
 			timeout_s.tv_sec = (time_t)(remaining_ms / 1000);
 			timeout_s.tv_usec = (suseconds_t)((remaining_ms % 1000) * 1000);
 			timeout = &timeout_s;
 		}
 
+		first_select = false;
 		r = select(nfds, &rfds, write ? &wfds : NULL, NULL, timeout);
 		if(r < 0 && errno == EINTR)
 			continue;
