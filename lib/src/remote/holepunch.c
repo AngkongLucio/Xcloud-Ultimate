@@ -377,7 +377,7 @@ static inline size_t curl_write_cb(
         void* ptr, size_t size, size_t nmemb, void* userdata);
 static ChiakiErrorCode hex_to_bytes(const char* hex_str, uint8_t* bytes, size_t max_len);
 static void bytes_to_hex(const uint8_t* bytes, size_t len, char* hex_str, size_t max_len);
-static void random_uuidv4(char* out);
+static ChiakiErrorCode random_uuidv4(char* out);
 static void *websocket_thread_func(void *user);
 static NotificationType parse_notification_type(ChiakiLog *log, json_object* json);
 static ChiakiErrorCode send_offer(Session *session);
@@ -822,11 +822,27 @@ CHIAKI_EXPORT Session* chiaki_holepunch_session_init(
     log_session_state(session);
     chiaki_mutex_unlock(&session->state_mutex);
 
-    random_uuidv4(session->pushctx_id);
-    session->sid_local = chiaki_random_32();
-    chiaki_random_bytes_crypt(session->hashed_id_local, sizeof(session->hashed_id_local));
-    chiaki_random_bytes_crypt(session->data1, sizeof(session->data1));
-    chiaki_random_bytes_crypt(session->data2, sizeof(session->data2));
+    err = random_uuidv4(session->pushctx_id);
+    if(err == CHIAKI_ERR_SUCCESS)
+    {
+        uint8_t random_sid[sizeof(session->sid_local)];
+        err = chiaki_random_bytes_crypt(random_sid, sizeof(random_sid));
+        if(err == CHIAKI_ERR_SUCCESS)
+            memcpy(&session->sid_local, random_sid, sizeof(session->sid_local));
+    }
+    if(err == CHIAKI_ERR_SUCCESS)
+        err = chiaki_random_bytes_crypt(session->hashed_id_local, sizeof(session->hashed_id_local));
+    if(err == CHIAKI_ERR_SUCCESS)
+        err = chiaki_random_bytes_crypt(session->data1, sizeof(session->data1));
+    if(err == CHIAKI_ERR_SUCCESS)
+        err = chiaki_random_bytes_crypt(session->data2, sizeof(session->data2));
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(session->log, "Could not initialize secure Holepunch session identifiers: %d", err);
+        chiaki_holepunch_session_fini(session);
+        free(session);
+        return NULL;
+    }
 
     return session;
 }
@@ -2053,22 +2069,22 @@ static void bytes_to_hex(const uint8_t* bytes, size_t len, char* hex_str, size_t
  *
  * @param[out] out Buffer to write the UUID to, must be at least 37 bytes long
  */
-static void random_uuidv4(char* out)
+static ChiakiErrorCode random_uuidv4(char* out)
 {
-    srand((unsigned int)time(NULL));
-    const char hex[] = "0123456789abcdef";
-    for (int i = 0; i < 36; i++) {
-        if (i == 8 || i == 13 || i == 18 || i == 23) {
-            out[i] = '-';
-        } else if (i == 14) {
-            out[i] = '4';
-        } else if (i == 19) {
-            out[i] = hex[(rand() % 4) + 8];
-        } else {
-            out[i] = hex[rand() % 16];
-        }
-    }
-    out[36] = '\0';
+    uint8_t bytes[16];
+    ChiakiErrorCode err = chiaki_random_bytes_crypt(bytes, sizeof(bytes));
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
+
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    int written = snprintf(out, 37,
+            "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+            bytes[0], bytes[1], bytes[2], bytes[3],
+            bytes[4], bytes[5], bytes[6], bytes[7],
+            bytes[8], bytes[9], bytes[10], bytes[11],
+            bytes[12], bytes[13], bytes[14], bytes[15]);
+    return written == 36 ? CHIAKI_ERR_SUCCESS : CHIAKI_ERR_UNKNOWN;
 }
 
 /**
