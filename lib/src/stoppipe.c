@@ -48,12 +48,17 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stop_pipe_init(ChiakiStopPipe *stop_pipe)
 	int r = pipe(stop_pipe->fds);
 	if(r < 0)
 		return CHIAKI_ERR_UNKNOWN;
-	r = fcntl(stop_pipe->fds[0], F_SETFL, O_NONBLOCK);
-	if(r == -1)
+
+	// Preserve existing descriptor flags while enabling non-blocking I/O.
+	for(size_t i = 0; i < 2; i++)
 	{
-		close(stop_pipe->fds[0]);
-		close(stop_pipe->fds[1]);
-		return CHIAKI_ERR_UNKNOWN;
+		int flags = fcntl(stop_pipe->fds[i], F_GETFL, 0);
+		if(flags == -1 || fcntl(stop_pipe->fds[i], F_SETFL, flags | O_NONBLOCK) == -1)
+		{
+			close(stop_pipe->fds[0]);
+			close(stop_pipe->fds[1]);
+			return CHIAKI_ERR_UNKNOWN;
+		}
 	}
 #endif
 	return CHIAKI_ERR_SUCCESS;
