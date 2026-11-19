@@ -1,5 +1,5 @@
 import React from 'react';
-import {Alert, Linking, useColorScheme, NativeModules} from 'react-native';
+import {Alert, Linking, Platform, useColorScheme, NativeModules} from 'react-native';
 import {
   PaperProvider,
   MD3DarkTheme,
@@ -293,7 +293,7 @@ function App() {
           </PaperProvider>
         </A11yProvider>
       </Provider>
-      <SystemBars style="light" hidden={false} />
+      {Platform.OS === 'android' ? (\n        <SystemBars style="light" hidden={false} />\n      ) : null}
     </>
   );
 }
