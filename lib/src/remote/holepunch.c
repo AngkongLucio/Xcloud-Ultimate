@@ -5452,49 +5452,49 @@ static bool valid_stun_hostname(const char *host)
             host[0] != '-' && host[len - 1] != '-';
 }
 
-static bool parse_ipv4_stun_entry(char *line, StunServer *server)
+static ChiakiErrorCode parse_ipv4_stun_entry(char *line, StunServer *server)
 {
     char *separator = strchr(line, ':');
     if(!separator || strchr(separator + 1, ':'))
-        return false;
+        return CHIAKI_ERR_INVALID_DATA;
 
     *separator = '\0';
     uint16_t port = 0;
     if(!valid_stun_hostname(line) || !parse_stun_port(separator + 1, &port))
-        return false;
+        return CHIAKI_ERR_INVALID_DATA;
 
     server->host = malloc(strlen(line) + 1);
     if(!server->host)
-        return false;
+        return CHIAKI_ERR_MEMORY;
     strcpy(server->host, line);
     server->port = port;
-    return true;
+    return CHIAKI_ERR_SUCCESS;
 }
 
-static bool parse_ipv6_stun_entry(char *line, StunServer *server)
+static ChiakiErrorCode parse_ipv6_stun_entry(char *line, StunServer *server)
 {
     if(line[0] != '[')
-        return false;
+        return CHIAKI_ERR_INVALID_DATA;
 
     char *closing = strchr(line + 1, ']');
     if(!closing || closing[1] != ':')
-        return false;
+        return CHIAKI_ERR_INVALID_DATA;
 
     *closing = '\0';
     struct in6_addr address;
     if(inet_pton(AF_INET6, line + 1, &address) != 1)
-        return false;
+        return CHIAKI_ERR_INVALID_DATA;
 
     uint16_t port = 0;
     if(!parse_stun_port(closing + 2, &port))
-        return false;
+        return CHIAKI_ERR_INVALID_DATA;
 
     server->host = malloc(strlen(line + 1) + 1);
     if(!server->host)
-        return false;
+        return CHIAKI_ERR_MEMORY;
     strcpy(server->host, line + 1);
     server->port = port;
-    return true;
+    return CHIAKI_ERR_SUCCESS;
 }
 
 static ChiakiErrorCode get_stun_servers(Session *session)
@@ -5577,7 +5577,7 @@ static ChiakiErrorCode get_stun_servers(Session *session)
             if(line_len)
             {
                 StunServer *server;
-                bool parsed;
+                ChiakiErrorCode parse_err;
                 if(list_index == 0)
                 {
                     if(session->num_stun_servers >= 10)
@@ -5586,8 +5586,8 @@ static ChiakiErrorCode get_stun_servers(Session *session)
                         break;
                     }
                     server = &session->stun_server_list[session->num_stun_servers];
-                    parsed = parse_ipv4_stun_entry(line, server);
-                    if(parsed)
+                    parse_err = parse_ipv4_stun_entry(line, server);
+                    if(parse_err == CHIAKI_ERR_SUCCESS)
                         session->num_stun_servers++;
                 }
                 else
@@ -5598,15 +5598,18 @@ static ChiakiErrorCode get_stun_servers(Session *session)
                         break;
                     }
                     server = &session->stun_server_list_ipv6[session->num_stun_servers_ipv6];
-                    parsed = parse_ipv6_stun_entry(line, server);
-                    if(parsed)
+                    parse_err = parse_ipv6_stun_entry(line, server);
+                    if(parse_err == CHIAKI_ERR_SUCCESS)
                         session->num_stun_servers_ipv6++;
                 }
 
-                if(!parsed)
+                if(parse_err == CHIAKI_ERR_MEMORY)
                 {
-                    CHIAKI_LOGW(session->log, "Ignoring malformed STUN server entry");
+                    err = CHIAKI_ERR_MEMORY;
+                    goto cleanup;
                 }
+                if(parse_err != CHIAKI_ERR_SUCCESS)
+                    CHIAKI_LOGW(session->log, "Ignoring malformed STUN server entry");
             }
             line = next;
         }
