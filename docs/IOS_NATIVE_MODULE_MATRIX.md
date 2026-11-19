@@ -42,3 +42,14 @@ This inventory is a porting checklist, not an assertion that iOS implementations
 - [ ] IPA packaging and TrollStore installation are verified on the target device.
 
 A successful CMake core build alone does not satisfy these release gates.
+
+
+## Shared-JavaScript safety work completed
+
+The following guards are compatibility protections, not native iOS streaming implementations:
+
+- `StreamView`, `StreamTextureView`, and `StreamFsrView` only resolve their Android native view managers on Android. On other platforms they render a plain empty React Native view, and their Android view-manager commands are not dispatched.
+- `ButtonView` resolves the Android native button view only on Android. On iOS it uses a React Native `Pressable` and preserves press-in/press-out callbacks for UI safety.
+- The iOS Stream screen remains an explicit unsupported-platform fallback. The empty view is not a decoder, renderer, or successful stream session.
+
+These changes must still pass TypeScript/lint, Android regression, and iOS Xcode/device validation before release.
