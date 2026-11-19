@@ -4,7 +4,7 @@
 
 - The repository is a React Native 0.72.14 application with an Android project.
 - The repository tree currently has no `ios/` directory, Xcode project, or iOS Podfile.
-- The streaming implementation is Android-specific: the home screen calls Android-only APIs such as `ToastAndroid`, and streaming uses native Android view managers and Java/Kotlin modules.
+- The Android streaming implementation still depends on Chiaki JNI, Android video/audio APIs, and Android native view managers. Shared JavaScript now has platform guards and an explicit iOS Stream fallback; those guards do not implement streaming on iOS.
 - The app's documented protocol and login flow are PlayStation Remote Play / PSN, not Xbox Cloud Gaming.
 
 ## What is needed before a working iPad IPA exists
@@ -17,8 +17,13 @@
 
 ## Important
 
-This branch only applies the Xbox-inspired green/dark visual theme to the existing React Native UI. It does not claim to provide an iOS port or a working IPA. Do not install an artifact until an actual iOS build has been produced and tested.
+This branch includes an iOS project-scaffold generator and a manual GitHub Actions workflow that can attempt an unsigned iOS shell-preview IPA build on macOS. The workflow has not yet been run, so no IPA is currently verified or available. Even if the shell-preview build succeeds, it will not provide working remote-play streaming, audio, or controller support. Do not describe a shell preview as a completed iOS port.
 
 ## Detailed implementation checklist
 
 See [IOS_PORT_PLAN.md](./IOS_PORT_PLAN.md) for the phased port plan, native module inventory, streaming-engine requirements, acceptance criteria, and release validation checklist.
+
+
+## Shell preview workflow
+
+See [IOS_TROLLSTORE_PREVIEW.md](./IOS_TROLLSTORE_PREVIEW.md) for the manual GitHub Actions build and TrollStore test instructions. The workflow is a build attempt, not a passing build result.
