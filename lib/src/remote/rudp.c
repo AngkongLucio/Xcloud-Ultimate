@@ -193,7 +193,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_ack_message(RudpInstance *rudp, u
     if(!rudp)
         return CHIAKI_ERR_INVALID_DATA;
     RudpMessage message;
-    uint16_t counter = rudp->counter;
+    uint16_t counter = chiaki_rudp_get_local_counter(rudp);
     message.type = ACK;
     message.subMessage = NULL;
     message.data_size = 6;
@@ -224,7 +224,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_ctrl_message(RudpInstance *rudp, 
         return CHIAKI_ERR_INVALID_DATA;
     RudpMessage message;
     uint16_t counter = get_then_increase_counter(rudp);
-    uint16_t counter_ack = rudp->counter;
+    uint16_t counter_ack = chiaki_rudp_get_local_counter(rudp);
     message.type = CTRL_MESSAGE;
     message.subMessage = NULL;
     message.data_size = 2 + ctrl_message_size;
@@ -409,7 +409,13 @@ static uint16_t get_then_increase_counter(RudpInstance *rudp)
 
 CHIAKI_EXPORT uint16_t chiaki_rudp_get_local_counter(RudpInstance *rudp)
 {
-    return rudp->counter;
+    if(!rudp)
+        return 0;
+
+    chiaki_mutex_lock(&rudp->counter_mutex);
+    uint16_t counter = rudp->counter;
+    chiaki_mutex_unlock(&rudp->counter_mutex);
+    return counter;
 }
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_send_raw(RudpInstance *rudp, uint8_t *buf, size_t buf_size)
