@@ -651,7 +651,9 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_rudp_fini(RudpInstance *rudp)
     ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
     if(rudp)
     {
-        chiaki_rudp_send_buffer_fini(&rudp->send_buffer);
+        err = chiaki_rudp_send_buffer_fini(&rudp->send_buffer);
+        if(err != CHIAKI_ERR_SUCCESS)
+            return err;
         if (!CHIAKI_SOCKET_IS_INVALID(rudp->sock))
         {
             CHIAKI_SOCKET_CLOSE(rudp->sock);
