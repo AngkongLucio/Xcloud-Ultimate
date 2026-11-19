@@ -260,15 +260,22 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stop_pipe_reset(ChiakiStopPipe *stop_pipe)
 	BOOL r = WSAResetEvent(stop_pipe->event);
 	return r ? CHIAKI_ERR_SUCCESS : CHIAKI_ERR_UNKNOWN;
 #elif defined(__SWITCH__)
-	//FIXME
 	uint8_t v;
 	int r;
 	while((r = read(stop_pipe->fd, &v, sizeof(v))) > 0);
+	if(r == 0 || (errno == EAGAIN || errno == EWOULDBLOCK))
+		return CHIAKI_ERR_SUCCESS;
+	if(r < 0 && errno == EINTR)
+		return chiaki_stop_pipe_reset(stop_pipe);
 	return r < 0 ? CHIAKI_ERR_UNKNOWN : CHIAKI_ERR_SUCCESS;
 #else
 	uint8_t v;
 	int r;
 	while((r = read(stop_pipe->fds[0], &v, sizeof(v))) > 0);
+	if(r == 0 || (errno == EAGAIN || errno == EWOULDBLOCK))
+		return CHIAKI_ERR_SUCCESS;
+	if(r < 0 && errno == EINTR)
+		return chiaki_stop_pipe_reset(stop_pipe);
 	return r < 0 ? CHIAKI_ERR_UNKNOWN : CHIAKI_ERR_SUCCESS;
 #endif
 }
