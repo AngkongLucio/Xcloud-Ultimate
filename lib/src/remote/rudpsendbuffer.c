@@ -339,7 +339,14 @@ static void rudp_send_buffer_resend(ChiakiRudpSendBuffer *send_buffer)
 				continue;
 			}
 			char packet_type[29] = {0};
-			GetRudpPacketType(send_buffer, *((uint16_t *)(packet->buf + 6)), packet_type);
+			uint16_t packet_type_value;
+			if(!packet->buf || packet->buf_size < 8)
+			{
+				CHIAKI_LOGE(send_buffer->log, "RUDP resend buffer contains an invalid packet");
+				continue;
+			}
+			memcpy(&packet_type_value, packet->buf + 6, sizeof(packet_type_value));
+			GetRudpPacketType(send_buffer, packet_type_value, packet_type);
 			CHIAKI_LOGI(send_buffer->log, "rudp Send Buffer re-sending packet with seqnum %#lx and type %s, tries: %llu", (unsigned long)packet->seq_num, packet_type, (unsigned long long)packet->tries);
 			packet->last_send_ms = now;
 			chiaki_rudp_send_raw(send_buffer->rudp, packet->buf, packet->buf_size);
