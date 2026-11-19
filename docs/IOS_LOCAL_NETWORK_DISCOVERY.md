@@ -28,3 +28,9 @@ The iOS scaffold script adds `NSLocalNetworkUsageDescription` to the generated a
 ## Release status
 
 Static code preparation only. No iOS pod install, Xcode build, simulator run, or physical-device UDP test has been completed. Do not treat iOS discovery as validated until the steps above pass.
+
+## Dependency verification
+
+The repository lockfile resolves `react-native-udp` to **4.1.7**. That release includes iOS Objective-C sources and a CocoaPods specification depending on React-Core and CocoaAsyncSocket. Its iOS implementation exposes bind, send, receive events, close, and broadcast configuration, which match the basic operations used by the PS4/PS5 discovery function.
+
+This is a static source/API compatibility check, not an iOS build or a real-network test. The library is an older release, so CocoaPods integration, iOS 18 behavior, Local Network permission, and router-specific broadcast behavior still need physical-device validation. The app also contains a separate UDP helper and wake-up path; those flows must be tested independently.
