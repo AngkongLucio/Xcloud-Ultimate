@@ -803,7 +803,6 @@ CHIAKI_EXPORT Session* chiaki_holepunch_session_init(
     session->gw.data = NULL;
     session->gw_status = GATEWAY_STATUS_UNKNOWN;
 
-    ChiakiErrorCode err;
     err = chiaki_mutex_init(&session->notif_mutex, false);
     assert(err == CHIAKI_ERR_SUCCESS);
     err = chiaki_cond_init(&session->notif_cond);
