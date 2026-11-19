@@ -338,16 +338,13 @@ static ChiakiErrorCode chiaki_rudp_message_parse(
         return CHIAKI_ERR_INVALID_DATA;
 
     message->size = ntohs(*(chiaki_unaligned_uint16_t *)(serialized_msg));
-    if(ntohl(*(chiaki_unaligned_uint32_t *)(serialized_msg + 2)) != RUDP_CONSTANT)
-        return CHIAKI_ERR_INVALID_DATA;
-
     message->type = ntohs(*(chiaki_unaligned_uint16_t *)(serialized_msg + 6));
     message->subtype = serialized_msg[6] & 0xFF;
     message->remote_counter = 0;
 
     // The upper four bits encode the RUDP packet marker, not its length.
     size_t length = (size_t)(message->size & 0x0FFF);
-    if(length < 8 || length > msg_size)
+    if((message->size & 0xF000) != 0xC000 || length < 8 || length > msg_size)
         return CHIAKI_ERR_INVALID_DATA;
 
     size_t data_size = length - 8;
