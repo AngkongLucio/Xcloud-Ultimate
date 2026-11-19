@@ -2317,10 +2317,24 @@ static void* websocket_thread_func(void *user) {
     size_t rlen;
     size_t wlen;
     bool expecting_pong = false;
-    chiaki_mutex_lock(&session->stop_mutex);
+    bool stop_mutex_locked = false;
+    err = chiaki_mutex_lock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(session->log, "websocket_thread_func: Could not lock stop mutex: %d", err);
+        goto cleanup_json;
+    }
+    stop_mutex_locked = true;
     while (!session->ws_thread_should_stop)
     {
-        chiaki_mutex_unlock(&session->stop_mutex);
+        err = chiaki_mutex_unlock(&session->stop_mutex);
+        if(err != CHIAKI_ERR_SUCCESS)
+        {
+            CHIAKI_LOGE(session->log, "websocket_thread_func: Could not unlock stop mutex: %d", err);
+            stop_mutex_locked = false;
+            goto cleanup_json;
+        }
+        stop_mutex_locked = false;
         now = chiaki_time_now_monotonic_us();
 
         if (expecting_pong && now - last_ping_sent > 5LL * SECOND_US)
@@ -2481,11 +2495,22 @@ static void* websocket_thread_func(void *user) {
                 goto cleanup_json;
             }
         }
-        chiaki_mutex_lock(&session->stop_mutex);
+        err = chiaki_mutex_lock(&session->stop_mutex);
+        if(err != CHIAKI_ERR_SUCCESS)
+        {
+            CHIAKI_LOGE(session->log, "websocket_thread_func: Could not reacquire stop mutex: %d", err);
+            goto cleanup_json;
+        }
+        stop_mutex_locked = true;
     }
 
     cleanup_json:
-    chiaki_mutex_unlock(&session->stop_mutex);
+    if(stop_mutex_locked)
+    {
+        ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&session->stop_mutex);
+        if(unlock_err != CHIAKI_ERR_SUCCESS)
+            CHIAKI_LOGE(session->log, "websocket_thread_func: Could not release stop mutex during cleanup: %d", unlock_err);
+    }
     json_tokener_free(tok);
     free(buf);
     cleanup:
