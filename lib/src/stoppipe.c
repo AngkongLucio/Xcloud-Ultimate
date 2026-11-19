@@ -261,21 +261,29 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stop_pipe_reset(ChiakiStopPipe *stop_pipe)
 	return r ? CHIAKI_ERR_SUCCESS : CHIAKI_ERR_UNKNOWN;
 #elif defined(__SWITCH__)
 	uint8_t v;
-	int r;
-	while((r = read(stop_pipe->fd, &v, sizeof(v))) > 0);
-	if(r == 0 || (errno == EAGAIN || errno == EWOULDBLOCK))
-		return CHIAKI_ERR_SUCCESS;
-	if(r < 0 && errno == EINTR)
-		return chiaki_stop_pipe_reset(stop_pipe);
-	return r < 0 ? CHIAKI_ERR_UNKNOWN : CHIAKI_ERR_SUCCESS;
+	for(;;)
+	{
+		int r = read(stop_pipe->fd, &v, sizeof(v));
+		if(r > 0)
+			continue;
+		if(r == 0 || errno == EAGAIN || errno == EWOULDBLOCK)
+			return CHIAKI_ERR_SUCCESS;
+		if(errno == EINTR)
+			continue;
+		return CHIAKI_ERR_UNKNOWN;
+	}
 #else
 	uint8_t v;
-	int r;
-	while((r = read(stop_pipe->fds[0], &v, sizeof(v))) > 0);
-	if(r == 0 || (errno == EAGAIN || errno == EWOULDBLOCK))
-		return CHIAKI_ERR_SUCCESS;
-	if(r < 0 && errno == EINTR)
-		return chiaki_stop_pipe_reset(stop_pipe);
-	return r < 0 ? CHIAKI_ERR_UNKNOWN : CHIAKI_ERR_SUCCESS;
+	for(;;)
+	{
+		int r = read(stop_pipe->fds[0], &v, sizeof(v));
+		if(r > 0)
+			continue;
+		if(r == 0 || errno == EAGAIN || errno == EWOULDBLOCK)
+			return CHIAKI_ERR_SUCCESS;
+		if(errno == EINTR)
+			continue;
+		return CHIAKI_ERR_UNKNOWN;
+	}
 #endif
 }
