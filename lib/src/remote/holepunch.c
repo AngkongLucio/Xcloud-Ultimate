@@ -755,10 +755,19 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_generate_client_device_uid(
 CHIAKI_EXPORT Session* chiaki_holepunch_session_init(
         const char* psn_oauth2_token, ChiakiLog *log)
 {
+    if(!psn_oauth2_token || !*psn_oauth2_token)
+        return NULL;
+
     Session *session = malloc(sizeof(Session));
     if(!session)
         return NULL;
-    make_oauth2_header(&session->oauth_header, psn_oauth2_token);
+    memset(session, 0, sizeof(*session));
+    ChiakiErrorCode err = make_oauth2_header(&session->oauth_header, psn_oauth2_token);
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        free(session);
+        return NULL;
+    }
     session->session_id_header = NULL;
     session->log = log;
 
@@ -766,6 +775,7 @@ CHIAKI_EXPORT Session* chiaki_holepunch_session_init(
     session->ws_notification_queue = createNq();
     if(!session->ws_notification_queue)
     {
+        free(session->oauth_header);
         free(session);
         return NULL;
     }
@@ -1870,7 +1880,15 @@ void notification_queue_free(NotificationQueue *nq)
 
 static ChiakiErrorCode make_oauth2_header(char** out, const char* token)
 {
-    size_t oauth_header_len = sizeof(oauth_header_fmt) + strlen(token) + 1;
+    if(!out || !token || !*token)
+        return CHIAKI_ERR_INVALID_DATA;
+
+    *out = NULL;
+    size_t token_len = strlen(token);
+    if(token_len > (size_t)-1 - sizeof(oauth_header_fmt) - 1)
+        return CHIAKI_ERR_OVERFLOW;
+
+    size_t oauth_header_len = sizeof(oauth_header_fmt) + token_len + 1;
     *out = malloc(oauth_header_len);
     if(!(*out))
         return CHIAKI_ERR_MEMORY;
