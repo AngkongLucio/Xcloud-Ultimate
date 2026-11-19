@@ -4,7 +4,8 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  ToastAndroid,
+  Alert,
+  Platform,
 } from 'react-native';
 import {Button, Text, TextInput, Divider} from 'react-native-paper';
 import Spinner from 'react-native-loading-spinner-overlay';
@@ -28,10 +29,25 @@ function ManualLoginScreen({navigation}) {
   const {t} = useTranslation();
   const [loginUrl, setLoginUrl] = React.useState('');
   const [redirectUrl, setRedirectUrl] = React.useState('');
+  const [loginError, setLoginError] = React.useState('');
 
   React.useEffect(() => {
-    const duid = HolepunchManager.getDeviceUid();
-    setLoginUrl(`${LOGIN_URL}duid=${duid}&`);
+    try {
+      if (typeof HolepunchManager?.getDeviceUid !== 'function') {
+        setLoginError(
+          'Manual PSN login is unavailable on iOS because the device identity native module has not been ported yet.',
+        );
+        return;
+      }
+      const duid = HolepunchManager.getDeviceUid();
+      if (!duid) {
+        throw new Error('The device identity is unavailable.');
+      }
+      setLoginUrl(`${LOGIN_URL}duid=${encodeURIComponent(String(duid))}&`);
+    } catch (error) {
+      log.error('Unable to prepare manual login:', error);
+      setLoginError('Unable to prepare manual login on this device.');
+    }
   }, []);
 
   log.info('loginUrl:', loginUrl);
@@ -39,7 +55,7 @@ function ManualLoginScreen({navigation}) {
   return (
     <ScrollView style={styles.container}>
       <Spinner
-        visible={!loginUrl}
+        visible={!loginUrl && !loginError}
         cancelable={true}
         color={'#DF6069'}
         overlayColor={'rgba(0, 0, 0, 0)'}
@@ -50,15 +66,24 @@ function ManualLoginScreen({navigation}) {
         <Text variant="titleMedium">{t('ManualLogin_manual_steps')}</Text>
 
         <View style={styles.center}>
-          <LinkText url={loginUrl}>{t('ManualLogin_open_link')}</LinkText>
+          {loginUrl ? (
+            <LinkText url={loginUrl}>{t('ManualLogin_open_link')}</LinkText>
+          ) : (
+            <Text>{loginError || 'Preparing secure login…'}</Text>
+          )}
         </View>
 
         <Button
           style={styles.mt20}
           mode="outlined"
+          disabled={!loginUrl}
           onPress={() => {
+            if (!loginUrl) {
+              Alert.alert(String(t('Warning')), loginError || 'Login link is unavailable.');
+              return;
+            }
             Clipboard.setString(loginUrl);
-            ToastAndroid.show(t('Copied'), ToastAndroid.SHORT);
+            Alert.alert('', String(t('Copied')));
           }}>
           {t('CopyLink')}
         </Button>
