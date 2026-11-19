@@ -370,7 +370,9 @@ static void *rudp_send_buffer_thread_func(void *user)
 			return NULL;
 	}
 
-	chiaki_mutex_unlock(&send_buffer->mutex);
+	ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&send_buffer->mutex);
+	if(unlock_err != CHIAKI_ERR_SUCCESS)
+		CHIAKI_LOGE(send_buffer->log, "RUDP send buffer worker could not unlock mutex while exiting: %d", unlock_err);
 
 	return NULL;
 }
