@@ -35,6 +35,9 @@ static bool assign_submessage_to_message(RudpMessage *message);
 
 CHIAKI_EXPORT RudpInstance *chiaki_rudp_init(chiaki_socket_t *sock, ChiakiLog *log)
 {
+    if(!sock || CHIAKI_SOCKET_IS_INVALID(*sock))
+        return NULL;
+
     RudpInstance *rudp = (RudpInstance *)calloc(1, sizeof(RudpInstance));
     if(!rudp)
         return NULL;
