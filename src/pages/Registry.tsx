@@ -164,6 +164,12 @@ function RegistryScreen({navigation}) {
       navigation.navigate({
         name: 'Home',
       });
+    }).catch((error: any) => {
+      log.error('Console registration failed:', error);
+      Alert.alert(
+        t('Warning'),
+        'Console registration failed. Verify the console host, PIN, PSN account, and network connection, then try again.',
+      );
     });
   };
 
