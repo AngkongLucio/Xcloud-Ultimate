@@ -94,4 +94,7 @@ These guards prevent known missing-module crashes; they do not replace Android U
 - RUDP request/retry handling now propagates send errors instead of waiting for a response after a failed send.
 - POSIX stop-pipe readiness polling preserves a zero-duration first poll, while retaining the monotonic deadline across interrupted select() calls.
 
+- RUDP retransmission-buffer shutdown now sets its stop flag under the buffer mutex, checks condition signaling and thread joining, and propagates shutdown errors so the parent RUDP instance is not freed while its worker may still be running.
+- RUDP send-buffer insertion now honors its documented buffer-ownership contract on mutex failures and validates the queued payload; a failed initial worker wake-up rolls back the queued packet.
+
 These are source-level defensive changes only. They have not been compiled or exercised against a PlayStation console, simulator, or physical iPad. They do not implement the iOS streaming bridge or make the app IPA-ready.
