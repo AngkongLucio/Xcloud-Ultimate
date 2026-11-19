@@ -81,6 +81,13 @@ function RegistryScreen({navigation}) {
       }
 
       setLoading(false);
+    }).catch((error: any) => {
+      setLoading(false);
+      Alert.alert(
+        t('Warning'),
+        'Console discovery failed. Check Local Network access and make sure your console and iPad are on the same network.',
+      );
+      log.error('Console discovery failed:', error);
     });
   }, [navigation, t]);
 
@@ -190,6 +197,13 @@ function RegistryScreen({navigation}) {
       }
 
       setLoading(false);
+    }).catch((error: any) => {
+      setLoading(false);
+      Alert.alert(
+        t('Warning'),
+        'Console discovery failed. Check Local Network access and make sure your console and iPad are on the same network.',
+      );
+      log.error('Console discovery failed:', error);
     });
   };
 
