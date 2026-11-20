@@ -3879,79 +3879,80 @@ cleanup:
 */
 static ChiakiErrorCode deleteSession(Session *session)
 {
-    ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
-
-    HttpResponseData response_data = {
-            .data = malloc(0),
-            .size = 0,
-    };
+    if(!session || !session->oauth_header || !session->curl_share ||
+            !session->session_id[0])
+        return CHIAKI_ERR_INVALID_DATA;
 
     char url[128] = {0};
-    snprintf(url, sizeof(url), delete_messsage_url_fmt, session->session_id);
+    int url_len = snprintf(url, sizeof(url), delete_messsage_url_fmt, session->session_id);
+    if(url_len < 0 || (size_t)url_len >= sizeof(url))
+        return CHIAKI_ERR_INVALID_DATA;
 
+    HttpResponseData response_data = {.data = NULL, .size = 0};
     CURL *curl = curl_easy_init();
     if(!curl)
-    {
-        free(response_data.data);
-        CHIAKI_LOGE(session->log, "Curl could not init");
         return CHIAKI_ERR_MEMORY;
-    }
 
+    ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
     struct curl_slist *headers = NULL;
-    headers = curl_slist_append(headers, session->oauth_header);
-    headers = curl_slist_append(headers, "Content-Type: application/json; charset=utf-8");
-
-    CURLcode res = curl_easy_setopt(curl, CURLOPT_SHARE, session->curl_share);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_SHARE failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_FAILONERROR failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_URL, url);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_URL failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_TIMEOUT failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_HTTPHEADER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_CUSTOMREQUEST failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_WRITEFUNCTION failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "delete_session: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
-
-    res = curl_easy_perform(curl);
-    curl_slist_free_all(headers);
-    if (res != CURLE_OK)
+    struct curl_slist *new_headers = curl_slist_append(headers, session->oauth_header);
+    if(!new_headers)
     {
-        if (res == CURLE_HTTP_RETURNED_ERROR)
+        err = CHIAKI_ERR_MEMORY;
+        goto cleanup;
+    }
+    headers = new_headers;
+    new_headers = curl_slist_append(headers, "Content-Type: application/json; charset=utf-8");
+    if(!new_headers)
+    {
+        err = CHIAKI_ERR_MEMORY;
+        goto cleanup;
+    }
+    headers = new_headers;
+
+#define SET_DELETE_SESSION_CURL_OPTION(option, value) \
+    do { \
+        CURLcode setopt_err = curl_easy_setopt(curl, option, value); \
+        if(setopt_err != CURLE_OK) \
+        { \
+            CHIAKI_LOGE(session->log, "deleteSession: CURL setopt " #option " failed: %s", curl_easy_strerror(setopt_err)); \
+            err = CHIAKI_ERR_UNKNOWN; \
+            goto cleanup; \
+        } \
+    } while(0)
+    SET_DELETE_SESSION_CURL_OPTION(CURLOPT_SHARE, session->curl_share);
+    SET_DELETE_SESSION_CURL_OPTION(CURLOPT_FAILONERROR, 1L);
+    SET_DELETE_SESSION_CURL_OPTION(CURLOPT_URL, url);
+    SET_DELETE_SESSION_CURL_OPTION(CURLOPT_TIMEOUT, 10L);
+    SET_DELETE_SESSION_CURL_OPTION(CURLOPT_HTTPHEADER, headers);
+    SET_DELETE_SESSION_CURL_OPTION(CURLOPT_CUSTOMREQUEST, "DELETE");
+    SET_DELETE_SESSION_CURL_OPTION(CURLOPT_WRITEFUNCTION, curl_write_cb);
+    SET_DELETE_SESSION_CURL_OPTION(CURLOPT_WRITEDATA, (void*)&response_data);
+    SET_DELETE_SESSION_CURL_OPTION(CURLOPT_SSL_VERIFYPEER, 1L);
+    SET_DELETE_SESSION_CURL_OPTION(CURLOPT_SSL_VERIFYHOST, 2L);
+#undef SET_DELETE_SESSION_CURL_OPTION
+
+    CURLcode res = curl_easy_perform(curl);
+    if(res != CURLE_OK)
+    {
+        if(res == CURLE_HTTP_RETURNED_ERROR)
         {
             long http_code = 0;
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-            CHIAKI_LOGE(session->log, "http_send_session_message: Sending holepunch session message failed with HTTP code %ld.", http_code);
+            CHIAKI_LOGE(session->log, "deleteSession: Request failed with HTTP code %ld", http_code);
             err = CHIAKI_ERR_HTTP_NONOK;
-        } else {
-            CHIAKI_LOGE(session->log, "http_send_session_message: Sending holepunch session message failed with CURL error %s.", curl_easy_strerror(res));
+        }
+        else
+        {
+            CHIAKI_LOGE(session->log, "deleteSession: Request failed: %s", curl_easy_strerror(res));
             err = CHIAKI_ERR_NETWORK;
         }
-        goto cleanup;
     }
 
-    cleanup:
-    curl_easy_cleanup(curl);
+cleanup:
+    curl_slist_free_all(headers);
     free(response_data.data);
+    curl_easy_cleanup(curl);
     return err;
 }
 
