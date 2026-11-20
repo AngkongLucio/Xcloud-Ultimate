@@ -953,16 +953,19 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_create(Session* session)
     ChiakiErrorCode err = get_websocket_fqdn(session, &session->ws_fqdn);
     if (err != CHIAKI_ERR_SUCCESS)
         return err;
-    chiaki_mutex_lock(&session->stop_mutex);
+    err = chiaki_mutex_lock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
     if(session->main_should_stop)
     {
         session->main_should_stop = false;
-        chiaki_mutex_unlock(&session->stop_mutex);
+        ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&session->stop_mutex);
         CHIAKI_LOGI(session->log, "chiaki_holepunch_session_create: canceled");
-        err = CHIAKI_ERR_CANCELED;
-        return err;
+        return unlock_err == CHIAKI_ERR_SUCCESS ? CHIAKI_ERR_CANCELED : unlock_err;
     }
-    chiaki_mutex_unlock(&session->stop_mutex);
+    err = chiaki_mutex_unlock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
 
     err = chiaki_thread_create(&session->ws_thread, websocket_thread_func, session);
     if (err != CHIAKI_ERR_SUCCESS)
@@ -971,39 +974,52 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_create(Session* session)
     chiaki_thread_set_name(&session->ws_thread, "Chiaki Holepunch WS");
     CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Created websocket thread");
 
-    chiaki_mutex_lock(&session->state_mutex);
+    err = chiaki_mutex_lock(&session->state_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
     while (!(session->state & SESSION_STATE_WS_OPEN))
     {
         CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Waiting for websocket to open...");
         err = chiaki_cond_wait(&session->state_cond, &session->state_mutex);
-        assert(err == CHIAKI_ERR_SUCCESS);
+        if(err != CHIAKI_ERR_SUCCESS)
+            break;
     }
-    chiaki_mutex_unlock(&session->state_mutex);
+    ChiakiErrorCode state_unlock_err = chiaki_mutex_unlock(&session->state_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
+    if(state_unlock_err != CHIAKI_ERR_SUCCESS)
+        return state_unlock_err;
 
-    chiaki_mutex_lock(&session->stop_mutex);
+    err = chiaki_mutex_lock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
     if(session->main_should_stop)
     {
         session->main_should_stop = false;
-        chiaki_mutex_unlock(&session->stop_mutex);
+        ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&session->stop_mutex);
         CHIAKI_LOGI(session->log, "chiaki_holepunch_session_create: canceled");
-        err = CHIAKI_ERR_CANCELED;
-        return err;
+        return unlock_err == CHIAKI_ERR_SUCCESS ? CHIAKI_ERR_CANCELED : unlock_err;
     }
-    chiaki_mutex_unlock(&session->stop_mutex);
+    err = chiaki_mutex_unlock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
     err = http_create_session(session);
     if (err != CHIAKI_ERR_SUCCESS)
         return err;
     CHIAKI_LOGV(session->log, "chiaki_holepunch_session_create: Sent holepunch session creation request");
-    chiaki_mutex_lock(&session->stop_mutex);
+    err = chiaki_mutex_lock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
     if(session->main_should_stop)
     {
         session->main_should_stop = false;
-        chiaki_mutex_unlock(&session->stop_mutex);
+        ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&session->stop_mutex);
         CHIAKI_LOGI(session->log, "chiaki_holepunch_session_create: canceled");
-        err = CHIAKI_ERR_CANCELED;
-        return err;
+        return unlock_err == CHIAKI_ERR_SUCCESS ? CHIAKI_ERR_CANCELED : unlock_err;
     }
-    chiaki_mutex_unlock(&session->stop_mutex);
+    err = chiaki_mutex_unlock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
 
     // FIXME: We're currently not using a shared timeout for both  notifications, i.e. if the first one
     //        takes 29 secs arrive, and the second one takes 15 secs, we're not going to time out despite
