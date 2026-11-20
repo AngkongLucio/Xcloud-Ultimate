@@ -3323,139 +3323,165 @@ static ChiakiErrorCode send_accept(Session *session, int req_id, Candidate *sele
 */
 static ChiakiErrorCode http_create_session(Session *session)
 {
-    size_t session_create_json_len = sizeof(session_create_json_fmt) + strlen(session->pushctx_id);
-    char* session_create_json = malloc(session_create_json_len);
-    if(!session_create_json)
+    if(!session || !session->oauth_header || !session->curl_share)
+        return CHIAKI_ERR_INVALID_DATA;
+
+    size_t pushctx_len = strlen(session->pushctx_id);
+    if(pushctx_len != 36)
+        return CHIAKI_ERR_INVALID_DATA;
+    if(pushctx_len > SIZE_MAX - sizeof(session_create_json_fmt))
+        return CHIAKI_ERR_OVERFLOW;
+
+    size_t request_len = sizeof(session_create_json_fmt) + pushctx_len;
+    char *request_json = malloc(request_len);
+    if(!request_json)
         return CHIAKI_ERR_MEMORY;
-    snprintf(session_create_json, session_create_json_len, session_create_json_fmt, session->pushctx_id);
-    CHIAKI_LOGV(session->log, "http_create_session: Sending JSON:\n%s", session_create_json);
+    snprintf(request_json, request_len, session_create_json_fmt, session->pushctx_id);
 
     HttpResponseData response_data = {
-            .data = malloc(0),
+            .data = NULL,
             .size = 0,
     };
-
-    CURL* curl = curl_easy_init();
+    CURL *curl = curl_easy_init();
     if(!curl)
     {
-        free(response_data.data);
-        free(session_create_json);
-        CHIAKI_LOGE(session->log, "Curl could not init");
+        free(request_json);
+        CHIAKI_LOGE(session->log, "http_create_session: Curl could not init");
         return CHIAKI_ERR_MEMORY;
     }
-    struct curl_slist *headers = NULL;
-    headers = curl_slist_append(headers, session->oauth_header);
-    headers = curl_slist_append(headers, "Content-Type: application/json; charset=utf-8");
-
-    CURLcode res = curl_easy_setopt(curl, CURLOPT_SHARE, session->curl_share);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_SHARE failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_FAILONERROR failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_URL, session_create_url);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_URL failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_TIMEOUT failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_HTTPHEADER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_POSTFIELDS, session_create_json);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_POSTFIELDS failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_WRITEFUNCTION failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_create_session: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
 
     ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
-    res = curl_easy_perform(curl);
-    curl_slist_free_all(headers);
-    if (res != CURLE_OK)
+    struct curl_slist *headers = NULL;
+    struct curl_slist *new_headers = curl_slist_append(headers, session->oauth_header);
+    if(!new_headers)
     {
-        if (res == CURLE_HTTP_RETURNED_ERROR)
+        err = CHIAKI_ERR_MEMORY;
+        goto cleanup;
+    }
+    headers = new_headers;
+    new_headers = curl_slist_append(headers, "Content-Type: application/json; charset=utf-8");
+    if(!new_headers)
+    {
+        err = CHIAKI_ERR_MEMORY;
+        goto cleanup;
+    }
+    headers = new_headers;
+
+#define SET_CREATE_SESSION_CURL_OPTION(option, value) \
+    do { \
+        CURLcode setopt_err = curl_easy_setopt(curl, option, value); \
+        if(setopt_err != CURLE_OK) \
+        { \
+            CHIAKI_LOGE(session->log, "http_create_session: CURL setopt " #option " failed: %s", curl_easy_strerror(setopt_err)); \
+            err = CHIAKI_ERR_UNKNOWN; \
+            goto cleanup; \
+        } \
+    } while(0)
+    SET_CREATE_SESSION_CURL_OPTION(CURLOPT_SHARE, session->curl_share);
+    SET_CREATE_SESSION_CURL_OPTION(CURLOPT_FAILONERROR, 1L);
+    SET_CREATE_SESSION_CURL_OPTION(CURLOPT_URL, session_create_url);
+    SET_CREATE_SESSION_CURL_OPTION(CURLOPT_TIMEOUT, 10L);
+    SET_CREATE_SESSION_CURL_OPTION(CURLOPT_HTTPHEADER, headers);
+    SET_CREATE_SESSION_CURL_OPTION(CURLOPT_POSTFIELDS, request_json);
+    SET_CREATE_SESSION_CURL_OPTION(CURLOPT_WRITEFUNCTION, curl_write_cb);
+    SET_CREATE_SESSION_CURL_OPTION(CURLOPT_WRITEDATA, (void*)&response_data);
+    SET_CREATE_SESSION_CURL_OPTION(CURLOPT_SSL_VERIFYPEER, 1L);
+    SET_CREATE_SESSION_CURL_OPTION(CURLOPT_SSL_VERIFYHOST, 2L);
+#undef SET_CREATE_SESSION_CURL_OPTION
+
+    CURLcode res = curl_easy_perform(curl);
+    if(res != CURLE_OK)
+    {
+        if(res == CURLE_HTTP_RETURNED_ERROR)
         {
             long http_code = 0;
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-            CHIAKI_LOGE(session->log, "http_create_session: Creating holepunch session failed with HTTP code %ld", http_code);
+            CHIAKI_LOGE(session->log, "http_create_session: Request failed with HTTP code %ld", http_code);
             err = CHIAKI_ERR_HTTP_NONOK;
-        } else {
-            CHIAKI_LOGE(session->log, "http_create_session: Creating holepunch session failed with CURL error %s", curl_easy_strerror(res));
+        }
+        else
+        {
+            CHIAKI_LOGE(session->log, "http_create_session: Request failed: %s", curl_easy_strerror(res));
             err = CHIAKI_ERR_NETWORK;
         }
+        goto cleanup;
+    }
+
+    if(!response_data.data || response_data.size == 0 || response_data.size > INT_MAX)
+    {
+        CHIAKI_LOGE(session->log, "http_create_session: Server returned an empty or invalid response");
+        err = CHIAKI_ERR_INVALID_DATA;
         goto cleanup;
     }
 
     json_tokener *tok = json_tokener_new();
     if(!tok)
     {
-        CHIAKI_LOGE(session->log, "Couldn't create new json tokener");
+        err = CHIAKI_ERR_MEMORY;
         goto cleanup;
     }
-    CHIAKI_LOGV(session->log, "http_create_session: Received JSON:\n%s", response_data.data);
-    json_object *json = json_tokener_parse_ex(tok, response_data.data, response_data.size);
-    if (json == NULL)
+    json_object *json = json_tokener_parse_ex(tok, response_data.data, (int)response_data.size);
+    enum json_tokener_error json_err = json_tokener_get_error(tok);
+    if(!json || json_err != json_tokener_success)
     {
-        CHIAKI_LOGE(session->log, "http_create_session: Parsing JSON failed");
-        err = CHIAKI_ERR_UNKNOWN;
-        goto cleanup_json_tokener;
+        CHIAKI_LOGE(session->log, "http_create_session: JSON parsing failed: %s", json_tokener_error_desc(json_err));
+        if(json)
+            json_object_put(json);
+        json_tokener_free(tok);
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup;
     }
 
-    json_object* session_id_json;
-    json_pointer_get(json, "/remotePlaySessions/0/sessionId", &session_id_json);
-    json_object* account_id_json;
-    json_pointer_get(json, "/remotePlaySessions/0/members/0/accountId", &account_id_json);
+    json_object *session_id_json = NULL;
+    json_object *account_id_json = NULL;
+    bool schema_ok =
+            json_pointer_get(json, "/remotePlaySessions/0/sessionId", &session_id_json) == 0 &&
+            json_pointer_get(json, "/remotePlaySessions/0/members/0/accountId", &account_id_json) == 0 &&
+            session_id_json && json_object_is_type(session_id_json, json_type_string) &&
+            account_id_json &&
+            (json_object_is_type(account_id_json, json_type_string) ||
+             json_object_is_type(account_id_json, json_type_int));
 
-    bool schema_bad =
-            session_id_json == NULL
-            || !json_object_is_type(session_id_json, json_type_string)
-            || account_id_json == NULL
-            || (!json_object_is_type(account_id_json, json_type_string)
-                && !json_object_is_type(account_id_json, json_type_int));
-    if (schema_bad)
+    const char *session_id = schema_ok ? json_object_get_string(session_id_json) : NULL;
+    bool uuid_valid = session_id && strlen(session_id) == 36;
+    for(size_t uuid_i = 0; uuid_valid && uuid_i < 36; ++uuid_i)
     {
-        CHIAKI_LOGE(session->log, "http_create_session: Unexpected JSON schema, could not parse sessionId and accountId.");
-        CHIAKI_LOGV(session->log, json_object_to_json_string_ext(json, JSON_C_TO_STRING_PRETTY));
-        err = CHIAKI_ERR_UNKNOWN;
-        goto cleanup_json;
-    }
-    const char* session_id = json_object_get_string(session_id_json);
-    if (strlen(session_id) != 36)
-    {
-        CHIAKI_LOGE(session->log, "http_create_session: Unexpected JSON schema, sessionId is not a UUIDv4, was '%s'.", session_id);
-        CHIAKI_LOGV(session->log, json_object_to_json_string_ext(json, JSON_C_TO_STRING_PRETTY));
-        err = CHIAKI_ERR_UNKNOWN;
-        goto cleanup_json;
-    }
-    memcpy(session->session_id, json_object_get_string(session_id_json), 36);
-    err = make_session_id_header(&session->session_id_header, session->session_id);
-    if(err != CHIAKI_ERR_SUCCESS)
-    {
-        CHIAKI_LOGE(session->log, "Could not allocate PSN session ID header: %d", err);
-        goto cleanup_json;
+        if(uuid_i == 8 || uuid_i == 13 || uuid_i == 18 || uuid_i == 23)
+        {
+            if(session_id[uuid_i] != '-')
+                uuid_valid = false;
+        }
+        else if(!((session_id[uuid_i] >= '0' && session_id[uuid_i] <= '9') ||
+                  (session_id[uuid_i] >= 'a' && session_id[uuid_i] <= 'f') ||
+                  (session_id[uuid_i] >= 'A' && session_id[uuid_i] <= 'F')))
+            uuid_valid = false;
     }
 
-    session->account_id = json_object_get_int64(account_id_json);
+    int64_t account_id = schema_ok ? json_object_get_int64(account_id_json) : -1;
+    if(!schema_ok || !uuid_valid || account_id < 0)
+    {
+        CHIAKI_LOGE(session->log, "http_create_session: Server returned an invalid session ID or account ID");
+        err = CHIAKI_ERR_INVALID_DATA;
+    }
+    else
+    {
+        memcpy(session->session_id, session_id, 36);
+        session->session_id[36] = '\0';
+        err = make_session_id_header(&session->session_id_header, session->session_id);
+        if(err == CHIAKI_ERR_SUCCESS)
+            session->account_id = (uint64_t)account_id;
+        else
+            CHIAKI_LOGE(session->log, "http_create_session: Could not allocate session ID header: %d", err);
+    }
 
-    cleanup_json:
     json_object_put(json);
-    cleanup_json_tokener:
     json_tokener_free(tok);
-    cleanup:
-    free(session_create_json);
+
+cleanup:
+    curl_slist_free_all(headers);
+    free(request_json);
     free(response_data.data);
     curl_easy_cleanup(curl);
-
     return err;
 }
 
