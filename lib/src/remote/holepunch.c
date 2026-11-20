@@ -76,7 +76,7 @@
 #define MILLISECONDS_US 1000L
 #define WEBSOCKET_PING_INTERVAL_SEC 5
 // Maximum WebSocket frame size currently supported by libcurl
-#define WEBSOCKET_MAX_FRAME_SIZE 64 * 1024
+#define WEBSOCKET_MAX_FRAME_SIZE 64 * 1024\n#define WEBSOCKET_MAX_MESSAGE_SIZE (4 * 1024 * 1024)
 #define SESSION_CREATION_TIMEOUT_SEC 30
 #define SESSION_START_TIMEOUT_SEC 30
 #define SESSION_DELETION_TIMEOUT_SEC 3
@@ -2362,13 +2362,17 @@ static void* websocket_thread_func(void *user) {
         CHIAKI_LOGE(session->log, "holepunch Couldn't create new json tokener");
         goto cleanup;
     }
-    const struct curl_ws_frame *meta;
+    const struct curl_ws_frame *meta = NULL;
     char *buf = malloc(WEBSOCKET_MAX_FRAME_SIZE);
-    if(!buf)
+    char *message_buf = malloc(WEBSOCKET_MAX_MESSAGE_SIZE + 1);
+    if(!buf || !message_buf)
     {
+        free(buf);
+        free(message_buf);
         json_tokener_free(tok);
         goto cleanup;
     }
+    size_t message_len = 0;
     size_t rlen;
     size_t wlen;
     bool expecting_pong = false;
@@ -2446,7 +2450,13 @@ static void* websocket_thread_func(void *user) {
             }
         }
 
-        CHIAKI_LOGV(session->log, "websocket_thread_func: Received WebSocket frame of length %zu with flags %d", rlen, meta->flags);
+        if(!meta)
+        {
+            CHIAKI_LOGE(session->log, "websocket_thread_func: libcurl returned no WebSocket frame metadata");
+            goto cleanup_json;
+        }
+        CHIAKI_LOGV(session->log, "websocket_thread_func: Received WebSocket frame chunk of length %zu with flags %d and %lld bytes remaining",
+                    rlen, meta->flags, (long long)meta->bytesleft);
         if (meta->flags & CURLWS_PONG)
         {
             CHIAKI_LOGV(session->log, "websocket_thread_func: Received PONG.");
@@ -2470,32 +2480,46 @@ static void* websocket_thread_func(void *user) {
         }
         if (meta->flags & CURLWS_TEXT || meta->flags & CURLWS_BINARY)
         {
-            CHIAKI_LOGV(session->log, "websocket_thread_func: Received WebSocket frame with %zu bytes of payload.", rlen);
-            json_object *json = json_tokener_parse_ex(tok, buf, rlen);
+            if(rlen > WEBSOCKET_MAX_MESSAGE_SIZE - message_len)
+            {
+                CHIAKI_LOGE(session->log, "websocket_thread_func: WebSocket message exceeded the %u-byte limit",
+                            (unsigned)WEBSOCKET_MAX_MESSAGE_SIZE);
+                goto cleanup_json;
+            }
+            if(rlen > 0)
+            {
+                memcpy(message_buf + message_len, buf, rlen);
+                message_len += rlen;
+            }
+
+            // curl_ws_recv can return partial chunks of a frame and fragmented
+            // messages. Do not parse until the final chunk of the final fragment.
+            if(meta->bytesleft > 0 || (meta->flags & CURLWS_CONT))
+                goto reacquire_stop_mutex;
+
+            message_buf[message_len] = '\0';
+            json_tokener_reset(tok);
+            json_object *json = json_tokener_parse_ex(tok, message_buf, (int)message_len);
             if (json == NULL)
             {
-                CHIAKI_LOGE(session->log, "websocket_thread_func: Parsing JSON from payload failed");
-                CHIAKI_LOGV(session->log, "websocket_thread_func: Payload was:\n%s", buf);
-                err = chiaki_mutex_lock(&session->stop_mutex);
-                if(err != CHIAKI_ERR_SUCCESS)
-                {
-                    CHIAKI_LOGE(session->log, "websocket_thread_func: Could not reacquire stop mutex after invalid JSON: %d", err);
-                    goto cleanup_json;
-                }
-                stop_mutex_locked = true;
-                continue;
+                CHIAKI_LOGE(session->log, "websocket_thread_func: Parsing complete JSON message failed");
+                CHIAKI_LOGV(session->log, "websocket_thread_func: Payload was:\n%s", message_buf);
+                message_len = 0;
+                message_buf[0] = '\0';
+                json_tokener_reset(tok);
+                goto reacquire_stop_mutex;
             }
             CHIAKI_LOGV(session->log, json_object_to_json_string_ext(json, JSON_C_TO_STRING_PRETTY));
 
             NotificationType type = parse_notification_type(session->log, json);
-            char *json_buf = malloc(rlen);
+            char *json_buf = malloc(message_len);
             if(!json_buf)
             {
                 json_object_put(json);
                 goto cleanup_json;
             }
-            memcpy(json_buf, buf, rlen);
-            size_t json_buf_size = rlen;
+            memcpy(json_buf, message_buf, message_len);
+            size_t json_buf_size = message_len;
             CHIAKI_LOGV(session->log, "Received notification of type %d", type);
             Notification *notif = newNotification(type, json, json_buf, json_buf_size);
             if(!notif)
@@ -2575,12 +2599,15 @@ static void* websocket_thread_func(void *user) {
             mutex_err = chiaki_mutex_unlock(&session->notif_mutex);
             if(mutex_err != CHIAKI_ERR_SUCCESS)
                 CHIAKI_LOGE(session->log, "websocket_thread_func: Could not unlock notification queue mutex: %d", mutex_err);
+            message_len = 0;
+            message_buf[0] = '\0';
             if (notif->type == NOTIFICATION_TYPE_SESSION_DELETED)
             {
                 CHIAKI_LOGI(session->log, "websocket_thread_func: Holepunch session was deleted on PSN server, exiting....");
                 goto cleanup_json;
             }
         }
+        reacquire_stop_mutex:
         err = chiaki_mutex_lock(&session->stop_mutex);
         if(err != CHIAKI_ERR_SUCCESS)
         {
@@ -2598,6 +2625,7 @@ static void* websocket_thread_func(void *user) {
             CHIAKI_LOGE(session->log, "websocket_thread_func: Could not release stop mutex during cleanup: %d", unlock_err);
     }
     json_tokener_free(tok);
+    free(message_buf);
     free(buf);
     cleanup:
     curl_easy_cleanup(curl);
