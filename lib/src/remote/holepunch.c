@@ -3752,98 +3752,122 @@ offer_cleanup:
 */
 static ChiakiErrorCode http_send_session_message(Session *session, SessionMessage *message, bool short_msg)
 {
-    ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
-
-    HttpResponseData response_data = {
-            .data = malloc(0),
-            .size = 0,
-    };
+    if(!session || !message || !session->oauth_header || !session->curl_share ||
+            !session->session_id[0])
+        return CHIAKI_ERR_INVALID_DATA;
 
     char url[128] = {0};
-    snprintf(url, sizeof(url), session_message_url_fmt, session->session_id);
+    int url_len = snprintf(url, sizeof(url), session_message_url_fmt, session->session_id);
+    if(url_len < 0 || (size_t)url_len >= sizeof(url))
+        return CHIAKI_ERR_INVALID_DATA;
 
     char console_uid_str[sizeof(session->console_uid) * 2 + 1] = {0};
-    bytes_to_hex(session->console_uid, sizeof(session->console_uid), console_uid_str, sizeof(console_uid_str));
+    bytes_to_hex(session->console_uid, sizeof(session->console_uid),
+            console_uid_str, sizeof(console_uid_str));
 
     char *payload_str = NULL;
     size_t payload_len = 0;
-    if(short_msg)
-        short_message_serialize(session, message, &payload_str, &payload_len);
-    else
-        session_message_serialize(session, message, &payload_str, &payload_len);
-    char msg_buf[sizeof(session_message_envelope_fmt) * 2 + payload_len];
-    snprintf(
-            msg_buf, sizeof(msg_buf), session_message_envelope_fmt,
-            payload_str, session->account_id, console_uid_str,
-            session->console_type == CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS4 ? "PS4" : "PS5"
-    );
-    CHIAKI_LOGV(session->log, "Message to send: %s", msg_buf);
+    ChiakiErrorCode err = short_msg
+            ? short_message_serialize(session, message, &payload_str, &payload_len)
+            : session_message_serialize(session, message, &payload_str, &payload_len);
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        free(payload_str);
+        return err;
+    }
+    if(!payload_str || payload_len == 0)
+    {
+        free(payload_str);
+        return CHIAKI_ERR_INVALID_DATA;
+    }
+
+    const char *console_type = session->console_type == CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS4 ? "PS4" : "PS5";
+    int envelope_len = snprintf(NULL, 0, session_message_envelope_fmt,
+            payload_str, session->account_id, console_uid_str, console_type);
+    if(envelope_len < 0 || (size_t)envelope_len == SIZE_MAX)
+    {
+        free(payload_str);
+        return CHIAKI_ERR_INVALID_DATA;
+    }
+    char *message_body = malloc((size_t)envelope_len + 1);
+    if(!message_body)
+    {
+        free(payload_str);
+        return CHIAKI_ERR_MEMORY;
+    }
+    snprintf(message_body, (size_t)envelope_len + 1, session_message_envelope_fmt,
+            payload_str, session->account_id, console_uid_str, console_type);
+
+    HttpResponseData response_data = {.data = NULL, .size = 0};
     CURL *curl = curl_easy_init();
     if(!curl)
     {
+        free(message_body);
         free(payload_str);
-        free(response_data.data);
-        CHIAKI_LOGE(session->log, "Curl could not init");
         return CHIAKI_ERR_MEMORY;
     }
 
     struct curl_slist *headers = NULL;
-    headers = curl_slist_append(headers, session->oauth_header);
-    headers = curl_slist_append(headers, "Content-Type: application/json; charset=utf-8");
-
-    CURLcode res = curl_easy_setopt(curl, CURLOPT_SHARE, session->curl_share);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_SHARE failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_FAILONERROR failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_URL, url);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_URL failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_TIMEOUT failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_HTTPHEADER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg_buf);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_POSTFIELDS failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_WRITEFUNCTION failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_send_session_message: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
-
-    res = curl_easy_perform(curl);
-    curl_slist_free_all(headers);
-    if (res != CURLE_OK)
+    struct curl_slist *new_headers = curl_slist_append(headers, session->oauth_header);
+    if(!new_headers)
     {
-        if (res == CURLE_HTTP_RETURNED_ERROR)
+        err = CHIAKI_ERR_MEMORY;
+        goto cleanup;
+    }
+    headers = new_headers;
+    new_headers = curl_slist_append(headers, "Content-Type: application/json; charset=utf-8");
+    if(!new_headers)
+    {
+        err = CHIAKI_ERR_MEMORY;
+        goto cleanup;
+    }
+    headers = new_headers;
+
+#define SET_MESSAGE_CURL_OPTION(option, value) \
+    do { \
+        CURLcode setopt_err = curl_easy_setopt(curl, option, value); \
+        if(setopt_err != CURLE_OK) \
+        { \
+            CHIAKI_LOGE(session->log, "http_send_session_message: CURL setopt " #option " failed: %s", curl_easy_strerror(setopt_err)); \
+            err = CHIAKI_ERR_UNKNOWN; \
+            goto cleanup; \
+        } \
+    } while(0)
+    SET_MESSAGE_CURL_OPTION(CURLOPT_SHARE, session->curl_share);
+    SET_MESSAGE_CURL_OPTION(CURLOPT_FAILONERROR, 1L);
+    SET_MESSAGE_CURL_OPTION(CURLOPT_URL, url);
+    SET_MESSAGE_CURL_OPTION(CURLOPT_TIMEOUT, 10L);
+    SET_MESSAGE_CURL_OPTION(CURLOPT_HTTPHEADER, headers);
+    SET_MESSAGE_CURL_OPTION(CURLOPT_POSTFIELDS, message_body);
+    SET_MESSAGE_CURL_OPTION(CURLOPT_WRITEFUNCTION, curl_write_cb);
+    SET_MESSAGE_CURL_OPTION(CURLOPT_WRITEDATA, (void*)&response_data);
+    SET_MESSAGE_CURL_OPTION(CURLOPT_SSL_VERIFYPEER, 1L);
+    SET_MESSAGE_CURL_OPTION(CURLOPT_SSL_VERIFYHOST, 2L);
+#undef SET_MESSAGE_CURL_OPTION
+
+    CURLcode res = curl_easy_perform(curl);
+    if(res != CURLE_OK)
+    {
+        if(res == CURLE_HTTP_RETURNED_ERROR)
         {
             long http_code = 0;
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-            CHIAKI_LOGE(session->log, "http_send_session_message: Sending holepunch session message failed with HTTP code %ld.", http_code);
-            CHIAKI_LOGV(session->log, "Request Body: %s.", msg_buf);
+            CHIAKI_LOGE(session->log, "http_send_session_message: Request failed with HTTP code %ld", http_code);
             err = CHIAKI_ERR_HTTP_NONOK;
-        } else {
-            CHIAKI_LOGE(session->log, "http_send_session_message: Sending holepunch session message failed with CURL error %s.", curl_easy_strerror(res));
+        }
+        else
+        {
+            CHIAKI_LOGE(session->log, "http_send_session_message: Request failed: %s", curl_easy_strerror(res));
             err = CHIAKI_ERR_NETWORK;
         }
-        goto cleanup;
     }
 
-    cleanup:
-    curl_easy_cleanup(curl);
-    free(payload_str);
+cleanup:
+    curl_slist_free_all(headers);
     free(response_data.data);
+    curl_easy_cleanup(curl);
+    free(message_body);
+    free(payload_str);
     return err;
 }
 
