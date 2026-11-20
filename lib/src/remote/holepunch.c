@@ -1155,6 +1155,10 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_start(
         Session* session, const uint8_t* device_uid,
         ChiakiHolepunchConsoleType console_type)
 {
+    if(!session || (console_type != CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS4 &&
+                    console_type != CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS5))
+        return CHIAKI_ERR_INVALID_DATA;
+
     ChiakiErrorCode err = chiaki_mutex_lock(&session->state_mutex);
     if(err != CHIAKI_ERR_SUCCESS)
         return err;
