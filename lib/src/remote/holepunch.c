@@ -2749,6 +2749,8 @@ static void* websocket_thread_func(void *user) {
         if(finish_lock_err == CHIAKI_ERR_SUCCESS)
         {
             session->ws_thread_finished = true;
+            if(!session->ws_open)
+                session->state &= ~SESSION_STATE_WS_OPEN;
             session->ws_thread_error = session->ws_open
                     ? CHIAKI_ERR_SUCCESS
                     : CHIAKI_ERR_HOST_DOWN;
