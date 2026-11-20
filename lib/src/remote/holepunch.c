@@ -2762,6 +2762,9 @@ static void* websocket_thread_func(void *user) {
                     session_message_free(msg);
                 }
             }
+            // Keep the type locally: once enqueued and the mutex is released,
+            // a waiting consumer may immediately remove and free notif.
+            NotificationType received_notification_type = notif->type;
             ChiakiErrorCode mutex_err = chiaki_mutex_lock(&session->notif_mutex);
             if(mutex_err != CHIAKI_ERR_SUCCESS)
             {
@@ -2780,7 +2783,7 @@ static void* websocket_thread_func(void *user) {
                 CHIAKI_LOGE(session->log, "websocket_thread_func: Could not unlock notification queue mutex: %d", mutex_err);
             message_len = 0;
             message_buf[0] = '\0';
-            if (notif->type == NOTIFICATION_TYPE_SESSION_DELETED)
+            if (received_notification_type == NOTIFICATION_TYPE_SESSION_DELETED)
             {
                 CHIAKI_LOGI(session->log, "websocket_thread_func: Holepunch session was deleted on PSN server, exiting....");
                 goto cleanup_json;
