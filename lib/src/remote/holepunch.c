@@ -347,6 +347,8 @@ typedef struct session_t
     NotificationQueue* ws_notification_queue;
     bool ws_thread_started;
     bool ws_thread_should_stop;
+    bool ws_thread_finished;
+    ChiakiErrorCode ws_thread_error;
     bool ws_open;
 
     bool main_should_stop;
@@ -968,6 +970,8 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_create(Session* session)
     if(err != CHIAKI_ERR_SUCCESS)
         return err;
 
+    session->ws_thread_finished = false;
+    session->ws_thread_error = CHIAKI_ERR_SUCCESS;
     err = chiaki_thread_create(&session->ws_thread, websocket_thread_func, session);
     if (err != CHIAKI_ERR_SUCCESS)
         return err;
@@ -978,18 +982,25 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_create(Session* session)
     err = chiaki_mutex_lock(&session->state_mutex);
     if(err != CHIAKI_ERR_SUCCESS)
         return err;
-    while (!(session->state & SESSION_STATE_WS_OPEN))
+    while (!(session->state & SESSION_STATE_WS_OPEN) && !session->ws_thread_finished)
     {
-        CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Waiting for websocket to open...");
+        CHIAKI_LOGV(session->log, "chiaki_holepunch_session_create: Waiting for websocket to open...");
         err = chiaki_cond_wait(&session->state_cond, &session->state_mutex);
         if(err != CHIAKI_ERR_SUCCESS)
             break;
     }
+    bool websocket_opened = (session->state & SESSION_STATE_WS_OPEN) != 0;
+    ChiakiErrorCode websocket_thread_error = session->ws_thread_error;
     ChiakiErrorCode state_unlock_err = chiaki_mutex_unlock(&session->state_mutex);
     if(err != CHIAKI_ERR_SUCCESS)
         return err;
     if(state_unlock_err != CHIAKI_ERR_SUCCESS)
         return state_unlock_err;
+    if(!websocket_opened)
+    {
+        CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: WebSocket thread exited before the connection opened");
+        return websocket_thread_error != CHIAKI_ERR_SUCCESS ? websocket_thread_error : CHIAKI_ERR_HOST_DOWN;
+    }
 
     err = chiaki_mutex_lock(&session->stop_mutex);
     if(err != CHIAKI_ERR_SUCCESS)
@@ -2339,7 +2350,7 @@ static void* websocket_thread_func(void *user) {
     if(!curl)
     {
         CHIAKI_LOGE(session->log, "Curl could not init");
-        return NULL;
+        goto thread_finished;
     }
     struct curl_slist *headers = NULL;
     char ws_host_header[192] = {0};
@@ -2728,9 +2739,29 @@ static void* websocket_thread_func(void *user) {
     free(message_buf);
     free(buf);
     cleanup:
-    curl_easy_cleanup(curl);
+    if(curl)
+        curl_easy_cleanup(curl);
     session->ws_open = false;
 
+    thread_finished:
+    {
+        ChiakiErrorCode finish_lock_err = chiaki_mutex_lock(&session->state_mutex);
+        if(finish_lock_err == CHIAKI_ERR_SUCCESS)
+        {
+            session->ws_thread_finished = true;
+            session->ws_thread_error = session->ws_open
+                    ? CHIAKI_ERR_SUCCESS
+                    : CHIAKI_ERR_HOST_DOWN;
+            ChiakiErrorCode finish_signal_err = chiaki_cond_broadcast(&session->state_cond);
+            if(finish_signal_err != CHIAKI_ERR_SUCCESS)
+                CHIAKI_LOGE(session->log, "websocket_thread_func: Could not signal WebSocket thread completion: %d", finish_signal_err);
+            ChiakiErrorCode finish_unlock_err = chiaki_mutex_unlock(&session->state_mutex);
+            if(finish_unlock_err != CHIAKI_ERR_SUCCESS)
+                CHIAKI_LOGE(session->log, "websocket_thread_func: Could not unlock state mutex after thread completion: %d", finish_unlock_err);
+        }
+        else
+            CHIAKI_LOGE(session->log, "websocket_thread_func: Could not lock state mutex to report thread completion: %d", finish_lock_err);
+    }
     return NULL;
 }
 
