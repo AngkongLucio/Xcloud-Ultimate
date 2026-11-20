@@ -1260,7 +1260,9 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_start(
         err = chiaki_mutex_lock(&session->state_mutex);
         if(err != CHIAKI_ERR_SUCCESS)
         {
-            clear_notification(session, notif);
+            ChiakiErrorCode clear_err = clear_notification(session, notif);
+            if(clear_err != CHIAKI_ERR_SUCCESS)
+                CHIAKI_LOGW(session->log, "chiaki_holepunch_session_start: Could not clear notification after state mutex failure: %d", clear_err);
             return err;
         }
 
@@ -1338,7 +1340,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_start(
             err = CHIAKI_ERR_UNKNOWN;
         }
 
-        clear_notification(session, notif);
+        ChiakiErrorCode clear_err = clear_notification(session, notif);
+        if(clear_err != CHIAKI_ERR_SUCCESS)
+        {
+            CHIAKI_LOGE(session->log, "chiaki_holepunch_session_start: Could not clear processed notification: %d", clear_err);
+            if(err == CHIAKI_ERR_SUCCESS)
+                err = clear_err;
+        }
 
         if(err == CHIAKI_ERR_SUCCESS)
         {
