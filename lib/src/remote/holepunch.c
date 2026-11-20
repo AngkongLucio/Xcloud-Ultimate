@@ -2364,34 +2364,32 @@ static void* websocket_thread_func(void *user) {
 
     CURLcode res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_HTTPHEADER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SHARE, session->curl_share);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_SHAREfailed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_FAILONERROR failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_TIMEOUT failed with CURL error %s", curl_easy_strerror(res));
+    {
+        CHIAKI_LOGE(session->log, "websocket_thread_func: CURL setopt CURLOPT_HTTPHEADER failed: %s", curl_easy_strerror(res));
+        curl_slist_free_all(headers);
+        goto cleanup;
+    }
+#define SET_WSOPT(option, value) \
+    do { \
+        res = curl_easy_setopt(curl, option, value); \
+        if(res != CURLE_OK) \
+        { \
+            CHIAKI_LOGE(session->log, "websocket_thread_func: CURL setopt " #option " failed: %s", curl_easy_strerror(res)); \
+            curl_slist_free_all(headers); \
+            goto cleanup; \
+        } \
+    } while(0)
+    SET_WSOPT(CURLOPT_SHARE, session->curl_share);
+    SET_WSOPT(CURLOPT_FAILONERROR, 1L);
+    SET_WSOPT(CURLOPT_TIMEOUT, 0L);
     // Bound DNS/TCP/TLS connection setup so session cleanup cannot wait forever
     // for a WebSocket that never finishes connecting.
-    res = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, 15000L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_CONNECTTIMEOUT_MS failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_URL, ws_url);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_URL failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 2L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_CONNECT_ONLY failed with CURL error %s", curl_easy_strerror(res));
-
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch websocket_thread_func: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
+    SET_WSOPT(CURLOPT_CONNECTTIMEOUT_MS, 15000L);
+    SET_WSOPT(CURLOPT_URL, ws_url);
+    SET_WSOPT(CURLOPT_CONNECT_ONLY, 2L);
+    SET_WSOPT(CURLOPT_SSL_VERIFYPEER, 1L);
+    SET_WSOPT(CURLOPT_SSL_VERIFYHOST, 2L);
+#undef SET_WSOPT
 
     res = curl_easy_perform(curl);
     curl_slist_free_all(headers);
