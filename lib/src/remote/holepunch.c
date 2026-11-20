@@ -1787,9 +1787,8 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
     log_session_state(session);
 
     cleanup_msg:
-    chiaki_mutex_lock(&session->notif_mutex);
+    session_message_clear_notification(session, msg);
     session_message_free(msg);
-    chiaki_mutex_unlock(&session->notif_mutex);
     cleanup:
     if(err != CHIAKI_ERR_SUCCESS)
     {
@@ -1804,9 +1803,8 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
             session->ipv6_sock = CHIAKI_INVALID_SOCKET;
         }
     }
-    chiaki_mutex_lock(&session->notif_mutex);
+    session_message_clear_notification(session, console_offer_msg);
     session_message_free(console_offer_msg);
-    chiaki_mutex_unlock(&session->notif_mutex);
     offer_cleanup:
     if(session->our_offer_msg)
     {
@@ -5060,6 +5058,18 @@ static ChiakiErrorCode clear_notification(
     return CHIAKI_ERR_UNKNOWN;
 }
 
+static void session_message_clear_notification(Session *session, SessionMessage *message)
+{
+    if(!session || !message || !message->notification)
+        return;
+    ChiakiErrorCode err = clear_notification(session, message->notification);
+    if(err != CHIAKI_ERR_SUCCESS)
+        CHIAKI_LOGW(session->log, "Could not clear notification owned by session message: %d", err);
+    // clear_notification may have removed the notification even if mutex release failed.
+    // Do not retain a pointer that could refer to freed queue storage.
+    message->notification = NULL;
+}
+
 /**
  * Wait for a SessionMessage to arrive
  *
@@ -5090,15 +5100,25 @@ static ChiakiErrorCode wait_for_session_message(
             CHIAKI_LOGE(session->log, "Failed to wait for holepunch session message notification.");
             return err;
         }
-        chiaki_mutex_lock(&session->stop_mutex);
+        ChiakiErrorCode stop_err = chiaki_mutex_lock(&session->stop_mutex);
+        if(stop_err != CHIAKI_ERR_SUCCESS)
+        {
+            clear_notification(session, notif);
+            return stop_err;
+        }
         if(session->main_should_stop)
         {
             session->main_should_stop = false;
-            chiaki_mutex_unlock(&session->stop_mutex);
-            err = CHIAKI_ERR_CANCELED;
-            return err;
+            stop_err = chiaki_mutex_unlock(&session->stop_mutex);
+            clear_notification(session, notif);
+            return stop_err == CHIAKI_ERR_SUCCESS ? CHIAKI_ERR_CANCELED : stop_err;
         }
-        chiaki_mutex_unlock(&session->stop_mutex);
+        stop_err = chiaki_mutex_unlock(&session->stop_mutex);
+        if(stop_err != CHIAKI_ERR_SUCCESS)
+        {
+            clear_notification(session, notif);
+            return stop_err;
+        }
         json_object *payload = session_message_get_payload(session->log, notif->json);
         err = session_message_parse(session->log, payload, &msg);
         json_object_put(payload);
@@ -5106,6 +5126,7 @@ static ChiakiErrorCode wait_for_session_message(
         {
             CHIAKI_LOGE(session->log, "Failed to parse holepunch session message");
             session_message_free(msg);
+            clear_notification(session, notif);
             return err;
         }
         if(msg->action & SESSION_MESSAGE_ACTION_TERMINATE)
@@ -5113,6 +5134,7 @@ static ChiakiErrorCode wait_for_session_message(
             CHIAKI_LOGW(session->log, "Holepunch session received Terminate message, terminating %d", msg->action);
             err = CHIAKI_ERR_CANCELED;
             session_message_free(msg);
+            clear_notification(session, notif);
             return err;
         }
         if (!(msg->action & types))
@@ -5158,27 +5180,39 @@ static ChiakiErrorCode wait_for_session_message_ack(
             CHIAKI_LOGE(session->log, "wait_for_session_message_ack: Failed to wait for holepunch session connection offer ACK notification.");
             return err;
         }
-        chiaki_mutex_lock(&session->stop_mutex);
+        ChiakiErrorCode stop_err = chiaki_mutex_lock(&session->stop_mutex);
+        if(stop_err != CHIAKI_ERR_SUCCESS)
+        {
+            session_message_clear_notification(session, msg);
+            session_message_free(msg);
+            return stop_err;
+        }
         if(session->main_should_stop)
         {
             session->main_should_stop = false;
+            stop_err = chiaki_mutex_unlock(&session->stop_mutex);
+            session_message_clear_notification(session, msg);
             session_message_free(msg);
-            chiaki_mutex_unlock(&session->stop_mutex);
-            err = CHIAKI_ERR_CANCELED;
-            return err;
+            return stop_err == CHIAKI_ERR_SUCCESS ? CHIAKI_ERR_CANCELED : stop_err;
         }
-        chiaki_mutex_unlock(&session->stop_mutex);
+        stop_err = chiaki_mutex_unlock(&session->stop_mutex);
+        if(stop_err != CHIAKI_ERR_SUCCESS)
+        {
+            session_message_clear_notification(session, msg);
+            session_message_free(msg);
+            return stop_err;
+        }
         if (msg->req_id != req_id)
         {
             CHIAKI_LOGE(session->log, "wait_for_session_message_ack: Got ACK for unexpected request ID %d", msg->req_id);
+            session_message_clear_notification(session, msg);
             session_message_free(msg);
             msg = NULL;
             continue;
         }
         finished = true;
-        chiaki_mutex_lock(&session->notif_mutex);
+        session_message_clear_notification(session, msg);
         session_message_free(msg);
-        chiaki_mutex_unlock(&session->notif_mutex);
     }
 
     return err;
