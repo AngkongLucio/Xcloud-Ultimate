@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
@@ -2259,10 +2260,24 @@ static ChiakiErrorCode get_websocket_fqdn(Session *session, char **fqdn)
     else
     {
         const char *fqdn_value = json_object_get_string(fqdn_json);
-        if(!fqdn_value || !*fqdn_value ||
-                (strchr(fqdn_value, '/') || strchr(fqdn_value, '\\') ||
-                 strchr(fqdn_value, '\r') || strchr(fqdn_value, '\n')) ||
-                strlen(fqdn_value) >= 96)
+        bool hostname_valid = fqdn_value && *fqdn_value;
+        size_t fqdn_len = hostname_valid ? strlen(fqdn_value) : 0;
+        if(fqdn_len == 0 || fqdn_len >= 96)
+            hostname_valid = false;
+        for(size_t hostname_i = 0; hostname_valid && hostname_i < fqdn_len; ++hostname_i)
+        {
+            unsigned char c = (unsigned char)fqdn_value[hostname_i];
+            bool allowed = (c >= 'a' && c <= 'z') ||
+                    (c >= 'A' && c <= 'Z') ||
+                    (c >= '0' && c <= '9') || c == '.' || c == '-';
+            if(!allowed || (c == '.' && (hostname_i == 0 ||
+                    hostname_i + 1 == fqdn_len || fqdn_value[hostname_i - 1] == '.' ||
+                    fqdn_value[hostname_i - 1] == '-' || fqdn_value[hostname_i + 1] == '-')) ||
+                    (c == '-' && (hostname_i == 0 || hostname_i + 1 == fqdn_len ||
+                    fqdn_value[hostname_i - 1] == '.' || fqdn_value[hostname_i + 1] == '.')))
+                hostname_valid = false;
+        }
+        if(!hostname_valid)
         {
             CHIAKI_LOGE(session->log, "get_websocket_fqdn: Server returned an invalid WebSocket hostname");
             err = CHIAKI_ERR_INVALID_DATA;
