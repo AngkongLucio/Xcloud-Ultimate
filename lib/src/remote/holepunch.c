@@ -2260,8 +2260,8 @@ static ChiakiErrorCode get_websocket_fqdn(Session *session, char **fqdn)
     {
         const char *fqdn_value = json_object_get_string(fqdn_json);
         if(!fqdn_value || !*fqdn_value ||
-                (strchr(fqdn_value, '/') || strchr(fqdn_value, '\\\\') ||
-                 strchr(fqdn_value, '\\r') || strchr(fqdn_value, '\\n')) ||
+                (strchr(fqdn_value, '/') || strchr(fqdn_value, '\\') ||
+                 strchr(fqdn_value, '\r') || strchr(fqdn_value, '\n')) ||
                 strlen(fqdn_value) >= 96)
         {
             CHIAKI_LOGE(session->log, "get_websocket_fqdn: Server returned an invalid WebSocket hostname");
