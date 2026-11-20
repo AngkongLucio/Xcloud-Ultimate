@@ -199,6 +199,7 @@ typedef struct notification_t
     struct notification_t *next;
 
     NotificationType type;
+    bool claimed; // Set under notif_mutex so only one waiter owns this queued notification.
     json_object* json;
     char* json_buf;
     size_t json_buf_size;
@@ -5250,8 +5251,12 @@ static ChiakiErrorCode wait_for_notification(
         for(Notification *notif = session->ws_notification_queue->front;
                 notif != NULL; notif = notif->next)
         {
-            if(notif->type & types)
+            if((notif->type & types) && !notif->claimed)
             {
+                // Claim the notification before releasing notif_mutex. Without
+                // this, concurrent waiters can both retain the same raw pointer
+                // and one may free it while the other is still processing it.
+                notif->claimed = true;
                 *out = notif;
                 err = CHIAKI_ERR_SUCCESS;
                 goto cleanup;
@@ -6394,6 +6399,7 @@ static Notification* newNotification(NotificationType type, json_object *json, c
     if(!notif)
         return NULL;
     notif->type = type;
+    notif->claimed = false;
     notif->json = json;
     notif->json_buf = json_buf;
     notif->json_buf_size = json_buf_size;
