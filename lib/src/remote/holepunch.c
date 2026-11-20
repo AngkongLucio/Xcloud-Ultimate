@@ -5557,7 +5557,7 @@ static ChiakiErrorCode wait_for_session_message_ack(
     bool finished = false;
     while (!finished)
     {
-        err = wait_for_session_message(session, &msg, msg_query, SESSION_START_TIMEOUT_SEC * 1000);
+        err = wait_for_session_message(session, &msg, msg_query, timeout_ms);
         if (err == CHIAKI_ERR_TIMEOUT)
         {
             CHIAKI_LOGE(session->log, "wait_for_session_message_ack: Timed out waiting for holepunch session connection offer ACK notification.");
