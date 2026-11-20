@@ -2455,14 +2455,18 @@ static void* websocket_thread_func(void *user) {
             CHIAKI_LOGE(session->log, "websocket_thread_func: libcurl returned no WebSocket frame metadata");
             goto cleanup_json;
         }
+        // curl_ws_recv metadata is only valid until the next WebSocket API call.
+        // Copy it before replying to a PING with curl_ws_send.
+        const int ws_flags = meta->flags;
+        const curl_off_t ws_bytesleft = meta->bytesleft;
         CHIAKI_LOGV(session->log, "websocket_thread_func: Received WebSocket frame chunk of length %zu with flags %d and %lld bytes remaining",
-                    rlen, meta->flags, (long long)meta->bytesleft);
-        if (meta->flags & CURLWS_PONG)
+                    rlen, ws_flags, (long long)ws_bytesleft);
+        if (ws_flags & CURLWS_PONG)
         {
             CHIAKI_LOGV(session->log, "websocket_thread_func: Received PONG.");
             expecting_pong = false;
         }
-        if (meta->flags & CURLWS_PING)
+        if (ws_flags & CURLWS_PING)
         {
             CHIAKI_LOGV(session->log, "websocket_thread_func: Received PING.");
             res = curl_ws_send(curl, buf, rlen, &wlen, 0, CURLWS_PONG);
@@ -2473,12 +2477,12 @@ static void* websocket_thread_func(void *user) {
             }
             CHIAKI_LOGV(session->log, "websocket_thread_func: Sent PONG.");
         }
-        if (meta->flags & CURLWS_CLOSE)
+        if (ws_flags & CURLWS_CLOSE)
         {
             CHIAKI_LOGE(session->log, "websocket_thread_func: WebSocket closed");
             goto cleanup_json;
         }
-        if (meta->flags & CURLWS_TEXT || meta->flags & CURLWS_BINARY)
+        if (ws_flags & CURLWS_TEXT || ws_flags & CURLWS_BINARY)
         {
             if(rlen > WEBSOCKET_MAX_MESSAGE_SIZE - message_len)
             {
@@ -2494,7 +2498,7 @@ static void* websocket_thread_func(void *user) {
 
             // curl_ws_recv can return partial chunks of a frame and fragmented
             // messages. Do not parse until the final chunk of the final fragment.
-            if(meta->bytesleft > 0 || (meta->flags & CURLWS_CONT))
+            if(ws_bytesleft > 0 || (ws_flags & CURLWS_CONT))
                 goto reacquire_stop_mutex;
 
             message_buf[message_len] = '\0';
