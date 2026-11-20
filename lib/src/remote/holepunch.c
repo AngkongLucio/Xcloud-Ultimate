@@ -5051,27 +5051,38 @@ static ChiakiErrorCode clear_notification(
 {
     if(!session || !notification || !session->ws_notification_queue)
         return CHIAKI_ERR_INVALID_DATA;
-    bool found = false;
     NotificationQueue *nq = session->ws_notification_queue;
     ChiakiErrorCode err = chiaki_mutex_lock(&session->notif_mutex);
     if(err != CHIAKI_ERR_SUCCESS)
         return err;
-    while (nq->rear != NULL)
+
+    Notification *previous = NULL;
+    Notification *current = nq->front;
+    while(current && current != notification)
     {
-        if(nq->front == notification)
-        {
-            found = true;
-            dequeueNq(nq);
-            break;
-        }
-        dequeueNq(nq);
+        previous = current;
+        current = current->next;
     }
+
+    if(current)
+    {
+        if(previous)
+            previous->next = current->next;
+        else
+            nq->front = current->next;
+        if(nq->rear == current)
+            nq->rear = previous;
+
+        if(current->json)
+            json_object_put(current->json);
+        free(current->json_buf);
+        free(current);
+    }
+
     err = chiaki_mutex_unlock(&session->notif_mutex);
     if(err != CHIAKI_ERR_SUCCESS)
         return err;
-    if(found)
-        return CHIAKI_ERR_SUCCESS;
-    return CHIAKI_ERR_UNKNOWN;
+    return current ? CHIAKI_ERR_SUCCESS : CHIAKI_ERR_UNKNOWN;
 }
 
 static void session_message_clear_notification(Session *session, SessionMessage *message)
