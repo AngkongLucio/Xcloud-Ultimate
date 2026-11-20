@@ -2452,15 +2452,30 @@ static void* websocket_thread_func(void *user) {
 
             // Automatically ACK OFFER session messages if we're not currently explicitly
             // waiting on offers
-            chiaki_mutex_lock(&session->state_mutex);
-            bool should_ack_offers =
-                    // We're not expecting any offers after receiving one for the control port and before it's established, afterwards we expect
-                    // one for the data port, so we don't auto-ACK in between
-                    (session->state & SESSION_STATE_CTRL_OFFER_RECEIVED
-                     && !(session->state & SESSION_STATE_CTRL_ESTABLISHED))
-                    // At this point all offers were received and we don't care for new ones anymore
-                    || session->state & SESSION_STATE_DATA_OFFER_RECEIVED;
-            chiaki_mutex_unlock(&session->state_mutex);
+            bool should_ack_offers = false;
+            ChiakiErrorCode state_mutex_err = chiaki_mutex_lock(&session->state_mutex);
+            if(state_mutex_err == CHIAKI_ERR_SUCCESS)
+            {
+                should_ack_offers =
+                        // We're not expecting any offers after receiving one for the control port and before it's established, afterwards we expect
+                        // one for the data port, so we don't auto-ACK in between
+                        (session->state & SESSION_STATE_CTRL_OFFER_RECEIVED
+                         && !(session->state & SESSION_STATE_CTRL_ESTABLISHED))
+                        // At this point all offers were received and we don't care for new ones anymore
+                        || session->state & SESSION_STATE_DATA_OFFER_RECEIVED;
+                state_mutex_err = chiaki_mutex_unlock(&session->state_mutex);
+                if(state_mutex_err != CHIAKI_ERR_SUCCESS)
+                {
+                    CHIAKI_LOGE(session->log, "websocket_thread_func: Could not unlock state mutex after reading session state: %d", state_mutex_err);
+                    should_ack_offers = false;
+                }
+            }
+            else
+            {
+                // Do not read shared session state without its mutex. The original
+                // notification is still queued below for the main session loop.
+                CHIAKI_LOGE(session->log, "websocket_thread_func: Could not lock state mutex before reading session state: %d", state_mutex_err);
+            }
             if (should_ack_offers && notif->type == NOTIFICATION_TYPE_SESSION_MESSAGE_CREATED)
             {
                 SessionMessage *msg = NULL;
