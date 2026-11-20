@@ -5475,9 +5475,17 @@ static ChiakiErrorCode wait_for_session_message(
     Notification *notif = NULL;
     SessionMessage *msg = NULL;
     uint32_t notif_query = NOTIFICATION_TYPE_SESSION_MESSAGE_CREATED;
+    uint64_t waiting_since = chiaki_time_now_monotonic_us();
     while (!finished)
     {
-        err = wait_for_notification(session, &notif, notif_query, timeout_ms);
+        uint64_t now = chiaki_time_now_monotonic_us();
+        uint64_t elapsed_ms = now >= waiting_since
+                ? (now - waiting_since) / MILLISECONDS_US
+                : timeout_ms;
+        if(elapsed_ms >= timeout_ms)
+            return CHIAKI_ERR_TIMEOUT;
+        uint64_t remaining_ms = timeout_ms - elapsed_ms;
+        err = wait_for_notification(session, &notif, notif_query, remaining_ms);
         if (err == CHIAKI_ERR_TIMEOUT)
         {
             CHIAKI_LOGE(session->log, "Timed out waiting for holepunch session message notification.");
