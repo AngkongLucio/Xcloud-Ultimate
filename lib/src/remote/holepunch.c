@@ -5559,13 +5559,23 @@ static ChiakiErrorCode wait_for_session_message(
 static ChiakiErrorCode wait_for_session_message_ack(
         Session *session, int req_id, uint64_t timeout_ms)
 {
+    if(!session)
+        return CHIAKI_ERR_INVALID_DATA;
+
     ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
     SessionMessage *msg = NULL;
     uint32_t msg_query = SESSION_MESSAGE_ACTION_RESULT;
-    bool finished = false;
-    while (!finished)
+    uint64_t waiting_since = chiaki_time_now_monotonic_us();
+    while (true)
     {
-        err = wait_for_session_message(session, &msg, msg_query, timeout_ms);
+        uint64_t now = chiaki_time_now_monotonic_us();
+        uint64_t elapsed_ms = now >= waiting_since
+                ? (now - waiting_since) / MILLISECONDS_US
+                : timeout_ms;
+        if(elapsed_ms >= timeout_ms)
+            return CHIAKI_ERR_TIMEOUT;
+        uint64_t remaining_ms = timeout_ms - elapsed_ms;
+        err = wait_for_session_message(session, &msg, msg_query, remaining_ms);
         if (err == CHIAKI_ERR_TIMEOUT)
         {
             CHIAKI_LOGE(session->log, "wait_for_session_message_ack: Timed out waiting for holepunch session connection offer ACK notification.");
@@ -5606,12 +5616,11 @@ static ChiakiErrorCode wait_for_session_message_ack(
             msg = NULL;
             continue;
         }
-        finished = true;
         session_message_clear_notification(session, msg);
         session_message_free(msg);
+        msg = NULL;
+        return CHIAKI_ERR_SUCCESS;
     }
-
-    return err;
 }
 
 /**
