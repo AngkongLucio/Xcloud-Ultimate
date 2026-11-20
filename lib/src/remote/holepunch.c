@@ -2332,14 +2332,25 @@ static void* websocket_thread_func(void *user) {
     }
     session->ws_open = true;
     CHIAKI_LOGE(session->log, "holepunch websocket_thread_func: Connected to push notification WebSocket %s", ws_url);
-    ChiakiErrorCode err = chiaki_mutex_lock(&session->state_mutex);
-    assert(err == CHIAKI_ERR_SUCCESS);
+    ChiakiErrorCode state_err = chiaki_mutex_lock(&session->state_mutex);
+    if(state_err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(session->log, "websocket_thread_func: Could not lock state mutex after WebSocket connection: %d", state_err);
+        goto cleanup;
+    }
     session->state |= SESSION_STATE_WS_OPEN;
     log_session_state(session);
-    err = chiaki_cond_signal(&session->state_cond);
-    assert(err == CHIAKI_ERR_SUCCESS);
-    err = chiaki_mutex_unlock(&session->state_mutex);
-    assert(err == CHIAKI_ERR_SUCCESS);
+    ChiakiErrorCode signal_err = chiaki_cond_signal(&session->state_cond);
+    if(signal_err != CHIAKI_ERR_SUCCESS)
+        CHIAKI_LOGE(session->log, "websocket_thread_func: Could not signal WebSocket-open state: %d", signal_err);
+    ChiakiErrorCode state_unlock_err = chiaki_mutex_unlock(&session->state_mutex);
+    if(state_unlock_err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(session->log, "websocket_thread_func: Could not unlock state mutex after WebSocket connection: %d", state_unlock_err);
+        goto cleanup;
+    }
+    if(signal_err != CHIAKI_ERR_SUCCESS)
+        goto cleanup;
 
     // Get the socket curl uses for the websocket so we can select() on it
     curl_socket_t sockfd;
