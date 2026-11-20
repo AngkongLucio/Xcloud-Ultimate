@@ -5145,68 +5145,68 @@ static ChiakiErrorCode wait_for_notification(
     *out = NULL;
 
     uint64_t waiting_since = chiaki_time_now_monotonic_us();
-    uint64_t now = waiting_since;
-    Notification *last_known = NULL;
-
     ChiakiErrorCode err = chiaki_mutex_lock(&session->notif_mutex);
     if(err != CHIAKI_ERR_SUCCESS)
         return err;
-    while (true) {
-        while (session->ws_notification_queue->rear == last_known || session->ws_notification_queue->rear == NULL)
+
+    while(true)
+    {
+        // Always scan from the current queue head. Other waiters may remove
+        // notifications while this thread is asleep, so retaining a node
+        // pointer across cond_timedwait would risk dereferencing freed memory.
+        for(Notification *notif = session->ws_notification_queue->front;
+                notif != NULL; notif = notif->next)
         {
-            err = chiaki_cond_timedwait(&session->notif_cond, &session->notif_mutex, timeout_ms);
-            if (err == CHIAKI_ERR_TIMEOUT)
+            if(notif->type & types)
             {
-                now = chiaki_time_now_monotonic_us();
-                if ((now - waiting_since) > (timeout_ms * MILLISECONDS_US))
-                {
-                    CHIAKI_LOGE(session->log, "holepunch wait_for_notification: Timed out waiting for holepunch session messages");
-                    err = CHIAKI_ERR_TIMEOUT;
-                    goto cleanup;
-                }
-            }
-            if(err != CHIAKI_ERR_SUCCESS && err != CHIAKI_ERR_TIMEOUT)
-                goto cleanup;
-            ChiakiErrorCode stop_err = chiaki_mutex_lock(&session->stop_mutex);
-            if(stop_err != CHIAKI_ERR_SUCCESS)
-            {
-                err = stop_err;
-                goto cleanup;
-            }
-            if(session->main_should_stop)
-            {
-                session->main_should_stop = false;
-                stop_err = chiaki_mutex_unlock(&session->stop_mutex);
-                err = stop_err == CHIAKI_ERR_SUCCESS ? CHIAKI_ERR_CANCELED : stop_err;
-                goto cleanup;
-            }
-            stop_err = chiaki_mutex_unlock(&session->stop_mutex);
-            if(stop_err != CHIAKI_ERR_SUCCESS)
-            {
-                err = stop_err;
-                goto cleanup;
-            }
-        }
-        Notification *notif;
-        if(last_known)
-            notif = last_known->next;
-        else
-            notif = session->ws_notification_queue->front;
-        while (notif != NULL && notif != last_known)
-        {
-            if (notif->type & types)
-            {
-                CHIAKI_LOGV(session->log, "holepunch wait_for_notification: Found notification of type %d", notif->type);
                 *out = notif;
                 err = CHIAKI_ERR_SUCCESS;
                 goto cleanup;
             }
-            last_known = notif;
-            notif = notif->next;
         }
+
+        ChiakiErrorCode stop_err = chiaki_mutex_lock(&session->stop_mutex);
+        if(stop_err != CHIAKI_ERR_SUCCESS)
+        {
+            err = stop_err;
+            goto cleanup;
+        }
+        if(session->main_should_stop)
+        {
+            session->main_should_stop = false;
+            stop_err = chiaki_mutex_unlock(&session->stop_mutex);
+            err = stop_err == CHIAKI_ERR_SUCCESS ? CHIAKI_ERR_CANCELED : stop_err;
+            goto cleanup;
+        }
+        stop_err = chiaki_mutex_unlock(&session->stop_mutex);
+        if(stop_err != CHIAKI_ERR_SUCCESS)
+        {
+            err = stop_err;
+            goto cleanup;
+        }
+
+        uint64_t now = chiaki_time_now_monotonic_us();
+        uint64_t elapsed_ms = now >= waiting_since
+                ? (now - waiting_since) / MILLISECONDS_US
+                : timeout_ms;
+        if(elapsed_ms >= timeout_ms)
+        {
+            CHIAKI_LOGE(session->log, "holepunch wait_for_notification: Timed out waiting for holepunch session messages");
+            err = CHIAKI_ERR_TIMEOUT;
+            goto cleanup;
+        }
+
+        err = chiaki_cond_timedwait(&session->notif_cond, &session->notif_mutex, timeout_ms - elapsed_ms);
+        if(err == CHIAKI_ERR_TIMEOUT)
+        {
+            // Re-check the queue and elapsed time before reporting timeout.
+            continue;
+        }
+        if(err != CHIAKI_ERR_SUCCESS)
+            goto cleanup;
     }
 
-    cleanup:
+cleanup:
     {
         ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&session->notif_mutex);
         if(err == CHIAKI_ERR_SUCCESS && unlock_err != CHIAKI_ERR_SUCCESS)
