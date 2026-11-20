@@ -1046,37 +1046,50 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_create(Session* session)
             CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Failed to wait for holepunch session creation notifications.");
             return err;
         }
-        chiaki_mutex_lock(&session->state_mutex);
+        err = chiaki_mutex_lock(&session->state_mutex);
+        if(err != CHIAKI_ERR_SUCCESS)
+        {
+            CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Could not lock session state: %d", err);
+            clear_notification(session, notif);
+            return err;
+        }
+
         if (notif->type == NOTIFICATION_TYPE_SESSION_CREATED)
         {
             session->state |= SESSION_STATE_CREATED;
             CHIAKI_LOGV(session->log, "chiaki_holepunch_session_create: Holepunch session created.");
-            // Get the user's online id
+
             json_object *online_id_json = NULL;
             json_pointer_get(notif->json, "/to/onlineId", &online_id_json);
             if (!online_id_json || !json_object_is_type(online_id_json, json_type_string))
             {
-                CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: JSON does not contain member with online Id of user");
-                const char *json_str = json_object_to_json_string_ext(notif->json, JSON_C_TO_STRING_PRETTY);
-                CHIAKI_LOGV(session->log, "chiaki_holepunch_session_create: JSON was:\n%s", json_str);
+                CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: JSON does not contain a valid online Id");
                 err = CHIAKI_ERR_UNKNOWN;
-                break;
             }
-            const char *online_id = json_object_get_string(online_id_json);
-            if (!online_id_json)
+            else
             {
-                CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: could not extra PSN online id string.");
-                err = CHIAKI_ERR_UNKNOWN;
-                return err;
+                const char *online_id = json_object_get_string(online_id_json);
+                if (!online_id)
+                {
+                    CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Could not extract PSN online id string");
+                    err = CHIAKI_ERR_UNKNOWN;
+                }
+                else
+                {
+                    char *online_id_copy = malloc(strlen(online_id) + 1);
+                    if(!online_id_copy)
+                    {
+                        CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Could not allocate PSN online id string");
+                        err = CHIAKI_ERR_MEMORY;
+                    }
+                    else
+                    {
+                        strcpy(online_id_copy, online_id);
+                        free(session->online_id);
+                        session->online_id = online_id_copy;
+                    }
+                }
             }
-            session->online_id = malloc((strlen(online_id) + 1) * sizeof(char));
-            if(!session->online_id)
-            {
-                CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: could not allocate space for PSN online id string.");
-                err = CHIAKI_ERR_MEMORY;
-                return err;
-            }
-            strcpy(session->online_id, online_id);
         }
         else if (notif->type == NOTIFICATION_TYPE_MEMBER_CREATED)
         {
@@ -1087,24 +1100,52 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_create(Session* session)
         {
             CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Got unexpected notification of type %d", notif->type);
             err = CHIAKI_ERR_UNKNOWN;
-            return err;
         }
-        chiaki_mutex_lock(&session->stop_mutex);
-        if(session->main_should_stop)
+
+        if(err == CHIAKI_ERR_SUCCESS)
         {
-            session->main_should_stop = false;
-            chiaki_mutex_unlock(&session->stop_mutex);
-            CHIAKI_LOGI(session->log, "chiaki_holepunch_session_create: canceled");
-            err = CHIAKI_ERR_CANCELED;
-            return err;
+            ChiakiErrorCode stop_err = chiaki_mutex_lock(&session->stop_mutex);
+            if(stop_err != CHIAKI_ERR_SUCCESS)
+            {
+                CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Could not lock stop mutex: %d", stop_err);
+                err = stop_err;
+            }
+            else
+            {
+                if(session->main_should_stop)
+                {
+                    session->main_should_stop = false;
+                    CHIAKI_LOGI(session->log, "chiaki_holepunch_session_create: canceled");
+                    err = CHIAKI_ERR_CANCELED;
+                }
+                ChiakiErrorCode stop_unlock_err = chiaki_mutex_unlock(&session->stop_mutex);
+                if(stop_unlock_err != CHIAKI_ERR_SUCCESS)
+                {
+                    CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Could not unlock stop mutex: %d", stop_unlock_err);
+                    if(err == CHIAKI_ERR_SUCCESS)
+                        err = stop_unlock_err;
+                }
+            }
         }
-        chiaki_mutex_unlock(&session->stop_mutex);
-        http_check_session(session, true);
-        log_session_state(session);
-        finished = (session->state & SESSION_STATE_CREATED) &&
-                   (session->state & SESSION_STATE_CLIENT_JOINED);
-        chiaki_mutex_unlock(&session->state_mutex);
+
+        if(err == CHIAKI_ERR_SUCCESS)
+        {
+            http_check_session(session, true);
+            log_session_state(session);
+            finished = (session->state & SESSION_STATE_CREATED) &&
+                       (session->state & SESSION_STATE_CLIENT_JOINED);
+        }
+
+        ChiakiErrorCode state_unlock_err = chiaki_mutex_unlock(&session->state_mutex);
+        if(state_unlock_err != CHIAKI_ERR_SUCCESS)
+        {
+            CHIAKI_LOGE(session->log, "chiaki_holepunch_session_create: Could not unlock state mutex: %d", state_unlock_err);
+            if(err == CHIAKI_ERR_SUCCESS)
+                err = state_unlock_err;
+        }
         clear_notification(session, notif);
+        if(err != CHIAKI_ERR_SUCCESS)
+            return err;
     }
     return err;
 }
