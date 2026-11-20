@@ -2468,14 +2468,10 @@ static void* websocket_thread_func(void *user) {
         }
         if (ws_flags & CURLWS_PING)
         {
+            // libcurl automatically replies to PING frames unless CURLWS_NOAUTOPONG
+            // is enabled. We leave that default behavior in place to avoid a
+            // duplicate PONG response.
             CHIAKI_LOGV(session->log, "websocket_thread_func: Received PING.");
-            res = curl_ws_send(curl, buf, rlen, &wlen, 0, CURLWS_PONG);
-            if (res != CURLE_OK)
-            {
-                CHIAKI_LOGE(session->log, "websocket_thread_func: Sending WebSocket PONG failed with CURL error %s", curl_easy_strerror(res));
-                goto cleanup_json;
-            }
-            CHIAKI_LOGV(session->log, "websocket_thread_func: Sent PONG.");
         }
         if (ws_flags & CURLWS_CLOSE)
         {
