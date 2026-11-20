@@ -2147,103 +2147,145 @@ static ChiakiErrorCode make_session_id_header(char **out, const char* session_id
 */
 static ChiakiErrorCode get_websocket_fqdn(Session *session, char **fqdn)
 {
+    if(!session || !fqdn || !session->oauth_header || !session->curl_share)
+        return CHIAKI_ERR_INVALID_DATA;
+    *fqdn = NULL;
+
     HttpResponseData response_data = {
-            .data = malloc(0),
+            .data = NULL,
             .size = 0,
     };
 
     CURL *curl = curl_easy_init();
     if(!curl)
     {
-        CHIAKI_LOGE(session->log, "Curl could not init");
+        CHIAKI_LOGE(session->log, "get_websocket_fqdn: Curl could not init");
         return CHIAKI_ERR_MEMORY;
     }
 
-    struct curl_slist *headers = NULL;
-    headers = curl_slist_append(headers, session->oauth_header);
-    headers = curl_slist_append(headers, "Host: mobile-pushcl.np.communication.playstation.net");
-    headers = curl_slist_append(headers, "Connection: Keep-Alive");
-
-    CURLcode res = curl_easy_setopt(curl, CURLOPT_SHARE, session->curl_share);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_SHARE failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_FAILONERROR failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_TIMEOUT failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_URL, ws_fqdn_api_url);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_URL failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_HTTPHEADER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_WRITEFUNCTION failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "holepunch get_websocket_fqdn: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
-
-    res = curl_easy_perform(curl);
-    curl_slist_free_all(headers);
     ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
-    if (res != CURLE_OK)
+    struct curl_slist *headers = NULL;
+    struct curl_slist *new_headers = curl_slist_append(headers, session->oauth_header);
+    if(!new_headers)
     {
-        if (res == CURLE_HTTP_RETURNED_ERROR)
+        err = CHIAKI_ERR_MEMORY;
+        goto cleanup;
+    }
+    headers = new_headers;
+    new_headers = curl_slist_append(headers, "Host: mobile-pushcl.np.communication.playstation.net");
+    if(!new_headers)
+    {
+        err = CHIAKI_ERR_MEMORY;
+        goto cleanup;
+    }
+    headers = new_headers;
+    new_headers = curl_slist_append(headers, "Connection: Keep-Alive");
+    if(!new_headers)
+    {
+        err = CHIAKI_ERR_MEMORY;
+        goto cleanup;
+    }
+    headers = new_headers;
+
+#define SET_FQDN_CURL_OPTION(option, value) \
+    do { \
+        CURLcode setopt_err = curl_easy_setopt(curl, option, value); \
+        if(setopt_err != CURLE_OK) \
+        { \
+            CHIAKI_LOGE(session->log, "get_websocket_fqdn: CURL setopt " #option " failed: %s", curl_easy_strerror(setopt_err)); \
+            err = CHIAKI_ERR_UNKNOWN; \
+            goto cleanup; \
+        } \
+    } while(0)
+    SET_FQDN_CURL_OPTION(CURLOPT_SHARE, session->curl_share);
+    SET_FQDN_CURL_OPTION(CURLOPT_FAILONERROR, 1L);
+    SET_FQDN_CURL_OPTION(CURLOPT_TIMEOUT, 10L);
+    SET_FQDN_CURL_OPTION(CURLOPT_URL, ws_fqdn_api_url);
+    SET_FQDN_CURL_OPTION(CURLOPT_HTTPHEADER, headers);
+    SET_FQDN_CURL_OPTION(CURLOPT_WRITEFUNCTION, curl_write_cb);
+    SET_FQDN_CURL_OPTION(CURLOPT_WRITEDATA, (void*)&response_data);
+    SET_FQDN_CURL_OPTION(CURLOPT_SSL_VERIFYPEER, 1L);
+    SET_FQDN_CURL_OPTION(CURLOPT_SSL_VERIFYHOST, 2L);
+#undef SET_FQDN_CURL_OPTION
+
+    CURLcode res = curl_easy_perform(curl);
+    if(res != CURLE_OK)
+    {
+        if(res == CURLE_HTTP_RETURNED_ERROR)
         {
             long http_code = 0;
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-            CHIAKI_LOGE(session->log, "holepunch get_websocket_fqdn: Fetching websocket FQDN from %s failed with HTTP code %ld", ws_fqdn_api_url, http_code);
+            CHIAKI_LOGE(session->log, "get_websocket_fqdn: Fetching WebSocket FQDN failed with HTTP code %ld", http_code);
             err = CHIAKI_ERR_HTTP_NONOK;
-        } else {
-            CHIAKI_LOGE(session->log, "holepunch get_websocket_fqdn: Fetching websocket FQDN from %s failed with CURL error %s", ws_fqdn_api_url, curl_easy_strerror(res));
+        }
+        else
+        {
+            CHIAKI_LOGE(session->log, "get_websocket_fqdn: Fetching WebSocket FQDN failed: %s", curl_easy_strerror(res));
             err = CHIAKI_ERR_NETWORK;
         }
+        goto cleanup;
+    }
+
+    if(!response_data.data || response_data.size == 0 || response_data.size > INT_MAX)
+    {
+        CHIAKI_LOGE(session->log, "get_websocket_fqdn: Server returned an empty or invalid response");
+        err = CHIAKI_ERR_INVALID_DATA;
         goto cleanup;
     }
 
     json_tokener *tok = json_tokener_new();
     if(!tok)
     {
-        CHIAKI_LOGE(session->log, "holepunch Couldn't create new json tokener");
+        CHIAKI_LOGE(session->log, "get_websocket_fqdn: Could not allocate JSON tokener");
+        err = CHIAKI_ERR_MEMORY;
         goto cleanup;
     }
-    json_object *json = json_tokener_parse_ex(tok, response_data.data, response_data.size);
-    if (json == NULL)
+    json_object *json = json_tokener_parse_ex(tok, response_data.data, (int)response_data.size);
+    if(!json)
     {
-        CHIAKI_LOGE(session->log, "holepunch get_websocket_fqdn: Parsing JSON failed");
-        err = CHIAKI_ERR_UNKNOWN;
-        goto cleanup_json_tokener;
+        CHIAKI_LOGE(session->log, "get_websocket_fqdn: Parsing JSON failed");
+        err = CHIAKI_ERR_INVALID_DATA;
+        json_tokener_free(tok);
+        goto cleanup;
     }
-    json_object *fqdn_json;
-    if (!json_object_object_get_ex(json, "fqdn", &fqdn_json))
-    {
-        CHIAKI_LOGE(session->log, "holepunch get_websocket_fqdn: JSON does not contain \"fqdn\" field");
-        err = CHIAKI_ERR_UNKNOWN;
-        goto cleanup_json;
-    } else if (!json_object_is_type(fqdn_json, json_type_string))
-    {
-        CHIAKI_LOGE(session->log, "holepunch get_websocket_fqdn: JSON \"fqdn\" field is not a string");
-        err = CHIAKI_ERR_UNKNOWN;
-        goto cleanup_json;
-    }
-    *fqdn = strdup(json_object_get_string(fqdn_json));
 
-    cleanup_json:
+    json_object *fqdn_json = NULL;
+    if(!json_object_object_get_ex(json, "fqdn", &fqdn_json) ||
+            !json_object_is_type(fqdn_json, json_type_string))
+    {
+        CHIAKI_LOGE(session->log, "get_websocket_fqdn: JSON does not contain a string \"fqdn\" field");
+        err = CHIAKI_ERR_INVALID_DATA;
+    }
+    else
+    {
+        const char *fqdn_value = json_object_get_string(fqdn_json);
+        if(!fqdn_value || !*fqdn_value ||
+                strpbrk(fqdn_value, "/\\\\\\r\\n") != NULL ||
+                strlen(fqdn_value) >= 96)
+        {
+            CHIAKI_LOGE(session->log, "get_websocket_fqdn: Server returned an invalid WebSocket hostname");
+            err = CHIAKI_ERR_INVALID_DATA;
+        }
+        else
+        {
+            *fqdn = strdup(fqdn_value);
+            if(!*fqdn)
+                err = CHIAKI_ERR_MEMORY;
+        }
+    }
+
     json_object_put(json);
-    cleanup_json_tokener:
     json_tokener_free(tok);
-    cleanup:
+
+cleanup:
+    curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
     free(response_data.data);
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        free(*fqdn);
+        *fqdn = NULL;
+    }
     return err;
 }
 
