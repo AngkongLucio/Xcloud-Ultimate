@@ -2265,17 +2265,24 @@ static ChiakiErrorCode get_websocket_fqdn(Session *session, char **fqdn)
         size_t fqdn_len = hostname_valid ? strlen(fqdn_value) : 0;
         if(fqdn_len == 0 || fqdn_len >= 96)
             hostname_valid = false;
-        for(size_t hostname_i = 0; hostname_valid && hostname_i < fqdn_len; ++hostname_i)
+        size_t label_start = 0;
+        for(size_t hostname_i = 0; hostname_valid && hostname_i <= fqdn_len; ++hostname_i)
         {
+            if(hostname_i == fqdn_len || fqdn_value[hostname_i] == '.')
+            {
+                size_t label_len = hostname_i - label_start;
+                if(label_len == 0 || label_len > 63 ||
+                        fqdn_value[label_start] == '-' || fqdn_value[hostname_i - 1] == '-')
+                    hostname_valid = false;
+                label_start = hostname_i + 1;
+                continue;
+            }
+
             unsigned char c = (unsigned char)fqdn_value[hostname_i];
             bool allowed = (c >= 'a' && c <= 'z') ||
                     (c >= 'A' && c <= 'Z') ||
-                    (c >= '0' && c <= '9') || c == '.' || c == '-';
-            if(!allowed || (c == '.' && (hostname_i == 0 ||
-                    hostname_i + 1 == fqdn_len || fqdn_value[hostname_i - 1] == '.' ||
-                    fqdn_value[hostname_i - 1] == '-' || fqdn_value[hostname_i + 1] == '-')) ||
-                    (c == '-' && (hostname_i == 0 || hostname_i + 1 == fqdn_len ||
-                    fqdn_value[hostname_i - 1] == '.' || fqdn_value[hostname_i + 1] == '.')))
+                    (c >= '0' && c <= '9') || c == '-';
+            if(!allowed)
                 hostname_valid = false;
         }
         if(!hostname_valid)
