@@ -953,6 +953,8 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_upnp_discover(Session *session)
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_create(Session* session)
 {
+    if(!session)
+        return CHIAKI_ERR_INVALID_DATA;
     ChiakiErrorCode err = get_websocket_fqdn(session, &session->ws_fqdn);
     if (err != CHIAKI_ERR_SUCCESS)
         return err;
