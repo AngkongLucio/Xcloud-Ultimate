@@ -5058,6 +5058,7 @@ static ChiakiErrorCode clear_notification(
 
     Notification *previous = NULL;
     Notification *current = nq->front;
+    bool found = false;
     while(current && current != notification)
     {
         previous = current;
@@ -5066,6 +5067,7 @@ static ChiakiErrorCode clear_notification(
 
     if(current)
     {
+        found = true;
         if(previous)
             previous->next = current->next;
         else
@@ -5082,7 +5084,7 @@ static ChiakiErrorCode clear_notification(
     err = chiaki_mutex_unlock(&session->notif_mutex);
     if(err != CHIAKI_ERR_SUCCESS)
         return err;
-    return current ? CHIAKI_ERR_SUCCESS : CHIAKI_ERR_UNKNOWN;
+    return found ? CHIAKI_ERR_SUCCESS : CHIAKI_ERR_UNKNOWN;
 }
 
 static void session_message_clear_notification(Session *session, SessionMessage *message)
