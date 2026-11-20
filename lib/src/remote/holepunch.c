@@ -2273,16 +2273,35 @@ static void* websocket_thread_func(void *user) {
     struct curl_slist *headers = NULL;
     char ws_host_header[192] = {0};
     snprintf(ws_host_header, sizeof(ws_host_header), "Host: %s", session->ws_fqdn);
-    headers = curl_slist_append(headers, session->oauth_header);
-    headers = curl_slist_append(headers, "Sec-WebSocket-Protocol: np-pushpacket");
-    headers = curl_slist_append(headers, ws_host_header);
-    headers = curl_slist_append(headers, "User-Agent: WebSocket++/0.8.2");
-    headers = curl_slist_append(headers, "X-PSN-APP-TYPE: REMOTE_PLAY");
-    headers = curl_slist_append(headers, "X-PSN-APP-VER: RemotePlay/1.0");
-    headers = curl_slist_append(headers, "X-PSN-KEEP-ALIVE-STATUS-TYPE: 3");
-    headers = curl_slist_append(headers, "X-PSN-OS-VER: Windows/10.0");
-    headers = curl_slist_append(headers, "X-PSN-PROTOCOL-VERSION: 2.1");
-    headers = curl_slist_append(headers, "X-PSN-RECONNECTION: false");
+    const char *header_values[] = {
+            session->oauth_header,
+            "Sec-WebSocket-Protocol: np-pushpacket",
+            ws_host_header,
+            "User-Agent: WebSocket++/0.8.2",
+            "X-PSN-APP-TYPE: REMOTE_PLAY",
+            "X-PSN-APP-VER: RemotePlay/1.0",
+            "X-PSN-KEEP-ALIVE-STATUS-TYPE: 3",
+            "X-PSN-OS-VER: Windows/10.0",
+            "X-PSN-PROTOCOL-VERSION: 2.1",
+            "X-PSN-RECONNECTION: false",
+    };
+    for(size_t header_i = 0; header_i < sizeof(header_values) / sizeof(header_values[0]); ++header_i)
+    {
+        if(!header_values[header_i])
+        {
+            CHIAKI_LOGE(session->log, "websocket_thread_func: Missing required WebSocket request header");
+            curl_slist_free_all(headers);
+            goto cleanup;
+        }
+        struct curl_slist *new_headers = curl_slist_append(headers, header_values[header_i]);
+        if(!new_headers)
+        {
+            CHIAKI_LOGE(session->log, "websocket_thread_func: Could not allocate WebSocket request headers");
+            curl_slist_free_all(headers);
+            goto cleanup;
+        }
+        headers = new_headers;
+    }
 
     CURLcode res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     if(res != CURLE_OK)
