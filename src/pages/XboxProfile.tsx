@@ -55,11 +55,19 @@ export default function XboxProfileScreen({navigation}) {
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 3);
 
+  const activeDays = new Set(
+    activity
+      .map(entry => Number(entry?.openedAt))
+      .filter(timestamp => Number.isFinite(timestamp) && timestamp > 0)
+      .map(timestamp => new Date(timestamp).toLocaleDateString()),
+  ).size;
+
   const activityInsights = {
     totalOpens: activity.length,
     uniqueTitles: uniqueActivityTitles,
     repeatOpens: Math.max(activity.length - uniqueActivityTitles, 0),
     repeatRate: activity.length ? Math.round(((activity.length - uniqueActivityTitles) / activity.length) * 100) : 0,
+    activeDays,
   };
 
   useEffect(() => {
@@ -143,6 +151,10 @@ export default function XboxProfileScreen({navigation}) {
             <View style={styles.insightRow}>
               <Text style={styles.insightLabel}>Repeat opens</Text>
               <Text accessibilityLabel={activityInsights.repeatOpens + " repeat opens"} style={styles.insightValue}>{activityInsights.repeatOpens}</Text>
+            </View>
+            <View style={styles.insightRow}>
+              <Text style={styles.insightLabel}>Active days</Text>
+              <Text accessibilityLabel={activityInsights.activeDays + " distinct activity days in saved history"} style={styles.insightValue}>{activityInsights.activeDays}</Text>
             </View>
             <View style={styles.insightTrack}>
               <View style={[styles.insightFill, {width: activityInsights.repeatRate + '%'}]} />
