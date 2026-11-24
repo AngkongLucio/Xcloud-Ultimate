@@ -34,14 +34,14 @@ export default function XboxProfileScreen({navigation}) {
     return activitySort === 'Oldest' ? aTime - bTime : bTime - aTime;
   });
 
-  const activityRange = activity.reduce((range, entry) => {
-    const timestamp = Number(entry?.openedAt);
-    if (!Number.isFinite(timestamp) || timestamp <= 0) return range;
-    return {
-      first: range.first === null ? timestamp : Math.min(range.first, timestamp),
-      latest: range.latest === null ? timestamp : Math.max(range.latest, timestamp),
-    };
-  }, {first: null, latest: null});
+  const validActivityTimestamps = activity
+    .map(entry => Number(entry?.openedAt))
+    .filter(timestamp => Number.isFinite(timestamp) && timestamp > 0);
+  const activityRange = validActivityTimestamps.reduce((range, timestamp) => ({
+    first: range.first === null ? timestamp : Math.min(range.first, timestamp),
+    latest: range.latest === null ? timestamp : Math.max(range.latest, timestamp),
+  }), {first: null, latest: null});
+  const invalidTimestampCount = activity.length - validActivityTimestamps.length;
 
   const uniqueActivityTitles = new Set(
     activity
@@ -347,6 +347,11 @@ export default function XboxProfileScreen({navigation}) {
               {activityRange.first === activityRange.latest
                 ? "Activity date: " + new Date(activityRange.first).toLocaleDateString()
                 : "Activity span: " + new Date(activityRange.first).toLocaleDateString() + " – " + new Date(activityRange.latest).toLocaleDateString()}
+            </Text>
+          ) : null}
+          {invalidTimestampCount > 0 ? (
+            <Text variant="bodySmall" accessibilityLabel={invalidTimestampCount + " saved entries have missing or invalid timestamps"} style={styles.statsNote}>
+              {invalidTimestampCount} {invalidTimestampCount === 1 ? 'entry has' : 'entries have'} unavailable timestamps and are excluded from date-based insights.
             </Text>
           ) : null}
           {activity.length > 1 ? (
