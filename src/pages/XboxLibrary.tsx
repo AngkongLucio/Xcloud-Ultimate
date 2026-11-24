@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
-import {ScrollView, StyleSheet, View, Linking, Pressable} from 'react-native';
+import {Alert, ScrollView, StyleSheet, View, Linking, Pressable} from 'react-native';
 import {Button, Card, Chip, Searchbar, Text} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 import {useIsFocused} from '@react-navigation/native';
@@ -193,6 +193,28 @@ export default function XboxLibraryScreen({navigation}) {
           textStyle={styles.chipText}>
           ★ Favorites ({favoriteCount})
         </Chip>
+        {favoriteCount > 0 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={"Clear all " + favoriteCount + " saved favorites"}
+            accessibilityHint="Asks for confirmation before removing every saved favorite."
+            onPress={() => Alert.alert(
+              'Clear all favorites?',
+              'This removes all saved favorites from this device. Your game catalog and activity history will stay unchanged.',
+              [
+                {text: 'Cancel', style: 'cancel'},
+                {text: 'Clear favorites', style: 'destructive', onPress: () => {
+                  haptic('impactLight');
+                  setFavoriteTitles([]);
+                  setFavoritesOnly(false);
+                  setSelectedIndex(0);
+                }},
+              ],
+            )}
+            style={styles.clearFavoritesButton}>
+            <Text style={styles.clearFavoritesText}>Clear favorites</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
@@ -310,7 +332,9 @@ const styles = StyleSheet.create({
   resetFilters: {alignSelf: 'flex-start', marginBottom: 8},
   chip: {backgroundColor: '#202920'},
   chipText: {color: '#e6eee6'},
-  favoriteFilterRow: {flexDirection: 'row', marginBottom: 8},
+  favoriteFilterRow: {flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8},
+  clearFavoritesButton: {paddingHorizontal: 10, paddingVertical: 8},
+  clearFavoritesText: {color: '#9cdb8a', fontSize: 12, fontWeight: '700'},
   grid: {flexDirection: 'row', flexWrap: 'wrap', gap: 12},
   gameCardContainer: {width: '48%', flexGrow: 1, position: 'relative'},
   gameCardPressable: {width: '100%', borderRadius: 14},
