@@ -129,7 +129,7 @@ export default function XboxDashboardScreen({navigation}) {
     {label: 'Controller feedback', run: () => updateHaptics(!hapticsEnabled)},
     {label: 'Compact game cards', run: () => updateCompactCards(!compactCards)},
     {label: 'All settings', run: () => { closeQuickSettings(); navigation.navigate('XboxSettings'); }},
-    {label: 'Notifications', run: () => { setQuickSettingsVisible(false); navigation.navigate('XboxNotifications'); }},
+    {label: unreadNotifications > 0 ? 'Notifications (' + unreadNotifications + ' unread)' : 'Notifications', run: () => { setQuickSettingsVisible(false); navigation.navigate('XboxNotifications'); }},
     {label: 'Launch cloud', run: () => { setQuickSettingsVisible(false); openCloud(); }},
   ];
   const moveQuickSelection = offset => {
@@ -235,7 +235,7 @@ export default function XboxDashboardScreen({navigation}) {
             </View>
             <View style={styles.quickActions}>
               <Button compact mode={quickSelection === 3 ? "contained" : "outlined"} buttonColor={quickSelection === 3 ? "#107c10" : undefined} textColor={quickSelection === 3 ? "#fff" : "#9cdb8a"} onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxSettings'); }}>All settings</Button>
-              <Button compact mode={quickSelection === 4 ? "contained" : "outlined"} buttonColor={quickSelection === 4 ? "#107c10" : undefined} textColor={quickSelection === 4 ? "#fff" : "#9cdb8a"} onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxNotifications'); }}>Notifications</Button>
+              <Button compact mode={quickSelection === 4 ? "contained" : "outlined"} buttonColor={quickSelection === 4 ? "#107c10" : undefined} textColor={quickSelection === 4 ? "#fff" : "#9cdb8a"} accessibilityLabel={unreadNotifications > 0 ? "Open notifications, " + unreadNotifications + " unread" : "Open notifications"} onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxNotifications'); }}>{unreadNotifications > 0 ? "Notifications (" + unreadNotifications + ")" : "Notifications"}</Button>
               <Button compact mode={quickSelection === 5 ? "contained" : "outlined"} buttonColor={quickSelection === 5 ? "#107c10" : undefined} textColor={quickSelection === 5 ? "#fff" : "#9cdb8a"} onPress={() => { setQuickSettingsVisible(false); openCloud(); }}>Launch cloud</Button>
             </View>
           </Card.Content>
