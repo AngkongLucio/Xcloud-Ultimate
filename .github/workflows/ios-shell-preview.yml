@@ -43,7 +43,7 @@ jobs:
         run: bash scripts/scaffold-ios-project.sh
 
       - name: Install JavaScript dependencies
-        run: yarn install
+        run: yarn install --no-immutable
 
       - name: Install iOS pods
         working-directory: ios
