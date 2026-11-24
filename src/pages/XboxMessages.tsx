@@ -268,6 +268,7 @@ export default function XboxMessagesScreen() {
               onPress={() => {
                 setInboxSearch('');
                 setInboxSort('Recent');
+                storage.set('xbox.messages.inboxSort', 'Recent');
               }}
               style={styles.resetInboxButton}>
               Reset search & sorting
