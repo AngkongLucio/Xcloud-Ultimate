@@ -105,7 +105,24 @@ export default function XboxAchievementsScreen() {
           </Card>
         );
       })}
-      {!visibleBadges.length ? <Card style={styles.badgeCard}><Card.Content><Text style={styles.badgeDescription}>No badges in this category yet.</Text></Card.Content></Card> : null}
+      {!visibleBadges.length ? (
+        <Card
+          accessible
+          accessibilityRole="text"
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={filter === 'Locked'
+            ? 'All local badges are unlocked. Show all badges to review your progress.'
+            : 'No local badges unlocked yet. Open a title from the sample library to begin.'}
+          style={styles.badgeCard}>
+          <Card.Content>
+            <Text style={styles.badgeDescription}>
+              {filter === 'Locked'
+                ? 'All local badges are unlocked! You have completed every badge goal.'
+                : 'No badges unlocked yet. Open a title from the sample library to start earning local badges.'}
+            </Text>
+          </Card.Content>
+        </Card>
+      ) : null}
       <Text variant="bodySmall" style={styles.footer}>These badges are created and stored locally. They are not official Xbox achievements, Gamerscore, account data, or proof of gameplay.</Text>
     </ScrollView>
   );
