@@ -133,6 +133,8 @@ export const getUserInfoFromToken = (
           userInfo.account_id = accountId;
 
           resolve(userInfo);
+        } else {
+          resolve(null);
         }
       })
       .catch(e => {
