@@ -5,6 +5,24 @@ import {useIsFocused} from '@react-navigation/native';
 import {storage} from '../store/mmkv';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
+const DASHBOARD_AVATARS = ['🎮', '🛡️', '🚀', '🐉', '⚡', '👾', '🏎️', '🌌'];
+const readLocalGamertag = () => {
+  const value = storage.getString('xbox.profile.gamertag');
+  return typeof value === 'string' ? value.trim().slice(0, 16) || 'Player' : 'Player';
+};
+const readLocalAvatar = () => {
+  const value = storage.getString('xbox.profile.avatar');
+  return DASHBOARD_AVATARS.includes(value) ? value : '🎮';
+};
+const readLastActivityTitle = () => {
+  const value = storage.getString('xbox.activity.lastTitle');
+  return typeof value === 'string' ? value.trim().slice(0, 120) || 'No recent launch' : 'No recent launch';
+};
+const readLastActivityTimestamp = () => {
+  const value = storage.getNumber('xbox.activity.lastOpenedAt');
+  return Number.isFinite(value) && value > 0 ? value : 0;
+};
+
 const readUnreadNotifications = () => {
   try {
     const raw = storage.getString('xbox.notifications.local');
@@ -37,10 +55,10 @@ export default function XboxDashboardScreen({navigation}) {
   const [bootVisible, setBootVisible] = useState(true);
   const bootOpacity = React.useRef(new Animated.Value(1)).current;
   const bootScale = React.useRef(new Animated.Value(0.88)).current;
-  const [lastTitle, setLastTitle] = useState(() => storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
-  const [lastOpenedAt, setLastOpenedAt] = useState(() => storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
-  const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
-  const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
+  const [lastTitle, setLastTitle] = useState(readLastActivityTitle);
+  const [lastOpenedAt, setLastOpenedAt] = useState(readLastActivityTimestamp);
+  const [gamertag, setGamertag] = useState(readLocalGamertag);
+  const [avatar, setAvatar] = useState(readLocalAvatar);
   const [unreadNotifications, setUnreadNotifications] = useState(readUnreadNotifications);
   const [dashboardSelection, setDashboardSelection] = useState(0);
   const [guideSelection, setGuideSelection] = useState(0);
@@ -62,10 +80,10 @@ export default function XboxDashboardScreen({navigation}) {
       setFocusOutline(storage.getBoolean('xbox.ui.focusOutline') ?? true);
       setCompactCards(storage.getBoolean('xbox.ui.compactCards') ?? false);
       setHapticsEnabled(storage.getBoolean('xbox.ui.haptics') ?? true);
-      setLastTitle(storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
-      setLastOpenedAt(storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
-      setGamertag(storage.getString('xbox.profile.gamertag') ?? 'Player');
-      setAvatar(storage.getString('xbox.profile.avatar') ?? '🎮');
+      setLastTitle(readLastActivityTitle());
+      setLastOpenedAt(readLastActivityTimestamp());
+      setGamertag(readLocalGamertag());
+      setAvatar(readLocalAvatar());
       setUnreadNotifications(readUnreadNotifications());
     }
   }, [isFocused]);
