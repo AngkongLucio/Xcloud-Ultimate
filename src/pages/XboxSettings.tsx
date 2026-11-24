@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Linking, ScrollView, StyleSheet, View} from 'react-native';
+import {Alert, Linking, ScrollView, StyleSheet, View} from 'react-native';
 import {Button, Card, Divider, Switch, Text} from 'react-native-paper';
 import NetInfo from '@react-native-community/netinfo';
 import {storage} from '../store/mmkv';
@@ -57,6 +57,28 @@ export default function XboxSettingsScreen() {
 
   const statusText = value => value === true ? 'Yes' : value === false ? 'No' : 'Unknown';
 
+  const resetDisplayPreferences = () => {
+    Alert.alert(
+      'Reset display preferences?',
+      'This restores compact cards off, focus highlight on, and haptic feedback on.',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Reset',
+          onPress: () => {
+            setCompactCards(false);
+            setFocusOutline(true);
+            setHapticsEnabled(true);
+            storage.set('xbox.ui.compactCards', false);
+            storage.set('xbox.ui.focusOutline', true);
+            storage.set('xbox.ui.haptics', true);
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text variant="labelLarge" style={styles.eyebrow}>XCLOUD ULTIMATE</Text>
@@ -100,6 +122,16 @@ export default function XboxSettingsScreen() {
               </View>
             </View>
           </View>
+          <Button
+            compact
+            mode="text"
+            textColor="#a8e69a"
+            accessibilityLabel="Reset display preferences to defaults"
+            accessibilityHint="Turns compact cards off and restores focus highlight and haptic feedback."
+            onPress={resetDisplayPreferences}
+            style={styles.actionButton}>
+            Reset display preferences
+          </Button>
         </Card.Content>
       </Card>
 
