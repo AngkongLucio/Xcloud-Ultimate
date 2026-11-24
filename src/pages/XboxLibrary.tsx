@@ -1,7 +1,8 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {ScrollView, StyleSheet, View, Linking, Pressable} from 'react-native';
 import {Button, Card, Chip, Searchbar, Text} from 'react-native-paper';
 import {storage} from '../store/mmkv';
+import {useIsFocused} from '@react-navigation/native';
 
 const XBOX_PLAY = 'https://www.xbox.com/play';
 const GAMES = [
@@ -19,8 +20,16 @@ export default function XboxLibraryScreen({navigation}) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const compactCards = storage.getBoolean('xbox.ui.compactCards') ?? false;
-  const focusOutline = storage.getBoolean('xbox.ui.focusOutline') ?? true;
+  const isFocused = useIsFocused();
+  const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
+  const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
+
+  useEffect(() => {
+    if (isFocused) {
+      setCompactCards(storage.getBoolean('xbox.ui.compactCards') ?? false);
+      setFocusOutline(storage.getBoolean('xbox.ui.focusOutline') ?? true);
+    }
+  }, [isFocused]);
 
   const visibleGames = useMemo(() => GAMES.filter(game => {
     const matchesSearch = game.title.toLowerCase().includes(search.trim().toLowerCase());
