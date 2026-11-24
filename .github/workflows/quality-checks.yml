@@ -34,8 +34,8 @@ jobs:
           corepack enable
           yarn --version
 
-      - name: Install locked dependencies
-        run: yarn install
+      - name: Install dependencies and refresh lockfile
+        run: yarn install --no-immutable
 
       - name: Run ESLint
         run: yarn lint
