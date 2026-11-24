@@ -31,7 +31,9 @@ fi
 
 echo "Generating a clean React Native 0.72.14 iOS template..."
 cd "$TMP_DIR"
-npx --yes @react-native-community/cli@11.3.10 init Peasyo --version 0.72.14 --template @react-native-community/template@0.72.14 --skip-install
+# --version selects the matching React Native community template automatically.
+# Do not pass --template here: that flag treats its value as a custom template.
+npx --yes @react-native-community/cli@11.3.10 init Peasyo --version 0.72.14 --skip-install
 
 if [[ ! -d "$TMP_DIR/Peasyo/ios/Peasyo.xcodeproj" || ! -f "$TMP_DIR/Peasyo/ios/Podfile" ]]; then
   echo "Error: React Native CLI did not produce the expected iOS project structure." >&2
