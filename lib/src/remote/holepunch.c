@@ -1554,7 +1554,7 @@ static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
             long http_code = 0;
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
             CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: Retrieving profile information for PS4 wakeup command failed with HTTP code %ld.", http_code);
-            CHIAKI_LOGV(session->log, "Response Body: %.*s.", (int)response_data.size, response_data.data);
+            CHIAKI_LOGV(session->log, "Response Body: %.*s.", (int)response_data.size, response_data.data ? response_data.data : "");
             err = CHIAKI_ERR_HTTP_NONOK;
         } else {
             CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: Retrieving profile information for PS4 wakeup command failed with CURL error %s", curl_easy_strerror(res));
@@ -1563,18 +1563,37 @@ static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
         goto cleanup;
     }
 
+    if(!response_data.data || response_data.size == 0 || response_data.size > INT_MAX)
+    {
+        CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: Profile endpoint returned an empty or oversized response");
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup;
+    }
+
     tok = json_tokener_new();
     if(!tok)
     {
         CHIAKI_LOGE(session->log, "Couldn't create new json tokener");
+        err = CHIAKI_ERR_MEMORY;
         goto cleanup;
     }
     json = json_tokener_parse_ex(tok, response_data.data, (int)response_data.size);
-    if (json == NULL)
+    enum json_tokener_error parse_err = json_tokener_get_error(tok);
+    if(!json || parse_err != json_tokener_success)
     {
-        CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: Parsing JSON failed");
-        err = CHIAKI_ERR_UNKNOWN;
+        CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: Parsing JSON failed: %s", json_tokener_error_desc(parse_err));
+        err = CHIAKI_ERR_INVALID_DATA;
         goto cleanup_json_tokener;
+    }
+
+    size_t parsed_size = json_tokener_get_parse_end(tok);
+    while(parsed_size < response_data.size && isspace((unsigned char)response_data.data[parsed_size]))
+        parsed_size++;
+    if(parsed_size != response_data.size)
+    {
+        CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: Unexpected data after profile JSON");
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup_json;
     }
 
     json_object *user_profile_url_json = NULL;
@@ -1631,8 +1650,9 @@ static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
     host_url[authority_len] = '\0';
 
     curl_easy_cleanup(curl);
+    curl = NULL;
     free(response_data.data);
-    response_data.data = malloc(0);
+    response_data.data = NULL;
     response_data.size = 0;
     headers = NULL;
     char url[2048];
