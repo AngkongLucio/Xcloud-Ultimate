@@ -26,8 +26,17 @@ export default function XboxLibraryScreen({navigation}) {
     try {
       const raw = storage.getString('xbox.library.favorites');
       const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? [...new Set(parsed.filter(title => GAMES.some(game => game.title === title)))] : [];
-    } catch (_) { return []; }
+      const normalized = Array.isArray(parsed)
+        ? [...new Set(parsed.filter(title => typeof title === 'string' && GAMES.some(game => game.title === title)))]
+        : [];
+      if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+        storage.set('xbox.library.favorites', JSON.stringify(normalized));
+      }
+      return normalized;
+    } catch (_) {
+      storage.delete('xbox.library.favorites');
+      return [];
+    }
   });
   const [selectedIndex, setSelectedIndex] = useState(0);
 
