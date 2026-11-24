@@ -2418,14 +2418,27 @@ static inline size_t curl_write_cb(
     return realsize;
 }
 
-static ChiakiErrorCode hex_to_bytes(const char* hex_str, uint8_t* bytes, size_t max_len) {
+static ChiakiErrorCode hex_to_bytes(const char* hex_str, uint8_t* bytes, size_t max_len)
+{
+    if(!hex_str || !bytes || max_len > SIZE_MAX / 2)
+        return CHIAKI_ERR_INVALID_DATA;
+
     size_t len = strlen(hex_str);
-    if (len > max_len * 2) {
-        len = max_len * 2;
-    }
-    for (size_t i = 0; i < len; i += 2) {
-        if(sscanf(hex_str + i, "%2hhx", &bytes[i / 2]) != 1)
+    if((len & 1) != 0 || len > max_len * 2)
+        return CHIAKI_ERR_INVALID_DATA;
+
+    for(size_t i = 0; i < len; i += 2)
+    {
+        unsigned char high = (unsigned char)hex_str[i];
+        unsigned char low = (unsigned char)hex_str[i + 1];
+        if(!isxdigit(high) || !isxdigit(low))
             return CHIAKI_ERR_INVALID_DATA;
+
+        unsigned int high_value = high >= '0' && high <= '9' ? high - '0'
+                : (unsigned int)(tolower(high) - 'a' + 10);
+        unsigned int low_value = low >= '0' && low <= '9' ? low - '0'
+                : (unsigned int)(tolower(low) - 'a' + 10);
+        bytes[i / 2] = (uint8_t)((high_value << 4) | low_value);
     }
     return CHIAKI_ERR_SUCCESS;
 }
