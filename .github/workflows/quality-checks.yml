@@ -1,0 +1,40 @@
+name: JavaScript Quality Checks
+
+on:
+  push:
+    branches:
+      - feature/xbox-dashboard-ios-prep
+  pull_request:
+    branches:
+      - feature/xbox-dashboard-ios-prep
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Install dependencies and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install locked dependencies
+        run: yarn install --immutable
+
+      - name: Run ESLint
+        run: yarn lint
