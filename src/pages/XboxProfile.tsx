@@ -14,6 +14,7 @@ const normalizeActivityHistory = value =>
         title: typeof entry.title === 'string' ? entry.title.trim().slice(0, 120) : '',
         openedAt: entry.openedAt,
       }))
+      .slice(-10)
     : [];
 
 const normalizeLaunchCount = value =>
@@ -35,7 +36,11 @@ export default function XboxProfileScreen({navigation}) {
     try {
       const saved = storage.getString('xbox.activity.history');
       const parsed = saved ? JSON.parse(saved) : [];
-      return normalizeActivityHistory(parsed);
+      const normalized = normalizeActivityHistory(parsed);
+      if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+        storage.set('xbox.activity.history', JSON.stringify(normalized));
+      }
+      return normalized;
     } catch (_) {
       return [];
     }
