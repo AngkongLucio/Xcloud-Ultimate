@@ -65,7 +65,8 @@ export default function XboxNotificationsScreen() {
   useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
 
   const markAllRead = () => {
-    const next = items.map(item => ({...item, read: true}));
+    const latest = readNotifications();
+    const next = latest.map(item => ({...item, read: true}));
     storage.set('xbox.notifications.local', JSON.stringify(next));
     setItems(next);
   };
@@ -90,7 +91,8 @@ export default function XboxNotificationsScreen() {
   };
 
   const markRead = id => {
-    const next = items.map(item => item.id === id ? {...item, read: true} : item);
+    const latest = readNotifications();
+    const next = latest.map(item => item.id === id ? {...item, read: true} : item);
     storage.set('xbox.notifications.local', JSON.stringify(next));
     setItems(next);
   };
