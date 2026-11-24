@@ -69,7 +69,7 @@ export default function XboxProfileScreen({navigation}) {
         .filter(timestamp => Number.isFinite(timestamp) && timestamp > 0)
         .map(timestamp => {
           const date = new Date(timestamp);
-          return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+          return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
         }),
     )].sort((a, b) => b - a);
 
@@ -95,7 +95,7 @@ export default function XboxProfileScreen({navigation}) {
         .filter(timestamp => Number.isFinite(timestamp) && timestamp > 0)
         .map(timestamp => {
           const date = new Date(timestamp);
-          return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+          return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
         }),
     )].sort((a, b) => a - b);
 
