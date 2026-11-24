@@ -124,6 +124,11 @@ export default function XboxProfileScreen({navigation}) {
 
   const activityTitleGroups = Object.entries(mostOpenedTitle)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const mostRecentActivity = activity.reduce((latest, entry) => {
+    const timestamp = Number(entry?.openedAt);
+    if (!Number.isFinite(timestamp) || timestamp <= 0) return latest;
+    return latest === null || timestamp > latest ? timestamp : latest;
+  }, null);
   const activityTitleBreakdown = activityTitleGroups.map(([title, count]) => ({
     title,
     count,
@@ -244,6 +249,12 @@ export default function XboxProfileScreen({navigation}) {
                   <Text style={styles.insightValue}>{item.count}</Text>
                 </View>
               ))}
+            </View>
+          ) : null}
+          {mostRecentActivity !== null ? (
+            <View style={styles.insightRow} accessibilityLabel={"Most recent catalog activity: " + new Date(mostRecentActivity).toLocaleString()}>
+              <Text style={styles.insightLabel}>Last catalog activity</Text>
+              <Text style={styles.insightValue}>{new Date(mostRecentActivity).toLocaleString()}</Text>
             </View>
           ) : null}
           <View style={styles.activityInsights}>
