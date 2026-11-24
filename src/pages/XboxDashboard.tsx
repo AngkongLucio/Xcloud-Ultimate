@@ -246,23 +246,23 @@ export default function XboxDashboardScreen({navigation}) {
         <Text style={styles.dashboardControllerHint}>On-screen controls navigate the dashboard shortcuts. Physical controller input is not directly captured here.</Text>
       </View>
       <View style={styles.actionRow}>
-        <Button mode="outlined" icon="account-circle" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxProfile')} style={styles.actionButton}>Profile</Button>
-        <Button mode="outlined" icon="view-grid" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxLibrary')} style={styles.actionButton}>
+        <Button mode={dashboardSelection === 2 ? "contained" : "outlined"} buttonColor={dashboardSelection === 2 ? "#107c10" : undefined} icon="account-circle" textColor={dashboardSelection === 2 ? "#ffffff" : "#9cdb8a"} onPress={() => navigation.navigate('XboxProfile')} style={[styles.actionButton, focusOutline && dashboardSelection === 2 && styles.controllerFocusedButton]}>Profile</Button>
+        <Button mode={dashboardSelection === 1 ? "contained" : "outlined"} buttonColor={dashboardSelection === 1 ? "#107c10" : undefined} icon="view-grid" textColor={dashboardSelection === 1 ? "#ffffff" : "#9cdb8a"} onPress={() => navigation.navigate('XboxLibrary')} style={[styles.actionButton, focusOutline && dashboardSelection === 1 && styles.controllerFocusedButton]}>
           Game Library
         </Button>
-        <Button mode="outlined" icon="cog" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxSettings')} style={styles.actionButton}>
+        <Button mode={dashboardSelection === 3 ? "contained" : "outlined"} buttonColor={dashboardSelection === 3 ? "#107c10" : undefined} icon="cog" textColor={dashboardSelection === 3 ? "#ffffff" : "#9cdb8a"} onPress={() => navigation.navigate('XboxSettings')} style={[styles.actionButton, focusOutline && dashboardSelection === 3 && styles.controllerFocusedButton]}>
           Settings
         </Button>
-        <Button mode="outlined" icon="account-group" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxFriends')} style={styles.actionButton}>
+        <Button mode={dashboardSelection === 4 ? "contained" : "outlined"} buttonColor={dashboardSelection === 4 ? "#107c10" : undefined} icon="account-group" textColor={dashboardSelection === 4 ? "#ffffff" : "#9cdb8a"} onPress={() => navigation.navigate('XboxFriends')} style={[styles.actionButton, focusOutline && dashboardSelection === 4 && styles.controllerFocusedButton]}>
           Friends
         </Button>
-        <Button mode="outlined" icon="trophy" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxAchievements')} style={styles.actionButton}>
+        <Button mode={dashboardSelection === 6 ? "contained" : "outlined"} buttonColor={dashboardSelection === 6 ? "#107c10" : undefined} icon="trophy" textColor={dashboardSelection === 6 ? "#ffffff" : "#9cdb8a"} onPress={() => navigation.navigate('XboxAchievements')} style={[styles.actionButton, focusOutline && dashboardSelection === 6 && styles.controllerFocusedButton]}>
           Achievements
         </Button>
-        <Button mode="outlined" icon="message-text" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxMessages')} style={styles.actionButton}>
+        <Button mode={dashboardSelection === 5 ? "contained" : "outlined"} buttonColor={dashboardSelection === 5 ? "#107c10" : undefined} icon="message-text" textColor={dashboardSelection === 5 ? "#ffffff" : "#9cdb8a"} onPress={() => navigation.navigate('XboxMessages')} style={[styles.actionButton, focusOutline && dashboardSelection === 5 && styles.controllerFocusedButton]}>
           Messages
         </Button>
-        <Button mode="outlined" icon="bell" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxNotifications')} style={styles.actionButton}>
+        <Button mode={dashboardSelection === 7 ? "contained" : "outlined"} buttonColor={dashboardSelection === 7 ? "#107c10" : undefined} icon="bell" textColor={dashboardSelection === 7 ? "#ffffff" : "#9cdb8a"} onPress={() => navigation.navigate('XboxNotifications')} style={[styles.actionButton, focusOutline && dashboardSelection === 7 && styles.controllerFocusedButton]}>
           Notifications
         </Button>
       </View>
@@ -393,6 +393,7 @@ const styles = StyleSheet.create({
   dashboardControllerHint: {color: '#9eae9d', fontSize: 11, textAlign: 'center', lineHeight: 16, marginTop: 10},
   actionRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14},
   actionButton: {borderColor: '#527b52'},
+  controllerFocusedButton: {borderColor: '#9cdb8a', borderWidth: 2, transform: [{scale: 1.025}]},
   linkCardPressable: {borderRadius: 14, marginBottom: 10},
   focusedCard: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 14, transform: [{scale: 1.012}]},
   linkCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderRadius: 14},
