@@ -41,6 +41,17 @@ CUSTOM_TEMPLATE="$TMP_DIR/rn072-template"
 mkdir -p "$CUSTOM_TEMPLATE"
 cp "$TMP_DIR/react-native-source/packages/react-native/template.config.js" "$CUSTOM_TEMPLATE/template.config.js"
 cp -R "$TMP_DIR/react-native-source/packages/react-native/template" "$CUSTOM_TEMPLATE/template"
+# React Native CLI treats --template as an installable package. The upstream
+# source subtree contains template.config.js and template/, but no package
+# manifest at this copied root, so provide one for Yarn's local package install.
+cat > "$CUSTOM_TEMPLATE/package.json" <<'TEMPLATE_PACKAGE'
+{
+  "name": "react-native-template-peasyo",
+  "version": "0.72.17",
+  "private": true,
+  "description": "Local React Native 0.72.17 template for Peasyo iOS shell"
+}
+TEMPLATE_PACKAGE
 
 if [[ ! -f "$CUSTOM_TEMPLATE/template.config.js" || ! -f "$CUSTOM_TEMPLATE/template/package.json" || ! -f "$CUSTOM_TEMPLATE/template/ios/Podfile" ]]; then
   echo "Error: official React Native 0.72.17 template source is incomplete." >&2
