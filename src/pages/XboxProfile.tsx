@@ -9,6 +9,7 @@ export default function XboxProfileScreen() {
   const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
   const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
   const [saved, setSaved] = useState(false);
+  const [launchCount, setLaunchCount] = useState(() => storage.getNumber('xbox.activity.launchCount') ?? 0);
 
   const saveProfile = () => {
     const cleanTag = gamertag.trim().slice(0, 16) || 'Player';
@@ -32,6 +33,36 @@ export default function XboxProfileScreen() {
         </Card.Content>
       </Card>
 
+      <Card style={styles.statsCard}>
+        <Card.Content>
+          <Text variant="titleLarge" style={styles.sectionTitle}>Player stats</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statTile}>
+              <Text variant="headlineMedium" style={styles.statNumber}>{launchCount}</Text>
+              <Text variant="labelSmall" style={styles.statLabel}>CATALOG OPENS</Text>
+            </View>
+            <View style={styles.statTile}>
+              <Text variant="headlineMedium" style={styles.statNumber}>{launchCount >= 1 ? '✓' : '—'}</Text>
+              <Text variant="labelSmall" style={styles.statLabel}>FIRST VISIT</Text>
+            </View>
+          </View>
+          <Text variant="titleMedium" style={styles.milestoneTitle}>Local milestones</Text>
+          {[
+            {label: 'First steps', target: 1},
+            {label: 'Explorer', target: 5},
+            {label: 'Regular', target: 10},
+          ].map(item => (
+            <View key={item.label} style={styles.milestoneRow}>
+              <View style={styles.milestoneCopy}>
+                <Text style={styles.milestoneName}>{item.label}</Text>
+                <Text style={styles.milestoneHint}>{Math.min(launchCount, item.target)} / {item.target} catalog opens</Text>
+              </View>
+              <Text style={styles.milestoneStatus}>{launchCount >= item.target ? '✓' : '○'}</Text>
+            </View>
+          ))}
+          <Text variant="bodySmall" style={styles.statsNote}>These are local companion-app milestones, not official Xbox achievements or playtime.</Text>
+        </Card.Content>
+      </Card>
       <Card style={styles.card}>
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Choose avatar</Text>
@@ -72,6 +103,18 @@ const styles = StyleSheet.create({
   eyebrow: {color: '#8fbc8f', letterSpacing: 2, fontWeight: '700'},
   heading: {color: '#fff', fontWeight: '800', marginTop: 5},
   intro: {color: '#aebcaf', lineHeight: 21, marginTop: 8, marginBottom: 18},
+  statsCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 16, marginBottom: 14},
+  statsRow: {flexDirection: 'row', gap: 10},
+  statTile: {flex: 1, backgroundColor: '#202920', borderRadius: 12, padding: 14},
+  statNumber: {color: '#9cdb8a', fontWeight: '800'},
+  statLabel: {color: '#aab5aa', letterSpacing: 1, marginTop: 4},
+  milestoneTitle: {color: '#fff', fontWeight: '700', marginTop: 20, marginBottom: 8},
+  milestoneRow: {flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#354136'},
+  milestoneCopy: {flex: 1},
+  milestoneName: {color: '#f2f6f1', fontWeight: '700'},
+  milestoneHint: {color: '#aab5aa', fontSize: 12, marginTop: 3},
+  milestoneStatus: {color: '#9cdb8a', fontSize: 22, fontWeight: '800'},
+  statsNote: {color: '#829082', lineHeight: 18, marginTop: 12},
   profileCard: {backgroundColor: '#18351f', borderRadius: 18, marginBottom: 16},
   profileContent: {alignItems: 'center', paddingVertical: 24},
   avatarCircle: {width: 92, height: 92, borderRadius: 46, backgroundColor: '#294d30', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#9cdb8a'},
