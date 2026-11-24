@@ -1,6 +1,8 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {ScrollView, View, StyleSheet, Linking, Pressable} from 'react-native';
 import {Button, Card, Text} from 'react-native-paper';
+import {useIsFocused} from '@react-navigation/native';
+import {storage} from '../store/mmkv';
 
 const XBOX_PLAY = 'https://www.xbox.com/play';
 
@@ -11,6 +13,11 @@ const quickLinks = [
 ];
 
 export default function XboxDashboardScreen({navigation}) {
+  const isFocused = useIsFocused();
+  const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
+  useEffect(() => {
+    if (isFocused) setFocusOutline(storage.getBoolean('xbox.ui.focusOutline') ?? true);
+  }, [isFocused]);
   const openCloud = () => Linking.openURL(XBOX_PLAY).catch(() => {});
   const openGamePass = () => Linking.openURL('https://www.xbox.com/xbox-game-pass').catch(() => {});
   const handleQuickLink = title => {
@@ -59,7 +66,7 @@ export default function XboxDashboardScreen({navigation}) {
           accessibilityRole="button"
           accessibilityLabel={item.title + '. ' + item.subtitle}
           onPress={() => handleQuickLink(item.title)}
-          style={({focused}) => [styles.linkCardPressable, focused && styles.focusedCard]}>
+          style={({focused}) => [styles.linkCardPressable, focusOutline && focused && styles.focusedCard]}>
           <Card style={styles.linkCard} mode="outlined">
           <Card.Content style={styles.linkContent}>
             <Text variant="headlineMedium">{item.icon}</Text>
