@@ -480,96 +480,96 @@ JNIEXPORT jstring JNICALL JNI_FCN(connectPsnConnection)(JNIEnv *env, jobject obj
     CHIAKI_LOGE(&global_log, "holepunch connectPsnConnection");
 
     const char *psn_oauth2_token = (*env)->GetStringUTFChars(env, token, NULL);
-//    ChiakiHolepunchConsoleType console_type = isPs5 ? CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS5 : CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS4;
-
-    ChiakiHolepunchConsoleType console_type = CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS5;
-    ChiakiHolepunchDeviceInfo *device_info_ps5;
-    size_t num_devices_ps5;
-
-    ChiakiHolepunchSession session = chiaki_holepunch_session_init(psn_oauth2_token, &global_log);
-
-    if (!session)
-    {
-        CHIAKI_LOGE(&global_log, ">> holepunch Found !! Failed to initialize session");
+    if(!psn_oauth2_token)
         return (*env)->NewStringUTF(env, "Failed");
-    }
-    CHIAKI_LOGE(&global_log, ">> holepunch Initialized session\n");
 
-    ChiakiErrorCode err = chiaki_holepunch_list_devices(psn_oauth2_token, CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS5, &device_info_ps5, &num_devices_ps5, &global_log);
-    if (err != CHIAKI_ERR_SUCCESS)
+    ChiakiHolepunchSession session = NULL;
+    ChiakiHolepunchDeviceInfo *device_info_ps5 = NULL;
+    size_t num_devices_ps5 = 0;
+    const char *result_message = "Failed";
+
+    // This legacy entry point currently supports the PS5 path.
+    const ChiakiHolepunchConsoleType console_type = CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS5;
+
+    session = chiaki_holepunch_session_init(psn_oauth2_token, &global_log);
+    if(!session)
     {
-        CHIAKI_LOGE(&global_log, "holepunch !! Failed to get PS5 devices: %s", chiaki_error_string(err));
-        if(err == CHIAKI_ERR_PSN_TOKEN_INVALID)
-            return (*env)->NewStringUTF(env, "Error: PSN token invalid");
-        return (*env)->NewStringUTF(env, "Error: Failed to list devices");
+        CHIAKI_LOGE(&global_log, "Failed to initialize holepunch session");
+        goto cleanup;
     }
-    CHIAKI_LOGE(&global_log, ">> holepunch Found %zu devices\n", num_devices_ps5);
+    CHIAKI_LOGE(&global_log, "Initialized holepunch session");
 
-    (*env)->ReleaseStringUTFChars(env, token, psn_oauth2_token);
+    ChiakiErrorCode err = chiaki_holepunch_list_devices(
+        psn_oauth2_token, console_type, &device_info_ps5, &num_devices_ps5, &global_log);
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(&global_log, "Failed to get PS5 devices: %s", chiaki_error_string(err));
+        result_message = err == CHIAKI_ERR_PSN_TOKEN_INVALID
+            ? "Error: PSN token invalid"
+            : "Error: Failed to list devices";
+        goto cleanup;
+    }
+    if(num_devices_ps5 == 0 || !device_info_ps5)
+    {
+        CHIAKI_LOGE(&global_log, "No PS5 devices are registered to this account");
+        result_message = "Error: No PS5 devices found";
+        goto cleanup;
+    }
 
-    uint8_t device_uid[32];
-
-    for (size_t i = 0; i < num_devices_ps5; i++)
+    for(size_t i = 0; i < num_devices_ps5; i++)
     {
         ChiakiHolepunchDeviceInfo dev = device_info_ps5[i];
         char duid_str[sizeof(dev.device_uid) * 2 + 1];
         format_hex(duid_str, sizeof(duid_str), dev.device_uid, sizeof(dev.device_uid));
-        CHIAKI_LOGE(&global_log, "holepunch %s %s (%s) rp_enabled=%s\n",
-                    dev.type == CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS5 ? "PS5" : "PS4",
-                    dev.device_name, duid_str, dev.remoteplay_enabled ? "true" : "false");
+        CHIAKI_LOGI(&global_log, "PS5 %s (%s) rp_enabled=%s",
+            dev.device_name, duid_str, dev.remoteplay_enabled ? "true" : "false");
     }
-
-    memcpy(device_uid, device_info_ps5[0].device_uid, sizeof(device_uid));
 
     err = chiaki_holepunch_upnp_discover(session);
     if(err != CHIAKI_ERR_SUCCESS)
     {
-        CHIAKI_LOGE(&global_log, "holepunch !! Failed to run upnp discover");
-        return (*env)->NewStringUTF(env, "Failed");
+        CHIAKI_LOGE(&global_log, "Failed to run UPnP discovery: %s", chiaki_error_string(err));
+        goto cleanup;
     }
 
     err = chiaki_holepunch_session_create(session);
-    if (err != CHIAKI_ERR_SUCCESS)
+    if(err != CHIAKI_ERR_SUCCESS)
     {
-        CHIAKI_LOGE(&global_log, "holepunch !! Failed to create session\n");
-        return (*env)->NewStringUTF(env, "Failed");
+        CHIAKI_LOGE(&global_log, "Failed to create holepunch session: %s", chiaki_error_string(err));
+        goto cleanup;
     }
-    CHIAKI_LOGE(&global_log, ">> holepunch Created session success\n");
 
     err = holepunch_session_create_offer(session);
-    if (err != CHIAKI_ERR_SUCCESS)
+    if(err != CHIAKI_ERR_SUCCESS)
     {
-        CHIAKI_LOGE(&global_log, "holepunch !! Failed to create offer msg for ctrl connection\n");
-        return (*env)->NewStringUTF(env, "Failed");
+        CHIAKI_LOGE(&global_log, "Failed to create control connection offer: %s", chiaki_error_string(err));
+        goto cleanup;
     }
-    CHIAKI_LOGE(&global_log, ">> holepunch Created offer msg for ctrl connection\n");
 
-    // duid处理
-    const char* duid_str = (*env)->GetStringUTFChars(env, duid, NULL);
-
-    // FIXME: chiaki_holepunch_session_start: Timed out waiting for holepunch session start notifications.
-    err = chiaki_holepunch_session_start(session, device_uid, CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS5);
-    if (err != CHIAKI_ERR_SUCCESS)
+    err = chiaki_holepunch_session_start(
+        session, device_info_ps5[0].device_uid, console_type);
+    if(err != CHIAKI_ERR_SUCCESS)
     {
-        CHIAKI_LOGE(&global_log, "holepunch !! Failed to start session\n");
-        chiaki_holepunch_session_fini(session);
-        return (*env)->NewStringUTF(env, "Failed");
+        CHIAKI_LOGE(&global_log, "Failed to start holepunch session: %s", chiaki_error_string(err));
+        goto cleanup;
     }
-    CHIAKI_LOGE(&global_log, ">> holepunch Started session\n");
 
     err = chiaki_holepunch_session_punch_hole(session, CHIAKI_HOLEPUNCH_PORT_TYPE_CTRL);
-    if (err != CHIAKI_ERR_SUCCESS)
+    if(err != CHIAKI_ERR_SUCCESS)
     {
-        CHIAKI_LOGE(&global_log, "!! holepunch Failed to punch hole for control connection.");
-        return (*env)->NewStringUTF(env, "Failed");
+        CHIAKI_LOGE(&global_log, "Failed to punch hole for control connection: %s", chiaki_error_string(err));
+        goto cleanup;
     }
-    CHIAKI_LOGI(&global_log, ">> holepunch Punched hole for control connection!");
 
+    CHIAKI_LOGI(&global_log, "PSN control connection hole punched successfully");
+    result_message = "Success";
+
+cleanup:
+    if(session)
+        chiaki_holepunch_session_fini(session);
+    chiaki_holepunch_free_device_list(&device_info_ps5);
     (*env)->ReleaseStringUTFChars(env, token, psn_oauth2_token);
-
-    CHIAKI_LOGI(&global_log, ">> holepunch Punched success!");
-
-    return (*env)->NewStringUTF(env, "Success");
+    return (*env)->NewStringUTF(env, result_message);
 }
 
 JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject result, jobject connect_info_obj, jstring log_file_str, jboolean log_verbose, jobject java_session)
