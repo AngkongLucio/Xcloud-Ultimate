@@ -62,6 +62,32 @@ export default function XboxProfileScreen({navigation}) {
       .map(timestamp => new Date(timestamp).toLocaleDateString()),
   ).size;
 
+  const activityStreak = (() => {
+    const dayStarts = [...new Set(
+      activity
+        .map(entry => Number(entry?.openedAt))
+        .filter(timestamp => Number.isFinite(timestamp) && timestamp > 0)
+        .map(timestamp => {
+          const date = new Date(timestamp);
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+        }),
+    )].sort((a, b) => b - a);
+
+    if (!dayStarts.length) return 0;
+
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const yesterdayStart = todayStart - 86400000;
+    if (dayStarts[0] !== todayStart && dayStarts[0] !== yesterdayStart) return 0;
+
+    let streak = 1;
+    for (let index = 1; index < dayStarts.length; index += 1) {
+      if (dayStarts[index - 1] - dayStarts[index] !== 86400000) break;
+      streak += 1;
+    }
+    return streak;
+  })();
+
   const activityInsights = {
     totalOpens: activity.length,
     uniqueTitles: uniqueActivityTitles,
@@ -155,6 +181,10 @@ export default function XboxProfileScreen({navigation}) {
             <View style={styles.insightRow}>
               <Text style={styles.insightLabel}>Active days</Text>
               <Text accessibilityLabel={activityInsights.activeDays + " distinct activity days in saved history"} style={styles.insightValue}>{activityInsights.activeDays}</Text>
+            </View>
+            <View style={styles.insightRow}>
+              <Text style={styles.insightLabel}>Current streak</Text>
+              <Text accessibilityLabel={activityStreak + " consecutive active days, based on saved history"} style={styles.insightValue}>{activityStreak} {activityStreak === 1 ? 'day' : 'days'}</Text>
             </View>
             <View style={styles.insightTrack}>
               <View style={[styles.insightFill, {width: activityInsights.repeatRate + '%'}]} />
