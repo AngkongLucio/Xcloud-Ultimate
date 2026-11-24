@@ -29,11 +29,11 @@ if ! xcode-select -p >/dev/null 2>&1; then
   exit 2
 fi
 
-echo "Generating a clean React Native 0.72.14 iOS template..."
+echo "Generating a clean React Native 0.72.17 iOS template..."
 cd "$TMP_DIR"
-# React Native 0.72.14 declares CLI ^11.4.1; use its compatible CLI release.
-# Keep --version so the generated native template matches the app dependency.
-npx --yes @react-native-community/cli@11.4.1 init Peasyo --version 0.72.14 --skip-install
+# React Native 0.72.17 uses the 0.72 template and CLI 11.4.1.
+# Pin the template to the same published version used by the app.
+npx --yes @react-native-community/cli@11.4.1 init Peasyo --version 0.72.17 --skip-install
 
 if [[ ! -d "$TMP_DIR/Peasyo/ios/Peasyo.xcodeproj" || ! -f "$TMP_DIR/Peasyo/ios/Podfile" ]]; then
   echo "Error: React Native CLI did not produce the expected iOS project structure." >&2
@@ -62,7 +62,7 @@ if ! /usr/libexec/PlistBuddy -c 'Print :NSLocalNetworkUsageDescription' "$APP_IN
 fi
 
 echo
-echo "Created $IOS_DIR from the official React Native 0.72.14 template."
+echo "Created $IOS_DIR from the official React Native 0.72.17 template."
 echo "Bundle identifier: com.peasyo"
 echo "AppRegistry module name: peasyo"
 echo
