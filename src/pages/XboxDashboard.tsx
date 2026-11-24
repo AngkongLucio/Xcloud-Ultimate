@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, View, StyleSheet, Linking, Pressable} from 'react-native';
+import {ScrollView, View, StyleSheet, Linking} from 'react-native';
 import {Button, Card, Text} from 'react-native-paper';
 
 const XBOX_PLAY = 'https://www.xbox.com/play';
@@ -10,7 +10,7 @@ const quickLinks = [
   {title: 'Recently played', subtitle: 'Continue where you left off', icon: '▶️'},
 ];
 
-export default function XboxDashboardScreen({navigation}) {
+export default function XboxDashboardScreen() {
   const openCloud = () => Linking.openURL(XBOX_PLAY).catch(() => {});
 
   return (
@@ -23,8 +23,7 @@ export default function XboxDashboardScreen({navigation}) {
         <Text variant="headlineSmall" style={styles.logo}>XBOX</Text>
       </View>
 
-      <Pressable onPress={openCloud} accessibilityRole="button" accessibilityLabel="Launch Xbox Cloud Gaming">
-        <Card style={styles.hero} mode="contained">
+      <Card style={styles.hero} mode="contained">
           <Card.Content>
             <Text variant="labelLarge" style={styles.heroEyebrow}>READY WHEN YOU ARE</Text>
             <Text variant="headlineLarge" style={styles.heroTitle}>Play your way.</Text>
@@ -35,8 +34,7 @@ export default function XboxDashboardScreen({navigation}) {
               Launch Cloud Gaming
             </Button>
           </Card.Content>
-        </Card>
-      </Pressable>
+      </Card>
 
       <Text variant="titleLarge" style={styles.sectionTitle}>Explore</Text>
       {quickLinks.map(item => (
