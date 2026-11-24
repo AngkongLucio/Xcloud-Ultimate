@@ -190,17 +190,17 @@ export default function XboxDashboardScreen({navigation}) {
               <Text variant="titleLarge" style={styles.quickTitle}>Quick Settings</Text>
               <Button compact textColor="#9cdb8a" onPress={() => { haptic(); setQuickSettingsVisible(false); }}>Close</Button>
             </View>
-            <View style={styles.quickRow}>
+            <View style={[styles.quickRow, focusOutline && quickSelection === 0 && styles.quickRowFocused]}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Focus highlight</Text><Text style={styles.quickHint}>Visible keyboard focus outline</Text></View>
               <Switch value={focusOutline} onValueChange={updateFocusOutline} />
             </View>
             <View style={styles.quickDivider} />
-            <View style={styles.quickRow}>
+            <View style={[styles.quickRow, focusOutline && quickSelection === 1 && styles.quickRowFocused]}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Controller feedback</Text><Text style={styles.quickHint}>Haptic taps for menu actions</Text></View>
               <Switch value={hapticsEnabled} onValueChange={updateHaptics} />
             </View>
             <View style={styles.quickDivider} />
-            <View style={styles.quickRow}>
+            <View style={[styles.quickRow, focusOutline && quickSelection === 2 && styles.quickRowFocused]}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Compact game cards</Text><Text style={styles.quickHint}>Tighter game library layout</Text></View>
               <Switch value={compactCards} onValueChange={updateCompactCards} />
             </View>
@@ -214,9 +214,9 @@ export default function XboxDashboardScreen({navigation}) {
               </View>
             </View>
             <View style={styles.quickActions}>
-              <Button compact mode="outlined" textColor="#9cdb8a" onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxSettings'); }}>All settings</Button>
-              <Button compact mode="outlined" textColor="#9cdb8a" onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxNotifications'); }}>Notifications</Button>
-              <Button compact mode="contained" buttonColor="#107c10" onPress={openCloud}>Launch cloud</Button>
+              <Button compact mode={quickSelection === 3 ? "contained" : "outlined"} buttonColor={quickSelection === 3 ? "#107c10" : undefined} textColor={quickSelection === 3 ? "#fff" : "#9cdb8a"} onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxSettings'); }}>All settings</Button>
+              <Button compact mode={quickSelection === 4 ? "contained" : "outlined"} buttonColor={quickSelection === 4 ? "#107c10" : undefined} textColor={quickSelection === 4 ? "#fff" : "#9cdb8a"} onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxNotifications'); }}>Notifications</Button>
+              <Button compact mode={quickSelection === 5 ? "contained" : "outlined"} buttonColor={quickSelection === 5 ? "#107c10" : undefined} textColor={quickSelection === 5 ? "#fff" : "#9cdb8a"} onPress={() => { setQuickSettingsVisible(false); openCloud(); }}>Launch cloud</Button>
             </View>
           </Card.Content>
         </Card>
@@ -361,6 +361,7 @@ const styles = StyleSheet.create({
   quickPanel: {backgroundColor: '#1b211c', borderColor: '#66845f', borderWidth: 1, borderRadius: 16, marginBottom: 18},
   quickHeader: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8},
   quickTitle: {color: '#fff', fontWeight: '800'},
+  quickRowFocused: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 10, paddingHorizontal: 8, backgroundColor: '#243a28', transform: [{scale: 1.01}]},
   quickRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 58, gap: 12},
   quickCopy: {flex: 1},
   quickLabel: {color: '#f2f6f1', fontWeight: '700'},
