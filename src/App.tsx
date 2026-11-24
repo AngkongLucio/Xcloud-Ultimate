@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {Alert, Linking, Platform, useColorScheme, NativeModules} from 'react-native';
 import {
   PaperProvider,
@@ -96,38 +96,41 @@ function App() {
   const colorScheme = useColorScheme();
   const settings = getSettings();
 
-  if (settings.check_update) {
+  const updateCheckStarted = useRef(false);
+
+  useEffect(() => {
+    if (!settings.check_update || updateCheckStarted.current) return;
+    updateCheckStarted.current = true;
+
     updater().then((infos: any) => {
-      if (infos) {
-        const {latestVer, version, updateText, url} = infos;
-        Alert.alert(
-          t('Update Warning'),
-          t(
-            `Check new version ${latestVer}, current version: ${version}. \n\n ${updateText}`,
-          ),
-          [
-            {
-              text: t('Cancel'),
-              style: 'default',
-              onPress: () => {},
+      if (!infos) return;
+      const {latestVer, version, updateText, url} = infos;
+      Alert.alert(
+        t('Update Warning'),
+        t(
+          `Check new version ${latestVer}, current version: ${version}. \n\n ${updateText}`,
+        ),
+        [
+          {
+            text: t('Cancel'),
+            style: 'default',
+          },
+          {
+            text: t('Download'),
+            style: 'default',
+            onPress: () => {
+              Linking.openURL(url).catch(() => {
+                Alert.alert(
+                  t('Unable to open download link'),
+                  t('Check your internet connection and try opening the link again.'),
+                );
+              });
             },
-            {
-              text: t('Download'),
-              style: 'default',
-              onPress: () => {
-                Linking.openURL(url).catch(() => {
-                  Alert.alert(
-                    t('Unable to open download link'),
-                    t('Check your internet connection and try opening the link again.'),
-                  );
-                });
-              },
-            },
-          ],
-        );
-      }
+          },
+        ],
+      );
     });
-  }
+  }, [settings.check_update, t]);
 
   // console.log('bind_usb_device:', settings.bind_usb_device);
   // USB rumble binding is Android-native; keep the shared app safe on iOS.
