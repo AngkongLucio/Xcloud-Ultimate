@@ -1490,57 +1490,63 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_start(
 */
 static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
 {
+    if(!session || !session->oauth_header || !session->curl_share)
+        return CHIAKI_ERR_INVALID_DATA;
+
     HttpResponseData response_data = {
-            .data = malloc(0),
+            .data = NULL,
             .size = 0,
     };
+    CURL *curl = NULL;
+    struct curl_slist *headers = NULL;
+    json_tokener *tok = NULL;
+    json_object *json = NULL;
+    ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
 
-    CURL *curl = curl_easy_init();
+    curl = curl_easy_init();
     if(!curl)
     {
         CHIAKI_LOGE(session->log, "Curl could not init");
         return CHIAKI_ERR_MEMORY;
     }
 
-    struct curl_slist *headers = NULL;
-    headers = curl_slist_append(headers, session->oauth_header);
-    headers = curl_slist_append(headers, "Host: asm.np.community.playstation.net");
-    headers = curl_slist_append(headers, "Connection: Keep-Alive");
-    headers = curl_slist_append(headers, "Content-Type: application/json; charset=utf-8");
-    headers = curl_slist_append(headers, "User-Agent: RpNetHttpUtilImpl");
+#define APPEND_WAKEUP_HEADER(value) \
+    do { \
+        struct curl_slist *new_headers = curl_slist_append(headers, value); \
+        if(!new_headers) { err = CHIAKI_ERR_MEMORY; goto cleanup; } \
+        headers = new_headers; \
+    } while(0)
+    APPEND_WAKEUP_HEADER(session->oauth_header);
+    APPEND_WAKEUP_HEADER("Host: asm.np.community.playstation.net");
+    APPEND_WAKEUP_HEADER("Connection: Keep-Alive");
+    APPEND_WAKEUP_HEADER("Content-Type: application/json; charset=utf-8");
+    APPEND_WAKEUP_HEADER("User-Agent: RpNetHttpUtilImpl");
 
-    CURLcode res = curl_easy_setopt(curl, CURLOPT_SHARE, session->curl_share);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_SHARE failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_FAILONERROR failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_TIMEOUT failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_URL, user_profile_url);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_URL failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_HTTPHEADER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_WRITEFUNCTION failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
-
-    ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
+#define SET_WAKEUP_OPTION(option, value) \
+    do { \
+        res = curl_easy_setopt(curl, option, value); \
+        if(res != CURLE_OK) { \
+            CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: CURL setopt " #option " failed: %s", curl_easy_strerror(res)); \
+            err = CHIAKI_ERR_NETWORK; \
+            goto cleanup; \
+        } \
+    } while(0)
+    CURLcode res;
+    SET_WAKEUP_OPTION(CURLOPT_SHARE, session->curl_share);
+    SET_WAKEUP_OPTION(CURLOPT_FAILONERROR, 1L);
+    SET_WAKEUP_OPTION(CURLOPT_TIMEOUT, 10L);
+    SET_WAKEUP_OPTION(CURLOPT_URL, user_profile_url);
+    SET_WAKEUP_OPTION(CURLOPT_HTTPHEADER, headers);
+    SET_WAKEUP_OPTION(CURLOPT_WRITEFUNCTION, curl_write_cb);
+    SET_WAKEUP_OPTION(CURLOPT_WRITEDATA, (void*)&response_data);
+    SET_WAKEUP_OPTION(CURLOPT_SSL_VERIFYPEER, 1L);
+    SET_WAKEUP_OPTION(CURLOPT_SSL_VERIFYHOST, 2L);
+#undef SET_WAKEUP_OPTION
+#undef APPEND_WAKEUP_HEADER
     res = curl_easy_perform(curl);
     curl_slist_free_all(headers);
-    CHIAKI_LOGV(session->log, "http_ps4_session_wakeup: Received JSON:\n%.*s", (int)response_data.size, response_data.data);
+    headers = NULL;
+    CHIAKI_LOGV(session->log, "http_ps4_session_wakeup: Received JSON:\n%.*s", (int)response_data.size, response_data.data ? response_data.data : "");
     if (res != CURLE_OK)
     {
         if (res == CURLE_HTTP_RETURNED_ERROR)
@@ -1557,13 +1563,13 @@ static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
         goto cleanup;
     }
 
-    json_tokener *tok = json_tokener_new();
+    tok = json_tokener_new();
     if(!tok)
     {
         CHIAKI_LOGE(session->log, "Couldn't create new json tokener");
         goto cleanup;
     }
-    json_object *json = json_tokener_parse_ex(tok, response_data.data, response_data.size);
+    json = json_tokener_parse_ex(tok, response_data.data, (int)response_data.size);
     if (json == NULL)
     {
         CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: Parsing JSON failed");
@@ -1593,35 +1599,49 @@ static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
         goto cleanup_json;
     }
 
-    char host_url_starter[128];
-    char host_url[128];
-    memcpy(host_url, user_profile_url, strlen(user_profile_url) + 1);
-    // Get just the base url
-    remove_substring(host_url, "https://");
-    remove_substring(host_url, "http://");
-    strcpy(host_url_starter, host_url);
-    char *ptr = strtok(host_url_starter, "/");
-    if(!(ptr == (host_url_starter + strlen(host_url_starter))))
-        strcpy(host_url, ptr);
-    memset(host_url_starter, 0, 128);
-    strcpy(host_url_starter, host_url);
-    ptr = strtok(host_url_starter, "?");
-    // if string found, copy part before string found, else leave string as-is
-    if(!(ptr == (host_url_starter + strlen(host_url_starter))))
-        strcpy(host_url, ptr);
-    memset(host_url_starter, 0, 128);
-    strcpy(host_url_starter, host_url);
-    ptr = strtok(host_url_starter, "#");
-    if(!(ptr == (host_url_starter + strlen(host_url_starter))))
-        strcpy(host_url, ptr);
+    char host_url[256];
+    static const char https_prefix[] = "https://";
+    if(strncmp(user_profile_url, https_prefix, sizeof(https_prefix) - 1) != 0)
+    {
+        CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: Profile URL is not HTTPS");
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup_json;
+    }
+    const char *authority = user_profile_url + sizeof(https_prefix) - 1;
+    const char *authority_end = strpbrk(authority, "/?#");
+    size_t authority_len = authority_end ? (size_t)(authority_end - authority) : strlen(authority);
+    if(authority_len == 0 || authority_len >= sizeof(host_url) ||
+            memchr(authority, '@', authority_len) ||
+            memchr(authority, '\\', authority_len))
+    {
+        CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: Profile URL has an invalid host");
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup_json;
+    }
+    for(size_t i = 0; i < authority_len; i++)
+    {
+        unsigned char ch = (unsigned char)authority[i];
+        if(ch <= 0x20 || ch >= 0x7f)
+        {
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup_json;
+        }
+    }
+    memcpy(host_url, authority, authority_len);
+    host_url[authority_len] = '\0';
 
     curl_easy_cleanup(curl);
     free(response_data.data);
     response_data.data = malloc(0);
     response_data.size = 0;
     headers = NULL;
-    char url[128] = {0};
-    snprintf(url, sizeof(url), wakeup_url_fmt, user_profile_url, session->online_id);
+    char url[2048];
+    int url_len = snprintf(url, sizeof(url), wakeup_url_fmt, user_profile_url, session->online_id);
+    if(url_len < 0 || (size_t)url_len >= sizeof(url))
+    {
+        err = CHIAKI_ERR_OVERFLOW;
+        goto cleanup_json;
+    }
 
     char envelope_buf[sizeof(session_wakeup_envelope_fmt) * 2] = {0};
 
@@ -1644,59 +1664,61 @@ static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
              data2_base64,
              session->session_id);
 
+    curl_easy_cleanup(curl);
+    curl = NULL;
+    free(response_data.data);
+    response_data.data = NULL;
+    response_data.size = 0;
+
     curl = curl_easy_init();
     if(!curl)
     {
         CHIAKI_LOGE(session->log, "Curl could not init");
-        json_object_put(json);
-        json_tokener_free(tok);
-        return CHIAKI_ERR_MEMORY;
+        err = CHIAKI_ERR_MEMORY;
+        goto cleanup_json;
     }
 
-    char host_url_string[134];
-    snprintf(host_url_string, sizeof(host_url_string), "Host: %s", host_url);
-    headers = curl_slist_append(headers, session->oauth_header);
-    headers = curl_slist_append(headers, host_url_string);
-    headers = curl_slist_append(headers, "Connection: Keep-Alive");
-    headers = curl_slist_append(headers, "Content-Type: application/json; charset=utf-8");
-    headers = curl_slist_append(headers, "User-Agent: RpNetHttpUtilImpl");
+    char host_url_string[sizeof(host_url) + sizeof("Host: ")];
+    int host_header_len = snprintf(host_url_string, sizeof(host_url_string), "Host: %s", host_url);
+    if(host_header_len < 0 || (size_t)host_header_len >= sizeof(host_url_string))
+    {
+        err = CHIAKI_ERR_OVERFLOW;
+        goto cleanup_json;
+    }
+    APPEND_WAKEUP_HEADER(session->oauth_header);
+    APPEND_WAKEUP_HEADER(host_url_string);
+    APPEND_WAKEUP_HEADER("Connection: Keep-Alive");
+    APPEND_WAKEUP_HEADER("Content-Type: application/json; charset=utf-8");
+    APPEND_WAKEUP_HEADER("User-Agent: RpNetHttpUtilImpl");
 
-    res = curl_easy_setopt(curl, CURLOPT_SHARE, session->curl_share);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_SHARE failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_FAILONERROR failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_TIMEOUT failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_URL, url);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_URL failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_HTTPHEADER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_POSTFIELDS, envelope_buf);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_POSTFIELDS failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_WRITEFUNCTION failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(session->log, "http_ps4_session_wakeup: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
+#define SET_WAKEUP_OPTION(option, value) \
+    do { \
+        res = curl_easy_setopt(curl, option, value); \
+        if(res != CURLE_OK) { \
+            CHIAKI_LOGE(session->log, "http_ps4_session_wakeup: CURL setopt " #option " failed: %s", curl_easy_strerror(res)); \
+            err = CHIAKI_ERR_NETWORK; \
+            goto cleanup_json; \
+        } \
+    } while(0)
+    SET_WAKEUP_OPTION(CURLOPT_SHARE, session->curl_share);
+    SET_WAKEUP_OPTION(CURLOPT_FAILONERROR, 1L);
+    SET_WAKEUP_OPTION(CURLOPT_TIMEOUT, 10L);
+    SET_WAKEUP_OPTION(CURLOPT_URL, url);
+    SET_WAKEUP_OPTION(CURLOPT_HTTPHEADER, headers);
+    SET_WAKEUP_OPTION(CURLOPT_POSTFIELDS, envelope_buf);
+    SET_WAKEUP_OPTION(CURLOPT_WRITEFUNCTION, curl_write_cb);
+    SET_WAKEUP_OPTION(CURLOPT_WRITEDATA, (void*)&response_data);
+    SET_WAKEUP_OPTION(CURLOPT_SSL_VERIFYPEER, 1L);
+    SET_WAKEUP_OPTION(CURLOPT_SSL_VERIFYHOST, 2L);
+#undef SET_WAKEUP_OPTION
+#undef APPEND_WAKEUP_HEADER
 
     CHIAKI_LOGV(session->log, "http_ps4_session_wakeup: Sending JSON:\n%s", envelope_buf);
 
     res = curl_easy_perform(curl);
     curl_slist_free_all(headers);
-    CHIAKI_LOGV(session->log, "http_ps4_session_wakeup: Received JSON:\n%.*s", (int)response_data.size, response_data.data);
+    headers = NULL;
+    CHIAKI_LOGV(session->log, "http_ps4_session_wakeup: Received JSON:\n%.*s", (int)response_data.size, response_data.data ? response_data.data : "");
     if (res != CURLE_OK)
     {
         if (res == CURLE_HTTP_RETURNED_ERROR)
@@ -1716,17 +1738,27 @@ static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
         goto cleanup_json;
     }
 
-    chiaki_mutex_lock(&session->state_mutex);
+    err = chiaki_mutex_lock(&session->state_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto cleanup_json;
     session->state |= SESSION_STATE_DATA_SENT;
     log_session_state(session);
-    chiaki_mutex_unlock(&session->state_mutex);
+    {
+        ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&session->state_mutex);
+        if(unlock_err != CHIAKI_ERR_SUCCESS)
+            err = unlock_err;
+    }
 
-    cleanup_json:
-    json_object_put(json);
-    cleanup_json_tokener:
-    json_tokener_free(tok);
-    cleanup:
-    curl_easy_cleanup(curl);
+cleanup_json:
+    if(json)
+        json_object_put(json);
+cleanup_json_tokener:
+    if(tok)
+        json_tokener_free(tok);
+cleanup:
+    curl_slist_free_all(headers);
+    if(curl)
+        curl_easy_cleanup(curl);
     free(response_data.data);
 
     return err;
