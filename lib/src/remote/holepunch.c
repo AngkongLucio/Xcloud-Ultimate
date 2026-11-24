@@ -725,6 +725,8 @@ cleanup:
 
 CHIAKI_EXPORT void chiaki_holepunch_free_device_list(ChiakiHolepunchDeviceInfo** devices)
 {
+    if(!devices)
+        return;
     free(*devices);
     *devices = NULL;
 }
