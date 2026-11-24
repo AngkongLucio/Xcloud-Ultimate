@@ -17,7 +17,6 @@ import {
 import Spinner from 'react-native-loading-spinner-overlay';
 import {useTranslation} from 'react-i18next';
 import uuid from 'react-native-uuid';
-import {KeyboardFocusView} from 'react-native-a11y';
 import {discoverDevices, type IDiscoveredDevice} from '../discovery';
 import {TokenStore} from '../store/tokenStore';
 import {getConsoles, saveConsoles} from '../store/consolesStore';
