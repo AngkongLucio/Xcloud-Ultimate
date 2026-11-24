@@ -648,7 +648,9 @@ function AndroidStreamScreen({navigation, route}) {
                     setPseudoScreenOff(true);
                   }
                 })
-                .catch(() => {});
+                .catch(() => {
+                  ToastAndroid.show(t('Unable to enable external display output'), ToastAndroid.SHORT);
+                });
             }, 1500);
           }
         } else if (event.type === HOLEPUNCHFINISHED) {
@@ -1202,7 +1204,9 @@ function AndroidStreamScreen({navigation, route}) {
         setExtOutputActive(false);
         ToastAndroid.show(t('External output disabled'), ToastAndroid.SHORT);
       })
-      .catch(() => {});
+      .catch(() => {
+        ToastAndroid.show(t('Unable to disable external display output'), ToastAndroid.SHORT);
+      });
   };
 
   // 挂起：外屏输出时切后台（前台服务保活，外屏继续输出，手机可用其它 app）；
