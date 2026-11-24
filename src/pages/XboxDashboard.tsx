@@ -9,7 +9,12 @@ const readUnreadNotifications = () => {
   try {
     const raw = storage.getString('xbox.notifications.local');
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter(item => !item.read).length : 0;
+    if (!Array.isArray(parsed)) return 0;
+    return parsed.filter(item =>
+      item && typeof item === 'object' && !Array.isArray(item)
+      && typeof item.title === 'string' && item.title.trim().length > 0
+      && typeof item.message === 'string' && item.read !== true,
+    ).length;
   } catch (_) { return 0; }
 };
 
