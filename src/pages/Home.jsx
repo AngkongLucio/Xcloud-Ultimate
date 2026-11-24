@@ -410,6 +410,7 @@ function HomeScreen({navigation, route}) {
                   item.rpRegistKey,
                 );
                 if (!credential) {
+                  setLoading(false);
                   showMessage(t('CredentialIsEmpty'));
                   return;
                 }
@@ -427,6 +428,7 @@ function HomeScreen({navigation, route}) {
                 // To Stream page
                 handleToLocalStream(item);
               } else {
+                setLoading(false);
                 Alert.alert(t('Warning'), t('ConSoleNotFound'), [
                   {
                     text: t('Confirm'),
@@ -453,8 +455,8 @@ function HomeScreen({navigation, route}) {
   };
 
   const handleToLocalStream = item => {
-    const hasValidUsbDevice = hasValidUsbDevice();
-    const isUsbMode = settings.bind_usb_device && hasValidUsbDevice;
+    const usbDeviceAvailable = hasValidUsbDevice();
+    const isUsbMode = settings.bind_usb_device && usbDeviceAvailable;
 
     setLoading(false);
     navigation.navigate({
@@ -474,6 +476,7 @@ function HomeScreen({navigation, route}) {
   };
 
   const handleToLogin = () => {
+    setLoading(false);
     const ts = new TokenStore();
     Alert.alert(t('Warning'), t('Token is expired, Please login'), [
       {
@@ -628,8 +631,8 @@ function HomeScreen({navigation, route}) {
 
   const handleOnlyConnect = () => {
     setShowWakeModal(false);
-    const hasValidUsbDevice = hasValidUsbDevice();
-    const isUsbMode = settings.bind_usb_device && hasValidUsbDevice;
+    const usbDeviceAvailable = hasValidUsbDevice();
+    const isUsbMode = settings.bind_usb_device && usbDeviceAvailable;
     navigation.navigate({
       name: 'Stream',
       params: {
@@ -647,10 +650,12 @@ function HomeScreen({navigation, route}) {
       currentConsole.rpRegistKey,
     );
     if (!credential) {
+      setLoading(false);
       showMessage(t('CredentialIsEmpty'));
       return;
     }
     if (!currentConsole.remoteHost) {
+      setLoading(false);
       showMessage(t('RemoteAddressCannotEmpty'));
       return;
     }
@@ -688,8 +693,8 @@ function HomeScreen({navigation, route}) {
   const handleWakeAndToStream = (host, credential) => {
     const isPS5 = currentConsole.apName.indexOf('PS5') > -1;
     log.info('handleWakeAndToStream', host, credential);
-    const hasValidUsbDevice = hasValidUsbDevice();
-    const isUsbMode = settings.bind_usb_device && hasValidUsbDevice;
+    const usbDeviceAvailable = hasValidUsbDevice();
+    const isUsbMode = settings.bind_usb_device && usbDeviceAvailable;
 
     wakeup(host, credential, isPS5);
 
