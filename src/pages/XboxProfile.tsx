@@ -16,6 +16,9 @@ const normalizeActivityHistory = value =>
       }))
     : [];
 
+const normalizeLaunchCount = value =>
+  Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+
 export default function XboxProfileScreen({navigation}) {
   const isFocused = useIsFocused();
   const [gamertag, setGamertag] = useState(() => {
@@ -27,7 +30,7 @@ export default function XboxProfileScreen({navigation}) {
     return AVATARS.includes(stored) ? stored : '🎮';
   });
   const [saved, setSaved] = useState(false);
-  const [launchCount, setLaunchCount] = useState(() => storage.getNumber('xbox.activity.launchCount') ?? 0);
+  const [launchCount, setLaunchCount] = useState(() => normalizeLaunchCount(storage.getNumber('xbox.activity.launchCount')));
   const [activity, setActivity] = useState(() => {
     try {
       const saved = storage.getString('xbox.activity.history');
@@ -182,7 +185,7 @@ export default function XboxProfileScreen({navigation}) {
       const storedAvatar = storage.getString('xbox.profile.avatar');
       setGamertag(typeof storedTag === 'string' ? storedTag.trim().slice(0, 16) || 'Player' : 'Player');
       setAvatar(AVATARS.includes(storedAvatar) ? storedAvatar : '🎮');
-      setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
+      setLaunchCount(normalizeLaunchCount(storage.getNumber('xbox.activity.launchCount')));
       try {
         const saved = storage.getString('xbox.activity.history');
         const parsed = saved ? JSON.parse(saved) : [];
