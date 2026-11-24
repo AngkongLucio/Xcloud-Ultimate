@@ -477,6 +477,8 @@ JNIEXPORT jstring JNICALL JNI_FCN(getPsnDuid)(JNIEnv *env, jobject obj, jstring 
 }
 
 JNIEXPORT jstring JNICALL JNI_FCN(connectPsnConnection)(JNIEnv *env, jobject obj, jstring token, jboolean isPs5, jstring duid) {
+    (void)isPs5;
+    (void)duid;
     CHIAKI_LOGE(&global_log, "holepunch connectPsnConnection");
 
     const char *psn_oauth2_token = (*env)->GetStringUTFChars(env, token, NULL);
