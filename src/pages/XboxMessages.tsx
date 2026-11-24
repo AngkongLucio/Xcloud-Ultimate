@@ -118,7 +118,7 @@ export default function XboxMessagesScreen() {
   const [activeFriend, setActiveFriend] = useState(null);
   const [draft, setDraft] = useState('');
   const [inboxSearch, setInboxSearch] = useState('');
-  const [inboxSort, setInboxSort] = useState('Recent');
+  const [inboxSort, setInboxSort] = useState(() => storage.getString('xbox.messages.inboxSort') === 'A–Z' ? 'A–Z' : 'Recent');
   const [chatSearch, setChatSearch] = useState('');
   const [feedback, setFeedback] = useState('');
 
@@ -130,7 +130,17 @@ export default function XboxMessagesScreen() {
       : null);
     setThreads(readThreads());
   };
-  useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
+  useEffect(() => {
+    if (isFocused) {
+      refresh();
+      const storedSort = storage.getString('xbox.messages.inboxSort');
+      const normalizedSort = storedSort === 'A–Z' ? 'A–Z' : 'Recent';
+      setInboxSort(normalizedSort);
+      if (storedSort !== normalizedSort) {
+        storage.set('xbox.messages.inboxSort', normalizedSort);
+      }
+    }
+  }, [isFocused]);
 
   const saveThreads = next => {
     const normalized = normalizeThreads(next);
@@ -266,7 +276,7 @@ export default function XboxMessagesScreen() {
           <View style={styles.sortRow} accessibilityLabel="Sort conversations">
             <Text style={styles.sortLabel}>SORT</Text>
             {['Recent', 'A–Z'].map(item => (
-              <Pressable key={item} accessibilityRole="button" accessibilityLabel={item === 'Recent' ? 'Sort conversations by recent activity' : 'Sort conversations alphabetically by player'} accessibilityState={{selected: inboxSort === item}} onPress={() => setInboxSort(item)} style={[styles.sortChip, inboxSort === item && styles.sortChipSelected]}>
+              <Pressable key={item} accessibilityRole="button" accessibilityLabel={item === 'Recent' ? 'Sort conversations by recent activity' : 'Sort conversations alphabetically by player'} accessibilityState={{selected: inboxSort === item}} onPress={() => { setInboxSort(item); storage.set('xbox.messages.inboxSort', item); }} style={[styles.sortChip, inboxSort === item && styles.sortChipSelected]}>
                 <Text style={[styles.sortText, inboxSort === item && styles.sortTextSelected]}>{item}</Text>
               </Pressable>
             ))}
