@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useIsFocused} from '@react-navigation/native';
-import {ScrollView, StyleSheet, View, Pressable} from 'react-native';
+import {Alert, ScrollView, StyleSheet, View, Pressable} from 'react-native';
 import {Button, Card, Text, TextInput} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 
@@ -60,8 +60,23 @@ export default function XboxFriendsScreen() {
 
   const removeFriend = id => {
     const removed = friends.find(item => item.id === id);
-    save(friends.filter(item => item.id !== id));
-    if (removed) setFormMessage(removed.name + ' was removed from your local list.');
+    if (!removed) return;
+    Alert.alert(
+      'Remove local player?',
+      'Remove ' + removed.name + ' from your local friends list? Any saved message conversation will remain on this device.',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            save(friends.filter(item => item.id !== id));
+            setFormMessage(removed.name + ' was removed from your local list. Saved messages were kept.');
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
   return (
