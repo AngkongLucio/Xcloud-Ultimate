@@ -1819,16 +1819,20 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
         && !(session->state & SESSION_STATE_CUSTOMDATA1_RECEIVED))
     {
         CHIAKI_LOGE(session->log, "chiaki_holepunch_session_punch_holes: customData1 not received yet.");
-        chiaki_mutex_unlock(&session->state_mutex);
-        err = CHIAKI_ERR_UNKNOWN;
+        {
+            ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&session->state_mutex);
+            err = unlock_err == CHIAKI_ERR_SUCCESS ? CHIAKI_ERR_UNKNOWN : unlock_err;
+        }
         goto offer_cleanup;
     }
     else if (port_type == CHIAKI_HOLEPUNCH_PORT_TYPE_DATA
              && !(session->state & SESSION_STATE_CTRL_ESTABLISHED))
     {
-        chiaki_mutex_unlock(&session->state_mutex);
+        {
+            ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&session->state_mutex);
+            err = unlock_err == CHIAKI_ERR_SUCCESS ? CHIAKI_ERR_UNKNOWN : unlock_err;
+        }
         CHIAKI_LOGE(session->log, "chiaki_holepunch_session_punch_holes: Control port not open yet.");
-        err = CHIAKI_ERR_UNKNOWN;
         goto offer_cleanup;
     }
     ChiakiErrorCode state_unlock_err = chiaki_mutex_unlock(&session->state_mutex);
@@ -2047,19 +2051,18 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
         CHIAKI_LOGE(session->log, "chiaki_holepunch_session_punch_holes: Couldn't send holepunch session message");
         goto cleanup_msg;
     }
-    chiaki_mutex_lock(&session->stop_mutex);
-    if(session->main_should_stop)
+    err = holepunch_check_cancelled(session);
+    if(err != CHIAKI_ERR_SUCCESS)
     {
-        session->main_should_stop = false;
-        chiaki_mutex_unlock(&session->stop_mutex);
-        CHIAKI_LOGI(session->log, "chiaki_holepunch_session_punch_holes: canceled");
-        err = CHIAKI_ERR_CANCELED;
+        if(err == CHIAKI_ERR_CANCELED)
+            CHIAKI_LOGI(session->log, "chiaki_holepunch_session_punch_holes: canceled");
         goto cleanup_msg;
     }
-    chiaki_mutex_unlock(&session->stop_mutex);
     memcpy(session->ps_ip, selected_candidate.addr, sizeof(session->ps_ip));
 
-    chiaki_mutex_lock(&session->state_mutex);
+    err = chiaki_mutex_lock(&session->state_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto cleanup_msg;
     if(port_type == CHIAKI_HOLEPUNCH_PORT_TYPE_CTRL)
     {
         session->state |= SESSION_STATE_CTRL_ESTABLISHED;
@@ -2073,18 +2076,17 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
         session->data_sock = sock;
         CHIAKI_LOGV(session->log, "chiaki_holepunch_session_punch_holes: Data connection established.");
     }
-    chiaki_mutex_unlock(&session->state_mutex);
+    err = chiaki_mutex_unlock(&session->state_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto cleanup_msg;
 
-    chiaki_mutex_lock(&session->stop_mutex);
-    if(session->main_should_stop)
+    err = holepunch_check_cancelled(session);
+    if(err != CHIAKI_ERR_SUCCESS)
     {
-        session->main_should_stop = false;
-        chiaki_mutex_unlock(&session->stop_mutex);
-        CHIAKI_LOGI(session->log, "chiaki_holepunch_session_punch_holes: canceled");
-        err = CHIAKI_ERR_CANCELED;
+        if(err == CHIAKI_ERR_CANCELED)
+            CHIAKI_LOGI(session->log, "chiaki_holepunch_session_punch_holes: canceled");
         goto cleanup_msg;
     }
-    chiaki_mutex_unlock(&session->stop_mutex);
     ChiakiErrorCode pserr = receive_request_send_response_ps(session, &sock, &selected_candidate, WAIT_RESPONSE_TIMEOUT_SEC);
     if(!(pserr == CHIAKI_ERR_SUCCESS || pserr == CHIAKI_ERR_TIMEOUT))
     {
