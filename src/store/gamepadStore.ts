@@ -4,8 +4,6 @@ const log = debugFactory('gamepadStore');
 
 const STORE_KEY = 'user.vgamepad';
 
-const defaultSettings: Record<string, any> = {};
-
 const readSettings = (): Record<string, any> => {
   const stored = storage.getString(STORE_KEY);
   if (!stored) {
