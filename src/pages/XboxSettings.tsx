@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Alert, Linking, ScrollView, StyleSheet, View} from 'react-native';
 import {Button, Card, Divider, Switch, Text} from 'react-native-paper';
 import NetInfo from '@react-native-community/netinfo';
@@ -10,6 +10,7 @@ export default function XboxSettingsScreen() {
   const [hapticsEnabled, setHapticsEnabled] = useState(() => storage.getBoolean('xbox.ui.haptics') ?? true);
   const [network, setNetwork] = useState({type: 'Checking…', connected: null, reachable: null});
   const [networkRefreshing, setNetworkRefreshing] = useState(false);
+  const networkRequestId = useRef(0);
 
   useEffect(() => {
     let active = true;
@@ -40,18 +41,23 @@ export default function XboxSettingsScreen() {
   }, []);
 
   const refreshNetwork = async () => {
+    const requestId = networkRequestId.current + 1;
+    networkRequestId.current = requestId;
     setNetworkRefreshing(true);
     try {
       const state = await NetInfo.fetch();
+      if (networkRequestId.current !== requestId) return;
       setNetwork({
         type: state.type || 'unknown',
         connected: state.isConnected,
         reachable: state.isInternetReachable,
       });
     } catch (_) {
-      setNetwork({type: 'Unavailable', connected: null, reachable: null});
+      if (networkRequestId.current === requestId) {
+        setNetwork({type: 'Unavailable', connected: null, reachable: null});
+      }
     } finally {
-      setNetworkRefreshing(false);
+      if (networkRequestId.current === requestId) setNetworkRefreshing(false);
     }
   };
 
