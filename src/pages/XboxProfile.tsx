@@ -44,6 +44,13 @@ export default function XboxProfileScreen({navigation}) {
       .filter(Boolean),
   ).size;
 
+  const mostOpenedTitle = activity.reduce((counts, entry) => {
+    const title = String(entry?.title || '').trim();
+    if (title) counts[title] = (counts[title] || 0) + 1;
+    return counts;
+  }, {});
+  const topActivity = Object.entries(mostOpenedTitle).sort((a, b) => b[1] - a[1])[0] || null;
+
   useEffect(() => {
     if (isFocused) {
       setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
@@ -101,6 +108,13 @@ export default function XboxProfileScreen({navigation}) {
               <Text variant="labelSmall" style={styles.statLabel}>UNIQUE TITLES</Text>
             </View>
           </View>
+          {topActivity ? (
+            <View style={styles.topActivity}>
+              <Text style={styles.topActivityLabel}>MOST OPENED IN SAVED HISTORY</Text>
+              <Text style={styles.topActivityTitle}>{topActivity[0]}</Text>
+              <Text accessibilityLabel={topActivity[1] + " saved catalog entries"} style={styles.topActivityCount}>{topActivity[1]} {topActivity[1] === 1 ? 'entry' : 'entries'}</Text>
+            </View>
+          ) : null}
           <Text variant="titleMedium" style={styles.milestoneTitle}>Local milestones</Text>
           {[
             {label: 'First steps', target: 1},
@@ -238,6 +252,10 @@ const styles = StyleSheet.create({
   statTile: {flex: 1, backgroundColor: '#202920', borderRadius: 12, padding: 14},
   statNumber: {color: '#9cdb8a', fontWeight: '800'},
   statLabel: {color: '#aab5aa', letterSpacing: 1, marginTop: 4},
+  topActivity: {backgroundColor: '#202920', borderRadius: 12, padding: 12, marginTop: 14, borderWidth: 1, borderColor: '#354136'},
+  topActivityLabel: {color: '#9cdb8a', fontSize: 10, letterSpacing: 1, fontWeight: '700'},
+  topActivityTitle: {color: '#fff', fontWeight: '700', marginTop: 6},
+  topActivityCount: {color: '#aab5aa', fontSize: 11, marginTop: 3},
   milestoneTitle: {color: '#fff', fontWeight: '700', marginTop: 20, marginBottom: 8},
   milestoneRow: {flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#354136'},
   milestoneCopy: {flex: 1},
