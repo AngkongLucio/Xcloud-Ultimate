@@ -1,4 +1,5 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
+import {useIsFocused} from '@react-navigation/native';
 import {ScrollView, StyleSheet, View, Pressable} from 'react-native';
 import {Button, Card, Text, TextInput} from 'react-native-paper';
 import {storage} from '../store/mmkv';
@@ -6,10 +7,15 @@ import {storage} from '../store/mmkv';
 const AVATARS = ['🎮', '🛡️', '🚀', '🐉', '⚡', '👾', '🏎️', '🌌'];
 
 export default function XboxProfileScreen() {
+  const isFocused = useIsFocused();
   const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
   const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
   const [saved, setSaved] = useState(false);
   const [launchCount, setLaunchCount] = useState(() => storage.getNumber('xbox.activity.launchCount') ?? 0);
+
+  useEffect(() => {
+    if (isFocused) setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
+  }, [isFocused]);
 
   const saveProfile = () => {
     const cleanTag = gamertag.trim().slice(0, 16) || 'Player';
