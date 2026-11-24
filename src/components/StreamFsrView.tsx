@@ -40,7 +40,9 @@ interface StreamViewRef {
 }
 
 const StreamViewNative =
-  requireNativeComponent<StreamViewProps>('StreamFsrView');
+  Platform.OS === 'android'
+    ? requireNativeComponent<StreamViewProps>('StreamFsrView')
+    : View;
 
 const StreamFsrView: ForwardRefRenderFunction<
   StreamViewRef,

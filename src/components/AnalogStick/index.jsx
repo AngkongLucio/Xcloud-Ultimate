@@ -1,7 +1,9 @@
 import React, {useCallback} from 'react';
-import {requireNativeComponent} from 'react-native';
+import {requireNativeComponent, Platform, View} from 'react-native';
 
-const RNAnalogStick = requireNativeComponent('AnalogStickView');
+const RNAnalogStick = Platform.OS === 'android'
+  ? requireNativeComponent('AnalogStickView')
+  : View;
 
 const AnalogStick = ({
   radius = 150,
@@ -17,6 +19,10 @@ const AnalogStick = ({
     },
     [onStickChange],
   );
+
+  if (Platform.OS !== 'android') {
+    return <View {...props} />;
+  }
 
   return (
     <RNAnalogStick
