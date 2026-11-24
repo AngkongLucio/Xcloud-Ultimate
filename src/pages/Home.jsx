@@ -87,9 +87,7 @@ function HomeScreen({navigation, route}) {
       const ts = new TokenStore();
       ts.load();
       const tokens = ts.getToken();
-      if (tokens.length > 0) {
-        setIsLogined(true);
-      }
+      setIsLogined(tokens.length > 0);
       const _consoles = getConsoles();
       log.info('consoles:', _consoles);
       setConsoles(_consoles);
@@ -139,9 +137,8 @@ function HomeScreen({navigation, route}) {
         ts.load();
         const tokens = ts.getToken();
         log.info('tokens:', tokens);
+        setIsLogined(tokens.length > 0);
         if (tokens.length > 0) {
-          setIsLogined(true);
-
           // Get consoles
           const _consoles = getConsoles();
           log.info('consoles:', _consoles);
