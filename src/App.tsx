@@ -132,14 +132,24 @@ function App() {
     });
   }, [settings.check_update, t]);
 
-  // console.log('bind_usb_device:', settings.bind_usb_device);
-  // USB rumble binding is Android-native; keep the shared app safe on iOS.
-  if (
-    settings.bind_usb_device !== undefined &&
-    typeof UsbRumbleManager?.setBindUsbDevice === 'function'
-  ) {
-    UsbRumbleManager.setBindUsbDevice(settings.bind_usb_device);
-  }
+  // USB rumble binding is Android-native. Apply it after render and only
+  // when the setting changes; never call native setters during React render.
+  useEffect(() => {
+    if (
+      Platform.OS !== 'android' ||
+      settings.bind_usb_device === undefined ||
+      typeof UsbRumbleManager?.setBindUsbDevice !== 'function'
+    ) {
+      return;
+    }
+
+    try {
+      UsbRumbleManager.setBindUsbDevice(settings.bind_usb_device);
+    } catch (error) {
+      // A disconnected or unavailable USB bridge must not crash the app.
+      console.warn('Unable to update USB rumble binding:', error);
+    }
+  }, [settings.bind_usb_device]);
 
   let paperTheme = paperDarkTheme;
   let navigationTheme = CombinedDarkTheme;
