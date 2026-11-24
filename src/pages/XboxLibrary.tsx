@@ -38,9 +38,20 @@ export default function XboxLibraryScreen({navigation}) {
 
   const openXbox = title => {
     if (title) {
+      const openedAt = Date.now();
       storage.set('xbox.activity.lastTitle', title);
-      storage.set('xbox.activity.lastOpenedAt', Date.now());
+      storage.set('xbox.activity.lastOpenedAt', openedAt);
       storage.set('xbox.activity.launchCount', (storage.getNumber('xbox.activity.launchCount') ?? 0) + 1);
+      let history = [];
+      try {
+        const storedHistory = storage.getString('xbox.activity.history');
+        history = storedHistory ? JSON.parse(storedHistory) : [];
+        if (!Array.isArray(history)) history = [];
+      } catch (_) {
+        history = [];
+      }
+      history.unshift({title, openedAt});
+      storage.set('xbox.activity.history', JSON.stringify(history.slice(0, 10)));
     }
     Linking.openURL(XBOX_PLAY).catch(() => {});
   };
