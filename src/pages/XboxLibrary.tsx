@@ -40,6 +40,7 @@ export default function XboxLibraryScreen({navigation}) {
     if (title) {
       storage.set('xbox.activity.lastTitle', title);
       storage.set('xbox.activity.lastOpenedAt', Date.now());
+      storage.set('xbox.activity.launchCount', (storage.getNumber('xbox.activity.launchCount') ?? 0) + 1);
     }
     Linking.openURL(XBOX_PLAY).catch(() => {});
   };
