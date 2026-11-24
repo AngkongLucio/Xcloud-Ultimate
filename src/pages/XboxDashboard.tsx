@@ -89,7 +89,7 @@ const XBOX_PLAY = 'https://www.xbox.com/play';
 const quickLinks = [
   {title: 'Cloud Gaming', subtitle: 'Play games from the cloud', icon: '☁️'},
   {title: 'Game Pass', subtitle: 'Explore your subscription', icon: '🎮'},
-  {title: 'Recently played', subtitle: 'Continue where you left off', icon: '▶️'},
+  {title: 'Recent activity', subtitle: 'View your recently opened titles', icon: '▶️'},
 ];
 
 export default function XboxDashboardScreen({navigation}) {
@@ -182,6 +182,7 @@ export default function XboxDashboardScreen({navigation}) {
     haptic('impactLight');
     if (title === 'Cloud Gaming') { openCloud(); }
     else if (title === 'Game Pass') { openGamePass(); }
+    else if (title === 'Recent activity') { navigation.navigate('XboxProfile'); }
     else { navigation.navigate('XboxLibrary'); }
   };
   const dashboardActions = [
