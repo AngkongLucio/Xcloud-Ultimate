@@ -138,7 +138,9 @@ export default function XboxLibraryScreen({navigation}) {
       history.unshift({title, openedAt});
       storage.set('xbox.activity.history', JSON.stringify(history.slice(0, 10)));
     }
-    Linking.openURL(XBOX_PLAY).catch(() => {});
+    Linking.openURL(XBOX_PLAY).catch(() => {
+      Alert.alert('Unable to open Xbox Cloud Gaming', 'Suriin ang internet connection o buksan ang https://www.xbox.com/play sa Safari.');
+    });
   };
   const moveSelection = direction => {
     if (!visibleGames.length) { return; }
