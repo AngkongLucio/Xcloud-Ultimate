@@ -46,6 +46,7 @@ export default function XboxProfileScreen({navigation}) {
       }
       return normalized;
     } catch (_) {
+      storage.delete('xbox.activity.history');
       return [];
     }
   });
