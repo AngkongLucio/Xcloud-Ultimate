@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {useIsFocused} from '@react-navigation/native';
 import {Alert, ScrollView, StyleSheet, View, Pressable} from 'react-native';
-import {Button, Card, Text, TextInput} from 'react-native-paper';
+import {Button, Card, ProgressBar, Text, TextInput} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 
 const AVATARS = ['🎮', '🛡️', '🚀', '🐉', '⚡', '👾', '🏎️', '🌌'];
@@ -82,6 +82,12 @@ export default function XboxProfileScreen({navigation}) {
               <View style={styles.milestoneCopy}>
                 <Text style={styles.milestoneName}>{item.label}</Text>
                 <Text accessibilityLabel={item.label + ": " + Math.min(launchCount, item.target) + " of " + item.target + " catalog opens"} style={styles.milestoneHint}>{Math.min(launchCount, item.target)} / {item.target} catalog opens</Text>
+                <ProgressBar
+                  progress={Math.min(launchCount / item.target, 1)}
+                  color="#9cdb8a"
+                  style={styles.milestoneProgress}
+                  accessibilityLabel={item.label + " milestone progress: " + Math.min(launchCount, item.target) + " of " + item.target + (launchCount >= item.target ? ", completed" : ", in progress")}
+                />
               </View>
               <Text accessibilityLabel={item.label + (launchCount >= item.target ? " completed" : " not yet completed")} style={styles.milestoneStatus}>{launchCount >= item.target ? '✓' : '○'}</Text>
             </View>
@@ -183,6 +189,7 @@ const styles = StyleSheet.create({
   milestoneCopy: {flex: 1},
   milestoneName: {color: '#f2f6f1', fontWeight: '700'},
   milestoneHint: {color: '#aab5aa', fontSize: 12, marginTop: 3},
+  milestoneProgress: {height: 5, borderRadius: 5, backgroundColor: '#344235', marginTop: 7},
   milestoneStatus: {color: '#9cdb8a', fontSize: 22, fontWeight: '800'},
   statsNote: {color: '#829082', lineHeight: 18, marginTop: 12},
   activityRow: {flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#354136', gap: 12},
