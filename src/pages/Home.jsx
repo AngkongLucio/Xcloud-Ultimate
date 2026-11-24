@@ -528,32 +528,51 @@ function HomeScreen({navigation, route}) {
       return;
     }
 
-    // token expired, refresh it
-    if (new Date().getTime() - tokenExpiry > 0) {
-      // refresh token
+    // Refresh expired or missing token expiry metadata.
+    const tokenExpiryTime = Number(tokenExpiry);
+    if (!Number.isFinite(tokenExpiryTime) || Date.now() >= tokenExpiryTime) {
       refreshAccessToken(refreshToken)
         .then(res => {
-          if (res) {
-            const {access_token, refresh_token, expires_in} = res;
-            tokens[0].accessToken = access_token;
-            tokens[0].refreshToken = refresh_token;
-            tokens[0].tokenExpiry = new Date().getTime() + expires_in * 1000;
-            ts.setToken(tokens);
-            ts.save();
-            setTimeout(() => {
-              setLoading(false);
-              navigation.navigate({
-                name: 'Stream',
-                params: {
-                  consoleInfo: {
-                    ...currentConsole,
-                    accessToken: access_token,
-                    psnAccountId: token.account_id,
-                  },
-                },
-              });
-            }, 500);
+          if (
+            !res ||
+            !res.access_token ||
+            !Number.isFinite(Number(res.expires_in)) ||
+            Number(res.expires_in) <= 0
+          ) {
+            setLoading(false);
+            handleToLogin();
+            return;
           }
+
+          const {access_token, refresh_token, expires_in} = res;
+          const tokenIndex = tokens.indexOf(token);
+          if (tokenIndex < 0) {
+            setLoading(false);
+            handleToLogin();
+            return;
+          }
+
+          tokens[tokenIndex] = {
+            ...token,
+            accessToken: access_token,
+            refreshToken: refresh_token || refreshToken,
+            tokenExpiry: Date.now() + Number(expires_in) * 1000,
+          };
+          ts.setToken(tokens);
+          ts.save();
+          setTimeout(() => {
+            setLoading(false);
+            navigation.navigate({
+              name: 'Stream',
+              params: {
+                consoleInfo: {
+                  ...currentConsole,
+                  accessToken: access_token,
+                  psnAccountId: token.account_id,
+                },
+              },
+            });
+          }, 500);
         })
         .catch(e => {
           setLoading(false);
