@@ -24,6 +24,7 @@ export default function XboxNotificationsScreen() {
   const [items, setItems] = useState(readNotifications);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [categoryFilter, setCategoryFilter] = useState('All');
   const refresh = () => setItems(readNotifications());
 
   useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
@@ -51,7 +52,8 @@ export default function XboxNotificationsScreen() {
     const query = searchQuery.trim().toLowerCase();
     const matchesSearch = !query || [item.title, item.message, item.kind].some(value => String(value || '').toLowerCase().includes(query));
     const matchesStatus = statusFilter === 'All' || (statusFilter === 'Unread' ? !item.read : item.read);
-    return matchesSearch && matchesStatus;
+    const matchesCategory = categoryFilter === 'All' || (categoryFilter === 'Activity' ? item.kind !== 'message' && item.kind !== 'friend' : item.kind === categoryFilter.toLowerCase().replace(/s$/, ''));
+    return matchesSearch && matchesStatus && matchesCategory;
   });
 
   return (
@@ -74,6 +76,13 @@ export default function XboxNotificationsScreen() {
         {['All', 'Unread', 'Read'].map(item => (
           <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " notifications"} accessibilityState={{selected: statusFilter === item}} onPress={() => setStatusFilter(item)} style={[styles.filterChip, statusFilter === item && styles.filterChipSelected]}>
             <Text style={[styles.filterText, statusFilter === item && styles.filterTextSelected]}>{item}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <View style={styles.filterRow} accessibilityLabel="Filter notifications by category">
+        {['All', 'Activity', 'Friends', 'Messages'].map(item => (
+          <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " category notifications"} accessibilityState={{selected: categoryFilter === item}} onPress={() => setCategoryFilter(item)} style={[styles.filterChip, categoryFilter === item && styles.filterChipSelected]}>
+            <Text style={[styles.filterText, categoryFilter === item && styles.filterTextSelected]}>{item}</Text>
           </Pressable>
         ))}
       </View>
