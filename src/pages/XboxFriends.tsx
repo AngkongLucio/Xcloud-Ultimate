@@ -119,7 +119,9 @@ export default function XboxFriendsScreen() {
       : (Number(b.addedAt) || 0) - (Number(a.addedAt) || 0));
 
   const removeFriend = id => {
-    const removed = friends.find(item => item.id === id);
+    const latestFriends = readLatestFriends();
+    const removed = latestFriends.find(item => item.id === id);
+    setFriends(latestFriends);
     if (!removed) return;
     Alert.alert(
       'Remove local player?',
@@ -130,9 +132,15 @@ export default function XboxFriendsScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            const latestFriends = readLatestFriends();
-            save(latestFriends.filter(item => item.id !== id));
-            setFormMessage(removed.name + ' was removed from your local list. Saved messages were kept.');
+            const currentFriends = readLatestFriends();
+            const currentRemoved = currentFriends.find(item => item.id === id);
+            if (!currentRemoved) {
+              setFriends(currentFriends);
+              setFormMessage('That player is no longer in your local list.');
+              return;
+            }
+            save(currentFriends.filter(item => item.id !== id));
+            setFormMessage(currentRemoved.name + ' was removed from your local list. Saved messages were kept.');
           },
         },
       ],
