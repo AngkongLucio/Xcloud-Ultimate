@@ -108,6 +108,21 @@ export default function XboxFriendsScreen() {
         <Text style={styles.count} accessibilityLiveRegion="polite" accessibilityLabel={filteredFriends.length + " of " + friends.length + " local players shown"}>{filteredFriends.length}{searchQuery.trim() ? " / " + friends.length : ""}</Text>
       </View>
       <TextInput mode="outlined" label="Search local players" accessibilityLabel="Search local friends list" accessibilityHint="Filters saved local player names as you type." value={searchQuery} onChangeText={setSearchQuery} autoCapitalize="none" clearButtonMode="while-editing" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.input} />
+      {(searchQuery.trim() || sortOrder !== 'Recent') ? (
+        <Button
+          compact
+          mode="text"
+          textColor="#a8e69a"
+          accessibilityLabel="Reset player search and sorting"
+          accessibilityHint="Clears the search and returns the list to recently added order."
+          onPress={() => {
+            setSearchQuery('');
+            setSortOrder('Recent');
+          }}
+          style={styles.resetFriendsButton}>
+          Reset search & sorting
+        </Button>
+      ) : null}
       <View style={styles.sortRow} accessibilityLabel="Sort local players">
         <Text style={styles.sortLabel}>SORT</Text>
         {['Recent', 'A–Z'].map(item => (
@@ -115,20 +130,7 @@ export default function XboxFriendsScreen() {
             <Text style={[styles.sortText, sortOrder === item && styles.sortTextSelected]}>{item}</Text>
           </Pressable>
         ))}
-        {searchQuery || sortOrder !== 'Recent' ? (
-          <Button
-            compact
-            mode="text"
-            textColor="#a8e69a"
-            accessibilityLabel="Reset player search and sorting"
-            accessibilityHint="Clears the search and returns the list to recently added order."
-            onPress={() => {
-              setSearchQuery('');
-              setSortOrder('Recent');
-            }}>
-            Reset
-          </Button>
-        ) : null}
+
       </View>
       {filteredFriends.length ? filteredFriends.map(friend => (
         <Card key={friend.id} style={styles.friendCard} accessible accessibilityLabel={"Local player " + friend.name + (friend.addedAt ? ", added " + new Date(friend.addedAt).toLocaleDateString() : "")}>
@@ -177,6 +179,7 @@ const styles = StyleSheet.create({
   count: {color: '#9cdb8a', fontWeight: '800', fontSize: 16},
   sortRow: {flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, marginBottom: 12},
   sortLabel: {color: '#829082', fontSize: 10, fontWeight: '800', letterSpacing: 1},
+  resetFriendsButton: {alignSelf: 'flex-start', marginTop: 2, marginBottom: 4},
   sortChip: {paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, backgroundColor: '#202920', borderWidth: 1, borderColor: '#354136'},
   sortChipSelected: {backgroundColor: '#294d30', borderColor: '#9cdb8a'},
   sortText: {color: '#aab5aa', fontSize: 11, fontWeight: '700'},
