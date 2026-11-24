@@ -108,11 +108,14 @@ export default function XboxProfileScreen({navigation}) {
     return longest;
   })();
 
+  const titledActivityCount = Object.values(mostOpenedTitle).reduce((total, count) => total + count, 0);
+  const repeatOpenCount = Object.values(mostOpenedTitle).reduce((total, count) => total + Math.max(count - 1, 0), 0);
+
   const activityInsights = {
     totalOpens: activity.length,
     uniqueTitles: uniqueActivityTitles,
-    repeatOpens: Math.max(activity.length - uniqueActivityTitles, 0),
-    repeatRate: activity.length ? Math.round(((activity.length - uniqueActivityTitles) / activity.length) * 100) : 0,
+    repeatOpens: repeatOpenCount,
+    repeatRate: titledActivityCount ? Math.round((repeatOpenCount / titledActivityCount) * 100) : 0,
     activeDays,
     averageOpensPerActiveDay: activeDays ? (activity.length / activeDays).toFixed(1) : '0.0',
     mostActiveDay: (() => {
