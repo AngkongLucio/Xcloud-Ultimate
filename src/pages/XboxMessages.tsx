@@ -123,7 +123,11 @@ export default function XboxMessagesScreen() {
   const [feedback, setFeedback] = useState('');
 
   const refresh = () => {
-    setFriends(readFriends());
+    const latestFriends = readFriends();
+    setFriends(latestFriends);
+    setActiveFriend(current => current
+      ? latestFriends.find(friend => friend.id === current.id) || null
+      : null);
     setThreads(readThreads());
   };
   useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
