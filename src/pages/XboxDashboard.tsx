@@ -171,9 +171,9 @@ export default function XboxDashboardScreen({navigation}) {
               <Text style={styles.guideControllerLabel}>GUIDE NAVIGATION</Text>
               <Text style={styles.guideControllerSelected}>{guideActions[guideSelection]?.label}</Text>
               <View style={styles.guideControllerButtons}>
-                <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveGuideSelection(-1)}>‹</Button>
-                <Button compact mode="contained" buttonColor="#107c10" onPress={openGuideSelection}>A · Open</Button>
-                <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveGuideSelection(1)}>›</Button>
+                <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Previous guide item" onPress={() => moveGuideSelection(-1)}>‹</Button>
+                <Button compact mode="contained" buttonColor="#107c10" accessibilityLabel={"Open " + guideActions[guideSelection]?.label} onPress={openGuideSelection}>A · Open</Button>
+                <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Next guide item" onPress={() => moveGuideSelection(1)}>›</Button>
               </View>
             </View>
             <Text style={styles.guideSection}>GAMING</Text>
@@ -218,9 +218,9 @@ export default function XboxDashboardScreen({navigation}) {
               <Text style={styles.quickControllerLabel}>QUICK SETTINGS NAVIGATION</Text>
               <Text style={styles.quickControllerSelected}>{quickActions[quickSelection]?.label}</Text>
               <View style={styles.quickControllerButtons}>
-                <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveQuickSelection(-1)}>‹ Previous</Button>
-                <Button compact mode="contained" buttonColor="#107c10" onPress={openQuickSelection}>A · Select</Button>
-                <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveQuickSelection(1)}>Next ›</Button>
+                <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Previous quick setting" onPress={() => moveQuickSelection(-1)}>‹ Previous</Button>
+                <Button compact mode="contained" buttonColor="#107c10" accessibilityLabel={"Select " + quickActions[quickSelection]?.label} onPress={openQuickSelection}>A · Select</Button>
+                <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Next quick setting" onPress={() => moveQuickSelection(1)}>Next ›</Button>
               </View>
             </View>
             <View style={styles.quickActions}>
@@ -250,9 +250,9 @@ export default function XboxDashboardScreen({navigation}) {
         <Text style={styles.dashboardControllerTitle}>DASHBOARD CONTROLLER</Text>
         <Text style={styles.dashboardSelected}>{dashboardActions[dashboardSelection]?.label}</Text>
         <View style={styles.dashboardDpadRow}>
-          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveDashboardSelection(-1)}>‹ Previous</Button>
-          <Button compact mode="contained" buttonColor="#107c10" onPress={openDashboardSelection}>A · Open</Button>
-          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveDashboardSelection(1)}>Next ›</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Previous dashboard item" onPress={() => moveDashboardSelection(-1)}>‹ Previous</Button>
+          <Button compact mode="contained" buttonColor="#107c10" accessibilityLabel={"Open " + dashboardActions[dashboardSelection]?.label} onPress={openDashboardSelection}>A · Open</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Next dashboard item" onPress={() => moveDashboardSelection(1)}>Next ›</Button>
         </View>
         <Text style={styles.dashboardControllerHint}>On-screen controls navigate the dashboard shortcuts. Physical controller input is not directly captured here.</Text>
       </View>
