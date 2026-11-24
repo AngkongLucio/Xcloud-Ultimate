@@ -63,7 +63,9 @@ export default function XboxProfileScreen({navigation}) {
     }
   });
 
-  const [activitySort, setActivitySort] = useState('Newest');
+  const [activitySort, setActivitySort] = useState(() =>
+    storage.getString('xbox.profile.activitySort') === 'Oldest' ? 'Oldest' : 'Newest',
+  );
   const sortedActivity = [...activity].sort((a, b) => {
     const aTime = Number(a?.openedAt) || 0;
     const bTime = Number(b?.openedAt) || 0;
@@ -216,6 +218,12 @@ export default function XboxProfileScreen({navigation}) {
         storage.set('xbox.profile.avatar', normalizedAvatar);
       }
       setLaunchCount(normalizeLaunchCount(storage.getNumber('xbox.activity.launchCount')));
+      const storedActivitySort = storage.getString('xbox.profile.activitySort');
+      const normalizedActivitySort = storedActivitySort === 'Oldest' ? 'Oldest' : 'Newest';
+      setActivitySort(normalizedActivitySort);
+      if (storedActivitySort !== normalizedActivitySort) {
+        storage.set('xbox.profile.activitySort', normalizedActivitySort);
+      }
       try {
         const saved = storage.getString('xbox.activity.history');
         const parsed = saved ? JSON.parse(saved) : [];
@@ -417,7 +425,10 @@ export default function XboxProfileScreen({navigation}) {
                   accessibilityRole="button"
                   accessibilityLabel={"Sort activity: " + option}
                   accessibilityState={{selected: activitySort === option}}
-                  onPress={() => setActivitySort(option)}
+                  onPress={() => {
+                    setActivitySort(option);
+                    storage.set('xbox.profile.activitySort', option);
+                  }}
                   style={[styles.activitySortChip, activitySort === option && styles.activitySortChipSelected]}>
                   <Text style={[styles.activitySortText, activitySort === option && styles.activitySortTextSelected]}>{option}</Text>
                 </Pressable>
