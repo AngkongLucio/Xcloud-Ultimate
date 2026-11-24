@@ -80,12 +80,21 @@ export default function XboxSettingsScreen() {
       <Card style={styles.card}>
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Network information</Text>
-          <View style={styles.infoRow}><Text style={styles.muted}>Connection type</Text><Text style={styles.value}>{network.type}</Text></View>
+          <View style={styles.infoRow}>
+            <Text style={styles.muted}>Connection type</Text>
+            <Text accessibilityLiveRegion="polite" accessibilityLabel={"Connection type: " + network.type} style={styles.value}>{network.type}</Text>
+          </View>
           <Divider style={styles.divider} />
-          <View style={styles.infoRow}><Text style={styles.muted}>Connected</Text><Text style={styles.value}>{statusText(network.connected)}</Text></View>
+          <View style={styles.infoRow}>
+            <Text style={styles.muted}>Connected</Text>
+            <Text accessibilityLiveRegion="polite" accessibilityLabel={"Device connected: " + statusText(network.connected)} style={styles.value}>{statusText(network.connected)}</Text>
+          </View>
           <Divider style={styles.divider} />
-          <View style={styles.infoRow}><Text style={styles.muted}>Internet reachable</Text><Text style={styles.value}>{statusText(network.reachable)}</Text></View>
-          <Text variant="bodySmall" style={styles.note}>
+          <View style={styles.infoRow}>
+            <Text style={styles.muted}>Internet reachable</Text>
+            <Text accessibilityLiveRegion="polite" accessibilityLabel={"Internet reachable: " + statusText(network.reachable)} style={styles.value}>{statusText(network.reachable)}</Text>
+          </View>
+          <Text variant="bodySmall" accessibilityLiveRegion="polite" accessibilityLabel={"Network status. Connection type " + network.type + ". Connected " + statusText(network.connected) + ". Internet reachable " + statusText(network.reachable) + "."} style={styles.note}>
             These are device network-status readings, not Xbox latency, stream bitrate, or server diagnostics.
           </Text>
           <Button mode="outlined" textColor="#a8e69a" accessibilityLabel="Open iPad device settings" onPress={() => Linking.openSettings().catch(() => {})} style={styles.actionButton}>
