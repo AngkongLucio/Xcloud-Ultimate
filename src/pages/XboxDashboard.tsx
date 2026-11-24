@@ -71,6 +71,12 @@ export default function XboxDashboardScreen({navigation}) {
         <Button mode="outlined" icon="cog" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxSettings')} style={styles.actionButton}>
           Settings
         </Button>
+        <Button mode="outlined" icon="account-group" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxFriends')} style={styles.actionButton}>
+          Friends
+        </Button>
+        <Button mode="outlined" icon="trophy" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxAchievements')} style={styles.actionButton}>
+          Achievements
+        </Button>
       </View>
       <Card style={styles.recentCard} mode="outlined">
         <Card.Content>
