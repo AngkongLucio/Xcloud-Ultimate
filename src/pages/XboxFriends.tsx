@@ -89,6 +89,7 @@ export default function XboxFriendsScreen() {
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Add a player</Text>
           <TextInput mode="outlined" label="Player display name" accessibilityLabel="Player display name" accessibilityHint="Enter a name of up to 20 characters. This adds a local entry only." value={name} onChangeText={value => {setName(value); setFormMessage("");}} maxLength={20} autoCapitalize="words" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.input} />
+          <Text accessibilityLiveRegion="polite" accessibilityLabel={name.length + " of 20 characters"} style={styles.characterCount}>{name.length}/20 characters</Text>
           <Text style={styles.avatarLabel}>Choose avatar</Text>
           <View style={styles.avatarRow}>
             {AVATARS.map(item => (
@@ -164,6 +165,7 @@ const styles = StyleSheet.create({
   addCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 16, marginBottom: 22},
   sectionTitle: {color: '#fff', fontWeight: '700'},
   input: {backgroundColor: '#101510', marginTop: 12},
+  characterCount: {color: '#829082', fontSize: 10, textAlign: 'right', marginTop: 3},
   avatarLabel: {color: '#aab5aa', fontSize: 12, fontWeight: '700', marginTop: 16, marginBottom: 9},
   avatarRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 9},
   avatarChoice: {width: 43, height: 43, borderRadius: 12, backgroundColor: '#202920', borderWidth: 1, borderColor: '#354136', alignItems: 'center', justifyContent: 'center'},
