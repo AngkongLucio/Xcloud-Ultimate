@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, View, StyleSheet, Linking} from 'react-native';
+import {ScrollView, View, StyleSheet, Linking, Pressable} from 'react-native';
 import {Button, Card, Text} from 'react-native-paper';
 
 const XBOX_PLAY = 'https://www.xbox.com/play';
@@ -12,6 +12,12 @@ const quickLinks = [
 
 export default function XboxDashboardScreen({navigation}) {
   const openCloud = () => Linking.openURL(XBOX_PLAY).catch(() => {});
+  const openGamePass = () => Linking.openURL('https://www.xbox.com/xbox-game-pass').catch(() => {});
+  const handleQuickLink = title => {
+    if (title === 'Cloud Gaming') { openCloud(); }
+    else if (title === 'Game Pass') { openGamePass(); }
+    else { navigation.navigate('XboxLibrary'); }
+  };
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -41,7 +47,15 @@ export default function XboxDashboardScreen({navigation}) {
         Open Game Library
       </Button>
       {quickLinks.map(item => (
-        <Card key={item.title} style={styles.linkCard} mode="outlined">
+        <Pressable
+          key={item.title}
+          focusable
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel={item.title + '. ' + item.subtitle}
+          onPress={() => handleQuickLink(item.title)}
+          style={({focused}) => [styles.linkCardPressable, focused && styles.focusedCard]}>
+          <Card style={styles.linkCard} mode="outlined">
           <Card.Content style={styles.linkContent}>
             <Text variant="headlineMedium">{item.icon}</Text>
             <View style={styles.linkText}>
@@ -50,7 +64,8 @@ export default function XboxDashboardScreen({navigation}) {
             </View>
             <Text variant="titleLarge" style={styles.chevron}>›</Text>
           </Card.Content>
-        </Card>
+          </Card>
+        </Pressable>
       ))}
 
       <Text variant="bodySmall" style={styles.footer}>
@@ -74,7 +89,9 @@ const styles = StyleSheet.create({
   playButton: {alignSelf: 'flex-start', backgroundColor: '#107c10'},
   sectionTitle: {color: '#fff', fontWeight: '700', marginBottom: 12},
   libraryButton: {alignSelf: 'flex-start', borderColor: '#527b52', marginBottom: 14},
-  linkCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderRadius: 14, marginBottom: 10},
+  linkCardPressable: {borderRadius: 14, marginBottom: 10},
+  focusedCard: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 14},
+  linkCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderRadius: 14},
   linkContent: {flexDirection: 'row', alignItems: 'center', gap: 14},
   linkText: {flex: 1},
   muted: {color: '#aab5aa', marginTop: 3},
