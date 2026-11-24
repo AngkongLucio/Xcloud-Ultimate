@@ -2,12 +2,11 @@ import React from 'react';
 import {
   StyleSheet,
   View,
-  Alert,
   ScrollView,
   NativeModules,
   NativeEventEmitter,
 } from 'react-native';
-import {Button, Text, Divider, Switch, RadioButton} from 'react-native-paper';
+import {Text, Divider, RadioButton} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
 import Slider from '@react-native-community/slider';
 import ColorPicker from 'react-native-wheel-color-picker';
@@ -77,20 +76,20 @@ function DsScreen({navigation}) {
   const [leftStickY, setLeftStickY] = React.useState(0);
   const [rightStickX, setRightStickX] = React.useState(0);
   const [rightStickY, setRightStickY] = React.useState(0);
-  const [gyrox, setGyrox] = React.useState(0);
-  const [gyroy, setGyroy] = React.useState(0);
-  const [gyroz, setGyroz] = React.useState(0);
-  const [accelx, setAccelx] = React.useState(0);
-  const [accely, setAccely] = React.useState(0);
-  const [accelz, setAccelz] = React.useState(0);
-  const [touch0active, setTouch0active] = React.useState(false);
-  const [touch0id, setTouch0id] = React.useState(0);
-  const [touch0x, setTouch0x] = React.useState(0);
-  const [touch0y, setTouch0y] = React.useState(0);
-  const [touch1active, setTouch1active] = React.useState(false);
-  const [touch1id, setTouch1id] = React.useState(0);
-  const [touch1x, setTouch1x] = React.useState(0);
-  const [touch1y, setTouch1y] = React.useState(0);
+  const [gyrox] = React.useState(0);
+  const [gyroy] = React.useState(0);
+  const [gyroz] = React.useState(0);
+  const [accelx] = React.useState(0);
+  const [accely] = React.useState(0);
+  const [accelz] = React.useState(0);
+  const [touch0active] = React.useState(false);
+  const [touch0id] = React.useState(0);
+  const [touch0x] = React.useState(0);
+  const [touch0y] = React.useState(0);
+  const [touch1active] = React.useState(false);
+  const [touch1id] = React.useState(0);
+  const [touch1x] = React.useState(0);
+  const [touch1y] = React.useState(0);
 
   const usbGpEventListener = React.useRef<any>(undefined);
   const [microLed, setMicroLed] = React.useState('0');
