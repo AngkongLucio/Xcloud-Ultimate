@@ -107,13 +107,21 @@ function HomeScreen({navigation, route}) {
       headerShown: false,
       // eslint-disable-next-line react/no-unstable-nested-components
       headerRight: () => (
-        <IconButton
-          icon="progress-wrench"
-          size={26}
-          onPress={() => {
-            navigation.navigate('Options');
-          }}
-        />
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <IconButton
+            icon="microsoft-xbox"
+            size={26}
+            accessibilityLabel="Xbox Cloud Gaming"
+            onPress={() => navigation.navigate('XboxCloud')}
+          />
+          <IconButton
+            icon="progress-wrench"
+            size={26}
+            onPress={() => {
+              navigation.navigate('Options');
+            }}
+          />
+        </View>
       ),
     });
 
