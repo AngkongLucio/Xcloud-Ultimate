@@ -20,6 +20,7 @@ export default function XboxMessagesScreen() {
   const [activeFriend, setActiveFriend] = useState(null);
   const [draft, setDraft] = useState('');
   const [inboxSearch, setInboxSearch] = useState('');
+  const [inboxSort, setInboxSort] = useState('Recent');
   const [feedback, setFeedback] = useState('');
 
   const refresh = () => {
@@ -58,7 +59,9 @@ export default function XboxMessagesScreen() {
     saveThreads(threads.filter(item => item.friendId !== friendId));
     setFeedback('Local conversation with ' + friendName + ' deleted.');
   };
-  const orderedThreads = [...threads].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  const orderedThreads = [...threads].sort((a, b) => inboxSort === 'A–Z'
+    ? (a.friendName || '').localeCompare(b.friendName || '')
+    : (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0));
   const visibleThreads = orderedThreads.filter(thread => {
     const last = thread.messages?.[thread.messages.length - 1];
     const query = inboxSearch.trim().toLowerCase();
@@ -118,6 +121,14 @@ export default function XboxMessagesScreen() {
             </Text>
           </View>
           <TextInput mode="outlined" label="Search conversations" accessibilityLabel="Search local conversations" accessibilityHint="Filters conversations by player name or the latest message text." value={inboxSearch} onChangeText={setInboxSearch} autoCapitalize="none" clearButtonMode="while-editing" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.composerInput} />
+          <View style={styles.sortRow} accessibilityLabel="Sort conversations">
+            <Text style={styles.sortLabel}>SORT</Text>
+            {['Recent', 'A–Z'].map(item => (
+              <Pressable key={item} accessibilityRole="button" accessibilityLabel={item === 'Recent' ? 'Sort conversations by recent activity' : 'Sort conversations alphabetically by player'} accessibilityState={{selected: inboxSort === item}} onPress={() => setInboxSort(item)} style={[styles.sortChip, inboxSort === item && styles.sortChipSelected]}>
+                <Text style={[styles.sortText, inboxSort === item && styles.sortTextSelected]}>{item}</Text>
+              </Pressable>
+            ))}
+          </View>
           {visibleThreads.length ? visibleThreads.map(thread => {
             const friend = friends.find(item => item.id === thread.friendId) || {id: thread.friendId, name: thread.friendName || 'Player', avatar: thread.avatar || '🎮'};
             const last = thread.messages?.[thread.messages.length - 1];
@@ -169,6 +180,12 @@ const styles = StyleSheet.create({
   sectionTitle: {color: '#fff', fontWeight: '700', marginBottom: 12},
   conversationsHeader: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12},
   conversationCount: {color: '#9cdb8a', fontSize: 12, fontWeight: '700'},
+  sortRow: {flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, marginBottom: 12},
+  sortLabel: {color: '#829082', fontSize: 10, fontWeight: '800', letterSpacing: 1},
+  sortChip: {paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, backgroundColor: '#202920', borderWidth: 1, borderColor: '#354136'},
+  sortChipSelected: {backgroundColor: '#294d30', borderColor: '#9cdb8a'},
+  sortText: {color: '#aab5aa', fontSize: 11, fontWeight: '700'},
+  sortTextSelected: {color: '#fff'},
   threadCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 14, marginBottom: 9},
   threadRow: {flexDirection: 'row', alignItems: 'center', gap: 11},
   avatar: {width: 46, height: 46, borderRadius: 23, backgroundColor: '#294d30', alignItems: 'center', justifyContent: 'center'},
