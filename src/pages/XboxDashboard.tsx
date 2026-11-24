@@ -120,7 +120,11 @@ export default function XboxDashboardScreen({navigation}) {
         if (finished) setBootVisible(false);
       });
     }, 1150);
-    return () => clearTimeout(bootTimer);
+    return () => {
+      clearTimeout(bootTimer);
+      bootOpacity.stopAnimation();
+      bootScale.stopAnimation();
+    };
   }, [bootOpacity, bootScale]);
 
   useEffect(() => {
