@@ -76,7 +76,7 @@ fi
 # rejects combining --version with --template, so the template is the
 # single source of truth for the React Native version.
 npx --yes @react-native-community/cli@11.4.1 init Peasyo \
-  --template "file://$CUSTOM_TEMPLATE" \
+  --template "file:./rn072-template" \
   --skip-install
 
 if [[ ! -d "$TMP_DIR/Peasyo/ios/Peasyo.xcodeproj" || ! -f "$TMP_DIR/Peasyo/ios/Podfile" ]]; then
