@@ -57,13 +57,13 @@ export default function XboxProfileScreen({navigation}) {
         </Card.Content>
       </Card>
 
-      <Button mode="contained" icon="trophy" onPress={() => navigation.navigate('XboxAchievements')} style={styles.achievementButton}>View Achievements</Button>
+      <Button mode="contained" icon="trophy" accessibilityLabel="View local achievements and badges" onPress={() => navigation.navigate('XboxAchievements')} style={styles.achievementButton}>View Achievements</Button>
       <Card style={styles.statsCard}>
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Player stats</Text>
           <View style={styles.statsRow}>
             <View style={styles.statTile}>
-              <Text variant="headlineMedium" style={styles.statNumber}>{launchCount}</Text>
+              <Text variant="headlineMedium" accessibilityLabel={launchCount + " catalog opens recorded locally"} style={styles.statNumber}>{launchCount}</Text>
               <Text variant="labelSmall" style={styles.statLabel}>CATALOG OPENS</Text>
             </View>
             <View style={styles.statTile}>
@@ -82,7 +82,7 @@ export default function XboxProfileScreen({navigation}) {
                 <Text style={styles.milestoneName}>{item.label}</Text>
                 <Text style={styles.milestoneHint}>{Math.min(launchCount, item.target)} / {item.target} catalog opens</Text>
               </View>
-              <Text style={styles.milestoneStatus}>{launchCount >= item.target ? '✓' : '○'}</Text>
+              <Text accessibilityLabel={item.label + (launchCount >= item.target ? " completed" : " not yet completed")} style={styles.milestoneStatus}>{launchCount >= item.target ? '✓' : '○'}</Text>
             </View>
           ))}
           <Text variant="bodySmall" style={styles.statsNote}>These are local companion-app milestones, not official Xbox achievements or playtime.</Text>
@@ -95,7 +95,7 @@ export default function XboxProfileScreen({navigation}) {
             <View key={String(entry.openedAt) + '-' + index} style={styles.activityRow}>
               <View style={styles.activityIcon}><Text style={styles.activityEmoji}>▶</Text></View>
               <View style={styles.activityCopy}>
-                <Text style={styles.activityTitle}>{entry.title || 'Xbox Catalog'}</Text>
+                <Text accessibilityLabel={"Recently opened catalog item: " + (entry.title || "Xbox Catalog")} style={styles.activityTitle}>{entry.title || 'Xbox Catalog'}</Text>
                 <Text style={styles.activityTime}>{entry.openedAt ? new Date(entry.openedAt).toLocaleString() : 'Time unavailable'}</Text>
               </View>
             </View>
@@ -122,6 +122,8 @@ export default function XboxProfileScreen({navigation}) {
           <TextInput
             mode="outlined"
             label="Display name"
+            accessibilityLabel="Local profile display name"
+            accessibilityHint="Up to 16 characters. This is not your Microsoft gamertag."
             value={gamertag}
             onChangeText={value => {setGamertag(value.slice(0, 16)); setSaved(false);}}
             maxLength={16}
