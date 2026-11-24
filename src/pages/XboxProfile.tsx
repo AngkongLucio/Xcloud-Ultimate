@@ -6,7 +6,7 @@ import {storage} from '../store/mmkv';
 
 const AVATARS = ['🎮', '🛡️', '🚀', '🐉', '⚡', '👾', '🏎️', '🌌'];
 
-export default function XboxProfileScreen() {
+export default function XboxProfileScreen({navigation}) {
   const isFocused = useIsFocused();
   const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
   const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
@@ -57,6 +57,7 @@ export default function XboxProfileScreen() {
         </Card.Content>
       </Card>
 
+      <Button mode="contained" icon="trophy" onPress={() => navigation.navigate('XboxAchievements')} style={styles.achievementButton}>View Achievements</Button>
       <Card style={styles.statsCard}>
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Player stats</Text>
@@ -147,6 +148,7 @@ const styles = StyleSheet.create({
   eyebrow: {color: '#8fbc8f', letterSpacing: 2, fontWeight: '700'},
   heading: {color: '#fff', fontWeight: '800', marginTop: 5},
   intro: {color: '#aebcaf', lineHeight: 21, marginTop: 8, marginBottom: 18},
+  achievementButton: {alignSelf: 'flex-start', backgroundColor: '#107c10', marginBottom: 14},
   statsCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 16, marginBottom: 14},
   statsRow: {flexDirection: 'row', gap: 10},
   statTile: {flex: 1, backgroundColor: '#202920', borderRadius: 12, padding: 14},
