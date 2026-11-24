@@ -165,7 +165,7 @@ function App() {
                   <RootStack.Screen
                     name="Home"
                     component={HomeScreen}
-                    options={{title: t('Consoles')}}
+                    options={{ttitle: t('Consoles')}}
                   />
                   <RootStack.Screen
                     name="XboxDashboard"
