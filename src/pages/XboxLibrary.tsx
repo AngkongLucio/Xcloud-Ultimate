@@ -4,6 +4,7 @@ import {Button, Card, Chip, Searchbar, Text} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 import {useIsFocused} from '@react-navigation/native';
 import {addLocalNotification} from './XboxNotifications';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 const XBOX_PLAY = 'https://www.xbox.com/play';
 const GAMES = [
@@ -24,6 +25,10 @@ export default function XboxLibraryScreen({navigation}) {
   const isFocused = useIsFocused();
   const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
+  const haptic = (type = 'selection') => {
+    if (!(storage.getBoolean('xbox.ui.haptics') ?? true)) return;
+    try { ReactNativeHapticFeedback.trigger(type, {enableVibrateFallback: true, ignoreAndroidSystemSettings: false}); } catch (_) {}
+  };
 
   useEffect(() => {
     if (isFocused) {
@@ -38,6 +43,7 @@ export default function XboxLibraryScreen({navigation}) {
   }), [search, category]);
 
   const openXbox = title => {
+    haptic('impactLight');
     if (title) {
       const openedAt = Date.now();
       addLocalNotification('Catalog opened', 'You opened ' + title + '.', 'activity');
@@ -59,6 +65,7 @@ export default function XboxLibraryScreen({navigation}) {
   };
   const moveSelection = offset => {
     if (!visibleGames.length) { return; }
+    haptic();
     setSelectedIndex(current => (current + offset + visibleGames.length) % visibleGames.length);
   };
   const openSelectedGame = () => {
@@ -87,7 +94,7 @@ export default function XboxLibraryScreen({navigation}) {
           <Chip
             key={item}
             selected={category === item}
-            onPress={() => { setCategory(item); setSelectedIndex(0); }}
+            onPress={() => { haptic(); setCategory(item); setSelectedIndex(0); }}
             style={styles.chip}
             textStyle={styles.chipText}>
             {item}
@@ -129,7 +136,7 @@ export default function XboxLibraryScreen({navigation}) {
         </View>
         <View style={styles.dpadRow}>
           <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection(2)}>↓</Button>
-          <Button compact mode="text" textColor="#9cdb8a" onPress={() => navigation.goBack()}>B · Back</Button>
+          <Button compact mode="text" textColor="#9cdb8a" onPress={() => { haptic('impactLight'); navigation.goBack(); }}>B · Back</Button>
         </View>
         <Text variant="bodySmall" style={styles.controllerHint}>Use these on-screen controls to move the highlight and open the selected title in Xbox.</Text>
       </View>
