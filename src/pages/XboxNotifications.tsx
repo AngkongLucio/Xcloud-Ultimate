@@ -5,19 +5,32 @@ import {TextInput} from 'react-native-paper';
 import {Button, Card, Text} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 
-const normalizeNotifications = value => Array.isArray(value)
-  ? value.filter(item => item && typeof item === 'object' && !Array.isArray(item)
-    && typeof item.title === 'string' && typeof item.message === 'string')
-    .map((item, index) => ({
-      id: String(item.id || 'legacy-' + index),
-      title: item.title.trim().slice(0, 120),
-      message: item.message.trim().slice(0, 500),
-      kind: ['message', 'friend'].includes(item.kind) ? item.kind : 'activity',
-      createdAt: Number.isFinite(Number(item.createdAt)) && Number(item.createdAt) > 0 ? Number(item.createdAt) : 0,
-      read: item.read === true,
-    }))
-    .filter(item => item.title.length > 0)
-  : [];
+const normalizeNotifications = value => {
+  if (!Array.isArray(value)) return [];
+  const seenIds = new Set();
+  return value
+    .filter(item => item && typeof item === 'object' && !Array.isArray(item)
+      && typeof item.title === 'string' && typeof item.message === 'string')
+    .map((item, index) => {
+      const baseId = String(item.id || 'legacy-' + index).trim().slice(0, 100) || 'legacy-' + index;
+      let id = baseId;
+      let suffix = 1;
+      while (seenIds.has(id)) {
+        id = (baseId.slice(0, 88) + '-' + suffix).slice(0, 100);
+        suffix += 1;
+      }
+      seenIds.add(id);
+      return {
+        id,
+        title: item.title.trim().slice(0, 120),
+        message: item.message.trim().slice(0, 500),
+        kind: ['message', 'friend'].includes(item.kind) ? item.kind : 'activity',
+        createdAt: Number.isFinite(Number(item.createdAt)) && Number(item.createdAt) > 0 ? Number(item.createdAt) : 0,
+        read: item.read === true,
+      };
+    })
+    .filter(item => item.title.length > 0);
+};
 
 const readNotifications = () => {
   try {
@@ -28,8 +41,12 @@ const readNotifications = () => {
 };
 
 export const addLocalNotification = (title, message, kind = 'activity') => {
+  const safeTitle = typeof title === 'string' ? title.trim().slice(0, 120) : '';
+  const safeMessage = typeof message === 'string' ? message.trim().slice(0, 500) : '';
+  if (!safeTitle || !safeMessage) return;
   const current = readNotifications();
-  const next = [{id: String(Date.now()) + Math.random().toString(36).slice(2, 7), title, message, kind, createdAt: Date.now(), read: false}, ...current].slice(0, 30);
+  const safeKind = ['message', 'friend'].includes(kind) ? kind : 'activity';
+  const next = [{id: String(Date.now()) + Math.random().toString(36).slice(2, 7), title: safeTitle, message: safeMessage, kind: safeKind, createdAt: Date.now(), read: false}, ...current].slice(0, 30);
   storage.set('xbox.notifications.local', JSON.stringify(next));
 };
 
