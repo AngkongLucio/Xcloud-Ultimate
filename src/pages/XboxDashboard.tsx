@@ -202,17 +202,17 @@ export default function XboxDashboardScreen({navigation}) {
             </View>
             <View style={[styles.quickRow, focusOutline && quickSelection === 0 && styles.quickRowFocused]}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Focus highlight</Text><Text style={styles.quickHint}>Visible keyboard focus outline</Text></View>
-              <Switch value={focusOutline} onValueChange={updateFocusOutline} />
+              <Switch value={focusOutline} onValueChange={updateFocusOutline} accessibilityRole="switch" accessibilityLabel="Focus highlight" accessibilityHint="Turns the green selection outline on or off." />
             </View>
             <View style={styles.quickDivider} />
             <View style={[styles.quickRow, focusOutline && quickSelection === 1 && styles.quickRowFocused]}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Controller feedback</Text><Text style={styles.quickHint}>Haptic taps for menu actions</Text></View>
-              <Switch value={hapticsEnabled} onValueChange={updateHaptics} />
+              <Switch value={hapticsEnabled} onValueChange={updateHaptics} accessibilityRole="switch" accessibilityLabel="Controller feedback" accessibilityHint="Turns menu haptic feedback on or off." />
             </View>
             <View style={styles.quickDivider} />
             <View style={[styles.quickRow, focusOutline && quickSelection === 2 && styles.quickRowFocused]}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Compact game cards</Text><Text style={styles.quickHint}>Tighter game library layout</Text></View>
-              <Switch value={compactCards} onValueChange={updateCompactCards} />
+              <Switch value={compactCards} onValueChange={updateCompactCards} accessibilityRole="switch" accessibilityLabel="Compact game cards" accessibilityHint="Uses a tighter layout for game library cards." />
             </View>
             <View style={styles.quickController}>
               <Text style={styles.quickControllerLabel}>QUICK SETTINGS NAVIGATION</Text>
