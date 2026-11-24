@@ -148,6 +148,13 @@ export default function XboxProfileScreen({navigation}) {
             activeOutlineColor="#9cdb8a"
             theme={{colors: {onSurfaceVariant: '#aab5aa'}}}
           />
+          <Text
+            variant="bodySmall"
+            accessibilityLiveRegion="polite"
+            accessibilityLabel={gamertag.length + " of 16 characters used"}
+            style={styles.characterCount}>
+            {gamertag.length}/16 characters
+          </Text>
           <Text variant="bodySmall" style={styles.hint}>Up to 16 characters. Saved only on this device.</Text>
           <Button mode="contained" icon="content-save" accessibilityLabel="Save local player profile" accessibilityHint="Saves the display name and avatar only on this device." onPress={saveProfile} style={styles.saveButton}>Save profile</Button>
           {saved ? <Text variant="bodySmall" accessibilityLiveRegion="polite" accessibilityLabel="Profile saved successfully on this device" style={styles.saved}>Profile saved on this device.</Text> : null}
@@ -198,6 +205,7 @@ const styles = StyleSheet.create({
   nameHeading: {marginTop: 22},
   input: {backgroundColor: '#101510'},
   hint: {color: '#829082', marginTop: 7},
+  characterCount: {color: '#9cdb8a', fontSize: 11, fontWeight: '700', textAlign: 'right', marginTop: 6},
   saveButton: {alignSelf: 'flex-start', marginTop: 18, backgroundColor: '#107c10'},
   saved: {color: '#9cdb8a', marginTop: 10},
   footer: {color: '#829082', lineHeight: 19, marginTop: 16},
