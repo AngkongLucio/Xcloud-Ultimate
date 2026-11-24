@@ -19,6 +19,7 @@ export default function XboxMessagesScreen() {
   const [threads, setThreads] = useState(() => readArray('xbox.messages.local'));
   const [activeFriend, setActiveFriend] = useState(null);
   const [draft, setDraft] = useState('');
+  const [inboxSearch, setInboxSearch] = useState('');
   const [feedback, setFeedback] = useState('');
 
   const refresh = () => {
@@ -58,6 +59,11 @@ export default function XboxMessagesScreen() {
     setFeedback('Local conversation with ' + friendName + ' deleted.');
   };
   const orderedThreads = [...threads].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  const visibleThreads = orderedThreads.filter(thread => {
+    const last = thread.messages?.[thread.messages.length - 1];
+    const query = inboxSearch.trim().toLowerCase();
+    return !query || (thread.friendName || '').toLowerCase().includes(query) || (last?.body || '').toLowerCase().includes(query);
+  });
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -106,12 +112,13 @@ export default function XboxMessagesScreen() {
             <Text variant="titleLarge" style={styles.sectionTitle}>Conversations</Text>
             <Text
               accessibilityLiveRegion="polite"
-              accessibilityLabel={orderedThreads.length + (orderedThreads.length === 1 ? " conversation" : " conversations")}
+              accessibilityLabel={visibleThreads.length + " of " + orderedThreads.length + " conversations shown"}
               style={styles.conversationCount}>
-              {orderedThreads.length}
+              {visibleThreads.length}{inboxSearch.trim() ? " / " + orderedThreads.length : ""}
             </Text>
           </View>
-          {orderedThreads.length ? orderedThreads.map(thread => {
+          <TextInput mode="outlined" label="Search conversations" accessibilityLabel="Search local conversations" accessibilityHint="Filters conversations by player name or the latest message text." value={inboxSearch} onChangeText={setInboxSearch} autoCapitalize="none" clearButtonMode="while-editing" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.composerInput} />
+          {visibleThreads.length ? visibleThreads.map(thread => {
             const friend = friends.find(item => item.id === thread.friendId) || {id: thread.friendId, name: thread.friendName || 'Player', avatar: thread.avatar || '🎮'};
             const last = thread.messages?.[thread.messages.length - 1];
             return (
@@ -130,9 +137,10 @@ export default function XboxMessagesScreen() {
             );
           }) : (
             <Card style={styles.emptyCard}><Card.Content style={styles.emptyContent}>
-              <Text style={styles.emptyIcon}>💬</Text>
-              <Text variant="titleMedium" style={styles.friendName}>No conversations yet</Text>
-              <Text style={styles.preview}>Choose one of your local players below to start.</Text>
+              <Text style={styles.emptyIcon}>{orderedThreads.length ? "🔎" : "💬"}</Text>
+              <Text variant="titleMedium" style={styles.friendName}>{orderedThreads.length ? "No matching conversations" : "No conversations yet"}</Text>
+              <Text accessibilityLiveRegion="polite" style={styles.preview}>{orderedThreads.length ? "Try another player name or message." : "Choose one of your local players below to start."}</Text>
+              {orderedThreads.length && inboxSearch ? <Button compact mode="text" textColor="#a8e69a" accessibilityLabel="Clear conversation search" onPress={() => setInboxSearch("")}>Clear search</Button> : null}
             </Card.Content></Card>
           )}
           <Text variant="titleLarge" style={[styles.sectionTitle, styles.playersTitle]}>Start a chat</Text>
