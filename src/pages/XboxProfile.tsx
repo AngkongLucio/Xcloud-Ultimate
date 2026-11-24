@@ -129,6 +129,7 @@ export default function XboxProfileScreen({navigation}) {
     count,
     percentage: titledActivityCount ? Math.round((count / titledActivityCount) * 100) : 0,
   }));
+  const activityTitleBreakdownTotal = activityTitleBreakdown.reduce((total, item) => total + item.percentage, 0);
 
   const activityInsights = {
     totalOpens: activity.length,
@@ -231,6 +232,7 @@ export default function XboxProfileScreen({navigation}) {
           {activityTitleBreakdown.length > 0 ? (
             <View style={styles.titleBreakdown}>
               <Text style={styles.topActivityLabel}>TITLE BREAKDOWN</Text>
+              <Text style={styles.statsNote}>Share of titled entries · Rounded percentages may not total exactly 100% ({activityTitleBreakdownTotal}%).</Text>
               {activityTitleBreakdown.map(item => (
                 <View key={item.title} style={styles.breakdownRow} accessibilityLabel={item.title + ": " + item.count + " opens, " + item.percentage + " percent of titled entries"}>
                   <View style={styles.breakdownCopy}>
