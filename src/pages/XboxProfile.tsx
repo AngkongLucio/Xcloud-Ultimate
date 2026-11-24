@@ -55,6 +55,13 @@ export default function XboxProfileScreen({navigation}) {
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 3);
 
+  const activityInsights = {
+    totalOpens: activity.length,
+    uniqueTitles: uniqueActivityTitles,
+    repeatOpens: Math.max(activity.length - uniqueActivityTitles, 0),
+    repeatRate: activity.length ? Math.round(((activity.length - uniqueActivityTitles) / activity.length) * 100) : 0,
+  };
+
   useEffect(() => {
     if (isFocused) {
       setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
@@ -131,6 +138,17 @@ export default function XboxProfileScreen({navigation}) {
               ))}
             </View>
           ) : null}
+          <View style={styles.activityInsights}>
+            <Text style={styles.topActivityLabel}>ACTIVITY INSIGHTS · SAVED HISTORY</Text>
+            <View style={styles.insightRow}>
+              <Text style={styles.insightLabel}>Repeat opens</Text>
+              <Text accessibilityLabel={activityInsights.repeatOpens + " repeat opens"} style={styles.insightValue}>{activityInsights.repeatOpens}</Text>
+            </View>
+            <View style={styles.insightTrack}>
+              <View style={[styles.insightFill, {width: activityInsights.repeatRate + '%'}]} />
+            </View>
+            <Text style={styles.insightFootnote}>{activityInsights.repeatRate}% of saved entries are repeat opens</Text>
+          </View>
           <Text variant="titleMedium" style={styles.milestoneTitle}>Local milestones</Text>
           {[
             {label: 'First steps', target: 1},
@@ -268,6 +286,13 @@ const styles = StyleSheet.create({
   statTile: {flex: 1, backgroundColor: '#202920', borderRadius: 12, padding: 14},
   statNumber: {color: '#9cdb8a', fontWeight: '800'},
   statLabel: {color: '#aab5aa', letterSpacing: 1, marginTop: 4},
+  activityInsights: {backgroundColor: '#202920', borderRadius: 12, padding: 12, marginTop: 10, borderWidth: 1, borderColor: '#354136'},
+  insightRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10},
+  insightLabel: {color: '#d7dfd5', fontSize: 12},
+  insightValue: {color: '#fff', fontWeight: '800', fontSize: 14},
+  insightTrack: {height: 6, borderRadius: 4, backgroundColor: '#354136', overflow: 'hidden', marginTop: 8},
+  insightFill: {height: 6, borderRadius: 4, backgroundColor: '#9cdb8a'},
+  insightFootnote: {color: '#aab5aa', fontSize: 10, marginTop: 6},
   leaderboard: {backgroundColor: '#202920', borderRadius: 12, padding: 12, marginTop: 10, borderWidth: 1, borderColor: '#354136'},
   leaderboardRow: {flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7},
   leaderboardRank: {color: '#9cdb8a', fontWeight: '800', width: 18},
