@@ -170,47 +170,47 @@ function App() {
                   <RootStack.Screen
                     name="XboxDashboard"
                     component={XboxDashboardScreen}
-                    options={{headerShown: false}}
+                    options={{...xboxTransition, eaderShown: false}}
                   />
                   <RootStack.Screen
                     name="XboxLibrary"
                     component={XboxLibraryScreen}
-                    options={{title: 'Game Library'}}
+                    options={{...xboxTransition, itle: 'Game Library'}}
                   />
                   <RootStack.Screen
                     name="XboxSettings"
                     component={XboxSettingsScreen}
-                    options={{title: 'Console Settings'}}
+                    options={{...xboxTransition, itle: 'Console Settings'}}
                   />
                   <RootStack.Screen
                     name="XboxProfile"
                     component={XboxProfileScreen}
-                    options={{title: 'Player Profile'}}
+                    options={{...xboxTransition, itle: 'Player Profile'}}
                   />
                   <RootStack.Screen
                     name="XboxAchievements"
                     component={XboxAchievementsScreen}
-                    options={{title: 'Achievements'}}
+                    options={{...xboxTransition, itle: 'Achievements'}}
                   />
                   <RootStack.Screen
                     name="XboxFriends"
                     component={XboxFriendsScreen}
-                    options={{title: 'Friends'}}
+                    options={{...xboxTransition, itle: 'Friends'}}
                   />
                   <RootStack.Screen
                     name="XboxMessages"
                     component={XboxMessagesScreen}
-                    options={{title: 'Messages'}}
+                    options={{...xboxTransition, itle: 'Messages'}}
                   />
                   <RootStack.Screen
                     name="XboxNotifications"
                     component={XboxNotificationsScreen}
-                    options={{title: 'Notifications'}}
+                    options={{...xboxTransition, itle: 'Notifications'}}
                   />
                   <RootStack.Screen
                     name="XboxCloud"
                     component={XboxCloudScreen}
-                    options={{title: 'Xbox Cloud Gaming'}}
+                    options={{...xboxTransition, itle: 'Xbox Cloud Gaming'}}
                   />
                   <RootStack.Screen
                     name="Options"
