@@ -290,9 +290,17 @@ export default function XboxDashboardScreen({navigation}) {
       <Card style={styles.recentCard} mode="outlined">
         <Card.Content>
           <Text variant="labelLarge" style={styles.recentEyebrow}>RECENT ACTIVITY</Text>
-          <Text variant="titleLarge" style={styles.recentTitle}>{lastTitle}</Text>
-          <Text variant="bodySmall" style={styles.muted}>{lastOpenedAt ? 'Last catalog launch: ' + new Date(lastOpenedAt).toLocaleString() : 'Your catalog launch activity will appear here.'}</Text>
-          <Button compact mode="text" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxLibrary')} style={styles.recentButton}>Open Game Library</Button>
+          <Text
+            variant="titleLarge"
+            accessibilityLiveRegion="polite"
+            accessibilityLabel={"Most recently opened catalog item: " + lastTitle}
+            style={styles.recentTitle}>{lastTitle}</Text>
+          <Text
+            variant="bodySmall"
+            accessibilityLabel={lastOpenedAt ? "Catalog item opened " + new Date(lastOpenedAt).toLocaleString() : "No catalog activity recorded yet"}
+            style={styles.muted}>{lastOpenedAt ? 'Last catalog launch: ' + new Date(lastOpenedAt).toLocaleString() : 'Your catalog launch activity will appear here.'}</Text>
+          <Text variant="bodySmall" style={styles.muted}>Catalog activity only — this does not confirm gameplay.</Text>
+          <Button compact mode="text" textColor="#9cdb8a" accessibilityLabel="Open game library from recent activity" onPress={() => navigation.navigate('XboxLibrary')} style={styles.recentButton}>Open Game Library</Button>
         </Card.Content>
       </Card>
       <Text variant="titleLarge" style={styles.sectionTitle}>Explore</Text>
