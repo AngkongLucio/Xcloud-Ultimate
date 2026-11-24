@@ -181,7 +181,7 @@ export default function XboxSettingsScreen() {
           <Button mode="outlined" textColor="#a8e69a" loading={networkRefreshing} disabled={networkRefreshing} accessibilityLabel="Refresh device network information" accessibilityHint="Checks the current connection type and internet reachability again." onPress={refreshNetwork} style={styles.actionButton}>
             Refresh network status
           </Button>
-          <Button mode="outlined" textColor="#a8e69a" accessibilityLabel="Open iPad device settings" onPress={() => Linking.openSettings().catch(() => {})} style={styles.actionButton}>
+          <Button mode="outlined" textColor="#a8e69a" accessibilityLabel="Open iPad device settings" onPress={() => Linking.openSettings().catch(() => Alert.alert('Unable to open device settings', 'Open the iPad Settings app manually and try again.'))} style={styles.actionButton}>
             Open device settings
           </Button>
         </Card.Content>
@@ -207,7 +207,7 @@ export default function XboxSettingsScreen() {
           <Text variant="bodySmall" style={styles.note}>
             Xbox account sign-in and cloud streaming remain on the official Xbox website.
           </Text>
-          <Button mode="text" textColor="#a8e69a" accessibilityLabel="Open official Xbox Cloud Gaming website" onPress={() => Linking.openURL('https://www.xbox.com/play').catch(() => {})}>
+          <Button mode="text" textColor="#a8e69a" accessibilityLabel="Open official Xbox Cloud Gaming website" onPress={() => Linking.openURL('https://www.xbox.com/play').catch(() => Alert.alert('Unable to open Xbox Cloud Gaming', 'Check your internet connection or open https://www.xbox.com/play in Safari.'))}>
             Open Xbox Cloud Gaming
           </Button>
         </Card.Content>
