@@ -92,14 +92,21 @@ export default function XboxLibraryScreen({navigation}) {
       addLocalNotification('Catalog opened', 'You opened ' + title + '.', 'activity');
       storage.set('xbox.activity.lastTitle', title);
       storage.set('xbox.activity.lastOpenedAt', openedAt);
-      storage.set('xbox.activity.launchCount', (storage.getNumber('xbox.activity.launchCount') ?? 0) + 1);
+      const launchCount = storage.getNumber('xbox.activity.launchCount') ?? 0;
+      storage.set('xbox.activity.launchCount', Number.isFinite(launchCount) && launchCount >= 0
+        ? Math.floor(launchCount) + 1
+        : 1);
       let history = [];
       try {
         const storedHistory = storage.getString('xbox.activity.history');
-        history = storedHistory ? JSON.parse(storedHistory) : [];
-        if (!Array.isArray(history)) history = [];
+        const parsed = storedHistory ? JSON.parse(storedHistory) : [];
+        history = Array.isArray(parsed) ? parsed.filter(item =>
+          item && typeof item.title === 'string' &&
+          GAMES.some(game => game.title === item.title) &&
+          Number.isFinite(item.openedAt) && item.openedAt > 0
+        ) : [];
       } catch (_) {
-        history = [];
+        storage.delete('xbox.activity.history');
       }
       history.unshift({title, openedAt});
       storage.set('xbox.activity.history', JSON.stringify(history.slice(0, 10)));
