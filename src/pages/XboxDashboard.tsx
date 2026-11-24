@@ -153,7 +153,7 @@ export default function XboxDashboardScreen({navigation}) {
               <View><Text style={styles.guideEyebrow}>XCLOUD ULTIMATE</Text><Text style={styles.guideHeading}>Guide</Text></View>
               <Pressable onPress={() => { haptic(); setGuideVisible(false); }} style={styles.guideClose}><Text style={styles.guideCloseText}>✕</Text></Pressable>
             </View>
-            <Pressable style={styles.guideProfile} onPress={() => openGuideRoute('XboxProfile')}>
+            <Pressable style={[styles.guideProfile, focusOutline && guideSelection === 0 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxProfile')}>
               <Text style={styles.guideAvatar}>{avatar}</Text>
               <View style={{flex: 1}}><Text style={styles.guideName}>{gamertag}</Text><Text style={styles.guideHint}>Local player profile</Text></View>
               <Text style={styles.guideChevron}>›</Text>
@@ -168,16 +168,16 @@ export default function XboxDashboardScreen({navigation}) {
               </View>
             </View>
             <Text style={styles.guideSection}>GAMING</Text>
-            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('CloudGaming')}><Text style={styles.guideIcon}>☁️</Text><Text style={styles.guideItemText}>Cloud Gaming</Text></Pressable>
-            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxLibrary')}><Text style={styles.guideIcon}>🎮</Text><Text style={styles.guideItemText}>Game Library</Text></Pressable>
-            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxAchievements')}><Text style={styles.guideIcon}>🏆</Text><Text style={styles.guideItemText}>Achievements</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 1 && styles.guideItemFocused]} onPress={() => openGuideRoute('CloudGaming')}><Text style={styles.guideIcon}>☁️</Text><Text style={styles.guideItemText}>Cloud Gaming</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 2 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxLibrary')}><Text style={styles.guideIcon}>🎮</Text><Text style={styles.guideItemText}>Game Library</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 3 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxAchievements')}><Text style={styles.guideIcon}>🏆</Text><Text style={styles.guideItemText}>Achievements</Text></Pressable>
             <Text style={styles.guideSection}>COMMUNITY</Text>
-            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxFriends')}><Text style={styles.guideIcon}>👥</Text><Text style={styles.guideItemText}>Friends</Text></Pressable>
-            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxMessages')}><Text style={styles.guideIcon}>💬</Text><Text style={styles.guideItemText}>Messages</Text></Pressable>
-            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxNotifications')}><Text style={styles.guideIcon}>🔔</Text><Text style={styles.guideItemText}>Notifications</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 4 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxFriends')}><Text style={styles.guideIcon}>👥</Text><Text style={styles.guideItemText}>Friends</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 5 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxMessages')}><Text style={styles.guideIcon}>💬</Text><Text style={styles.guideItemText}>Messages</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 6 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxNotifications')}><Text style={styles.guideIcon}>🔔</Text><Text style={styles.guideItemText}>Notifications</Text></Pressable>
             <View style={styles.guideSpacer} />
             <Text style={styles.guideSection}>SYSTEM</Text>
-            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxSettings')}><Text style={styles.guideIcon}>⚙️</Text><Text style={styles.guideItemText}>Settings</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 7 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxSettings')}><Text style={styles.guideIcon}>⚙️</Text><Text style={styles.guideItemText}>Settings</Text></Pressable>
             <Text style={styles.guideFoot}>Companion app menu · Xbox sign-in stays official</Text>
           </View>
         </View>
@@ -345,6 +345,7 @@ const styles = StyleSheet.create({
   guideClose: {width: 36, height: 36, borderRadius: 18, backgroundColor: '#29372b', alignItems: 'center', justifyContent: 'center'},
   guideCloseText: {color: '#d9ead7', fontSize: 17},
   guideProfile: {flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13, backgroundColor: '#223126', borderRadius: 13, marginBottom: 22},
+  guideItemFocused: {borderWidth: 2, borderColor: '#9cdb8a', backgroundColor: '#29432e', transform: [{scale: 1.015}]},
   guideAvatar: {fontSize: 29},
   guideName: {color: '#fff', fontWeight: '800', fontSize: 15},
   guideHint: {color: '#9eae9d', fontSize: 11, marginTop: 3},
