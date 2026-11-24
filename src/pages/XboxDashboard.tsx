@@ -147,7 +147,7 @@ export default function XboxDashboardScreen({navigation}) {
           <Pressable onPress={() => { haptic(); setGuideSelection(0); setGuideVisible(true); }} accessibilityRole="button" accessibilityLabel="Open Xbox guide" style={styles.quickButton}>
             <Text style={styles.quickButtonText}>☰</Text>
           </Pressable>
-          <Pressable onPress={() => { haptic(); setQuickSelection(0); setQuickSettingsVisible(value => !value); }} accessibilityRole="button" accessibilityLabel="Toggle quick settings" style={styles.quickButton}>
+          <Pressable onPress={() => { haptic(); if (quickSettingsVisible) closeQuickSettings(); else { setQuickSelection(0); setQuickSettingsVisible(true); } }} accessibilityRole="button" accessibilityLabel="Toggle quick settings" style={styles.quickButton}>
             <Text style={styles.quickButtonText}>⚙</Text>
           </Pressable>
           <Text variant="headlineSmall" style={styles.logo}>XBOX</Text>
@@ -198,7 +198,7 @@ export default function XboxDashboardScreen({navigation}) {
           <Card.Content>
             <View style={styles.quickHeader}>
               <Text variant="titleLarge" style={styles.quickTitle}>Quick Settings</Text>
-              <Button compact textColor="#9cdb8a" onPress={() => { haptic(); setQuickSettingsVisible(false); }}>Close</Button>
+              <Button compact textColor="#9cdb8a" onPress={() => { haptic(); closeQuickSettings(); }}>Close</Button>
             </View>
             <View style={[styles.quickRow, focusOutline && quickSelection === 0 && styles.quickRowFocused]}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Focus highlight</Text><Text style={styles.quickHint}>Visible keyboard focus outline</Text></View>
