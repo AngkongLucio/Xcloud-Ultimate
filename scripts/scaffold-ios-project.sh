@@ -32,9 +32,10 @@ fi
 echo "Fetching the official React Native 0.72.17 template source..."
 git clone --depth 1 --filter=blob:none --sparse --branch v0.72.17 \
   https://github.com/react/react-native.git "$TMP_DIR/react-native-source"
-git -C "$TMP_DIR/react-native-source" sparse-checkout set \
-  packages/react-native/template \
-  packages/react-native/template.config.js
+# Non-cone mode is required because template.config.js is a file, not a directory.
+git -C "$TMP_DIR/react-native-source" sparse-checkout set --no-cone \
+  'packages/react-native/template/' \
+  'packages/react-native/template.config.js'
 
 CUSTOM_TEMPLATE="$TMP_DIR/rn072-template"
 mkdir -p "$CUSTOM_TEMPLATE"
@@ -63,8 +64,8 @@ cp -R "$TMP_DIR/Peasyo/ios" "$IOS_DIR"
 # Match the existing Android application ID and AppRegistry name.
 find "$IOS_DIR" -type f \( -name '*.pbxproj' -o -name '*.plist' -o -name '*.mm' -o -name '*.h' -o -name '*.m' -o -name 'Podfile' \) -print0 |
 while IFS= read -r -d '' file; do
-  /usr/bin/sed -i '' 's/org\.reactjs\.native\.example\.[^; ]*/com.peasyo/g' "$file"
-  /usr/bin/sed -i '' 's/self\.moduleName = @"Peasyo";/self.moduleName = @"peasyo";/' "$file"
+  /usr/bin/sed -i '' 's/org\\.reactjs\\.native\\.example\\.[^; ]*/com.peasyo/g' "$file"
+  /usr/bin/sed -i '' 's/self\\.moduleName = @"Peasyo";/self.moduleName = @"peasyo";/' "$file"
 done
 
 APP_INFO_PLIST="$IOS_DIR/Peasyo/Info.plist"
