@@ -40,9 +40,6 @@ export default function XboxLibraryScreen({navigation}) {
   });
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useEffect(() => {
-    storage.set('xbox.library.favorites', JSON.stringify(favoriteTitles));
-  }, [favoriteTitles]);
   const libraryScrollRef = useRef(null);
   const isFocused = useIsFocused();
   useEffect(() => {
@@ -96,10 +93,22 @@ export default function XboxLibraryScreen({navigation}) {
   }, [visibleGames.length]);
 
   const toggleFavorite = title => {
-    setFavoriteTitles(current => {
-      const next = current.includes(title) ? current.filter(item => item !== title) : [...current, title];
-      return next;
-    });
+    if (!GAMES.some(game => game.title === title)) return;
+    let latest = [];
+    try {
+      const raw = storage.getString('xbox.library.favorites');
+      const parsed = raw ? JSON.parse(raw) : [];
+      latest = Array.isArray(parsed)
+        ? [...new Set(parsed.filter(item => typeof item === 'string' && GAMES.some(game => game.title === item)))]
+        : [];
+    } catch (_) {
+      storage.delete('xbox.library.favorites');
+    }
+    const next = latest.includes(title)
+      ? latest.filter(item => item !== title)
+      : [...latest, title];
+    storage.set('xbox.library.favorites', JSON.stringify(next));
+    setFavoriteTitles(next);
   };
 
   const openXbox = title => {
