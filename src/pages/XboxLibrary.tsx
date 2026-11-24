@@ -264,6 +264,15 @@ export default function XboxLibraryScreen({navigation}) {
         </Button>
       )}
 
+      {visibleGames.length === 0 ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          accessibilityRole="text"
+          accessibilityLabel="No games match the current search and filters."
+          style={styles.controllerHint}>
+          No games found. Try another search or reset your filters.
+        </Text>
+      ) : null}
       <View style={styles.grid}>
         {visibleGames.map((game, index) => (
           <View key={game.title} style={styles.gameCardContainer}>
