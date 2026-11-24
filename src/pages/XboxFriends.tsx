@@ -17,6 +17,7 @@ export default function XboxFriendsScreen() {
   });
   const [name, setName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState('Recent');
   const [formMessage, setFormMessage] = useState('');
   const [avatar, setAvatar] = useState('🎮');
 
@@ -50,7 +51,12 @@ export default function XboxFriendsScreen() {
     setFormMessage(clean + ' was added to your local list.');
   };
 
-  const filteredFriends = friends.filter(item => item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()));
+  const filteredFriends = friends
+    .filter(item => item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    .slice()
+    .sort((a, b) => sortOrder === 'A–Z'
+      ? a.name.localeCompare(b.name)
+      : (Number(b.addedAt) || 0) - (Number(a.addedAt) || 0));
 
   const removeFriend = id => {
     const removed = friends.find(item => item.id === id);
@@ -86,6 +92,14 @@ export default function XboxFriendsScreen() {
         <Text style={styles.count} accessibilityLiveRegion="polite" accessibilityLabel={filteredFriends.length + " of " + friends.length + " local players shown"}>{filteredFriends.length}{searchQuery.trim() ? " / " + friends.length : ""}</Text>
       </View>
       <TextInput mode="outlined" label="Search local players" accessibilityLabel="Search local friends list" accessibilityHint="Filters saved local player names as you type." value={searchQuery} onChangeText={setSearchQuery} autoCapitalize="none" clearButtonMode="while-editing" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.input} />
+      <View style={styles.sortRow} accessibilityLabel="Sort local players">
+        <Text style={styles.sortLabel}>SORT</Text>
+        {['Recent', 'A–Z'].map(item => (
+          <Pressable key={item} accessibilityRole="button" accessibilityLabel={item === 'Recent' ? 'Sort players by recently added' : 'Sort players alphabetically'} accessibilityState={{selected: sortOrder === item}} onPress={() => setSortOrder(item)} style={[styles.sortChip, sortOrder === item && styles.sortChipSelected]}>
+            <Text style={[styles.sortText, sortOrder === item && styles.sortTextSelected]}>{item}</Text>
+          </Pressable>
+        ))}
+      </View>
       {filteredFriends.length ? filteredFriends.map(friend => (
         <Card key={friend.id} style={styles.friendCard} accessible accessibilityLabel={"Local player " + friend.name + (friend.addedAt ? ", added " + new Date(friend.addedAt).toLocaleDateString() : "")}>
           <Card.Content style={styles.friendRow}>
@@ -130,6 +144,12 @@ const styles = StyleSheet.create({
   formMessage: {color: '#9cdb8a', fontSize: 12, marginTop: 10, lineHeight: 18},
   listHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12},
   count: {color: '#9cdb8a', fontWeight: '800', fontSize: 16},
+  sortRow: {flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, marginBottom: 12},
+  sortLabel: {color: '#829082', fontSize: 10, fontWeight: '800', letterSpacing: 1},
+  sortChip: {paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, backgroundColor: '#202920', borderWidth: 1, borderColor: '#354136'},
+  sortChipSelected: {backgroundColor: '#294d30', borderColor: '#9cdb8a'},
+  sortText: {color: '#aab5aa', fontSize: 11, fontWeight: '700'},
+  sortTextSelected: {color: '#fff'},
   friendCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 14, marginBottom: 10},
   friendRow: {flexDirection: 'row', alignItems: 'center', gap: 12},
   friendAvatar: {width: 48, height: 48, borderRadius: 24, backgroundColor: '#294d30', alignItems: 'center', justifyContent: 'center'},
