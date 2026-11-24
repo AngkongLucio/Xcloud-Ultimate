@@ -23,8 +23,10 @@ export default function XboxSettingsScreen() {
 
   useEffect(() => {
     let active = true;
+    const initialRequestId = networkRequestId.current + 1;
+    networkRequestId.current = initialRequestId;
     NetInfo.fetch().then(state => {
-      if (active) {
+      if (active && networkRequestId.current === initialRequestId) {
         setNetwork({
           type: state.type || 'unknown',
           connected: state.isConnected,
@@ -32,10 +34,13 @@ export default function XboxSettingsScreen() {
         });
       }
     }).catch(() => {
-      if (active) setNetwork({type: 'Unavailable', connected: null, reachable: null});
+      if (active && networkRequestId.current === initialRequestId) {
+        setNetwork({type: 'Unavailable', connected: null, reachable: null});
+      }
     });
     const unsubscribe = NetInfo.addEventListener(state => {
       if (active) {
+        networkRequestId.current += 1;
         setNetwork({
           type: state.type || 'unknown',
           connected: state.isConnected,
@@ -45,6 +50,7 @@ export default function XboxSettingsScreen() {
     });
     return () => {
       active = false;
+      networkRequestId.current += 1;
       unsubscribe();
     };
   }, []);
