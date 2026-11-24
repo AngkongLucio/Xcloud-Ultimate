@@ -88,6 +88,26 @@ export default function XboxProfileScreen({navigation}) {
     return streak;
   })();
 
+  const longestActivityStreak = (() => {
+    const dayStarts = [...new Set(
+      activity
+        .map(entry => Number(entry?.openedAt))
+        .filter(timestamp => Number.isFinite(timestamp) && timestamp > 0)
+        .map(timestamp => {
+          const date = new Date(timestamp);
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+        }),
+    )].sort((a, b) => a - b);
+
+    let longest = 0;
+    let current = 0;
+    dayStarts.forEach((day, index) => {
+      current = index > 0 && day - dayStarts[index - 1] === 86400000 ? current + 1 : 1;
+      longest = Math.max(longest, current);
+    });
+    return longest;
+  })();
+
   const activityInsights = {
     totalOpens: activity.length,
     uniqueTitles: uniqueActivityTitles,
@@ -185,6 +205,10 @@ export default function XboxProfileScreen({navigation}) {
             <View style={styles.insightRow}>
               <Text style={styles.insightLabel}>Current streak</Text>
               <Text accessibilityLabel={activityStreak + " consecutive active days, based on saved history"} style={styles.insightValue}>{activityStreak} {activityStreak === 1 ? 'day' : 'days'}</Text>
+            </View>
+            <View style={styles.insightRow}>
+              <Text style={styles.insightLabel}>Longest streak</Text>
+              <Text accessibilityLabel={longestActivityStreak + " days, longest consecutive activity streak in saved history"} style={styles.insightValue}>{longestActivityStreak} {longestActivityStreak === 1 ? 'day' : 'days'}</Text>
             </View>
             <View style={styles.insightTrack}>
               <View style={[styles.insightFill, {width: activityInsights.repeatRate + '%'}]} />
