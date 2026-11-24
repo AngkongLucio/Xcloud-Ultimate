@@ -112,7 +112,7 @@ function HomeScreen({navigation, route}) {
             icon="microsoft-xbox"
             size={26}
             accessibilityLabel="Xbox Cloud Gaming"
-            onPress={() => navigation.navigate('XboxCloud')}
+            onPress={() => navigation.navigate('XboxDashboard')}
           />
           <IconButton
             icon="progress-wrench"
