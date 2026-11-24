@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useIsFocused} from '@react-navigation/native';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View, Pressable} from 'react-native';
 import {Card, ProgressBar, Text} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 
@@ -14,6 +14,7 @@ const BADGES = [
 export default function XboxAchievementsScreen() {
   const isFocused = useIsFocused();
   const [count, setCount] = useState(() => storage.getNumber('xbox.activity.launchCount') ?? 0);
+  const [filter, setFilter] = useState('All');
 
   useEffect(() => {
     if (isFocused) setCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
@@ -22,6 +23,7 @@ export default function XboxAchievementsScreen() {
   const unlocked = BADGES.filter(item => count >= item.target).length;
   const nextBadge = BADGES.find(item => count < item.target);
   const remaining = nextBadge ? Math.max(0, nextBadge.target - count) : 0;
+  const visibleBadges = BADGES.filter(item => filter === 'All' || (filter === 'Unlocked' ? count >= item.target : count < item.target));
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -42,7 +44,15 @@ export default function XboxAchievementsScreen() {
           </Text>
         </Card.Content>
       </Card>
-      {BADGES.map(item => {
+      <View style={styles.filterRow} accessibilityLabel="Filter local achievements">
+        {['All', 'Unlocked', 'Locked'].map(item => (
+          <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " badges"} accessibilityState={{selected: filter === item}} onPress={() => setFilter(item)} style={[styles.filterChip, filter === item && styles.filterChipSelected]}>
+            <Text style={[styles.filterText, filter === item && styles.filterTextSelected]}>{item}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text accessibilityLiveRegion="polite" accessibilityLabel={visibleBadges.length + " " + filter.toLowerCase() + " badges shown"} style={styles.filterCount}>{visibleBadges.length} {filter.toLowerCase()} badges</Text>
+      {visibleBadges.map(item => {
         const earned = count >= item.target;
         const progress = Math.min(count / item.target, 1);
         return (
@@ -65,6 +75,7 @@ export default function XboxAchievementsScreen() {
           </Card>
         );
       })}
+      {!visibleBadges.length ? <Card style={styles.badgeCard}><Card.Content><Text style={styles.badgeDescription}>No badges in this category yet.</Text></Card.Content></Card> : null}
       <Text variant="bodySmall" style={styles.footer}>These badges are created and stored locally. They are not official Xbox achievements, Gamerscore, account data, or proof of gameplay.</Text>
     </ScrollView>
   );
@@ -82,6 +93,12 @@ const styles = StyleSheet.create({
   summaryHint: {color: '#c3d4c3', fontSize: 12, marginTop: 10},
   nextBadge: {color: '#9cdb8a', fontSize: 12, fontWeight: '700', marginTop: 8},
   progress: {height: 8, borderRadius: 8, backgroundColor: '#344235', marginTop: 8},
+  filterRow: {flexDirection: 'row', gap: 8, marginBottom: 8},
+  filterChip: {paddingHorizontal: 15, paddingVertical: 9, borderRadius: 18, backgroundColor: '#202920', borderWidth: 1, borderColor: '#354136'},
+  filterChipSelected: {backgroundColor: '#294d30', borderColor: '#9cdb8a'},
+  filterText: {color: '#aab5aa', fontSize: 12, fontWeight: '700'},
+  filterTextSelected: {color: '#fff'},
+  filterCount: {color: '#aab5aa', fontSize: 11, marginBottom: 12},
   badgeCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 14, marginBottom: 12},
   earnedCard: {borderColor: '#789d70'},
   badgeRow: {flexDirection: 'row', alignItems: 'center', gap: 12},
