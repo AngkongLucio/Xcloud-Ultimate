@@ -164,6 +164,12 @@ function HomeScreen({navigation, route}) {
             if (accessToken.length) {
               getUserInfoFromToken(accessToken)
                 .then(userInfo => {
+                  if (!userInfo || !userInfo.user_id) {
+                    showMessage(t('Unable to Fetch User Information'));
+                    setLoading(false);
+                    return;
+                  }
+
                   // Save token(userInfo) to local storege
                   ts.load();
                   const tokens = ts.getToken();
@@ -203,6 +209,7 @@ function HomeScreen({navigation, route}) {
           })
           .catch(e => {
             showMessage(t('Get access_token failed') + ':' + e);
+            setLoading(false);
           });
       }
     }
