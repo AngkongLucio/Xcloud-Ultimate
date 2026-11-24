@@ -21,15 +21,19 @@ const normalizeNotifications = value => {
       }
       seenIds.add(id);
       return {
+        ...item,
         id,
         title: item.title.trim().slice(0, 120),
         message: item.message.trim().slice(0, 500),
-        kind: ['message', 'friend'].includes(item.kind) ? item.kind : 'activity',
-        createdAt: Number.isFinite(Number(item.createdAt)) && Number(item.createdAt) > 0 ? Number(item.createdAt) : 0,
+        kind: ['activity', 'friend', 'message'].includes(item.kind) ? item.kind : 'activity',
         read: item.read === true,
+        createdAt: Number.isFinite(Number(item.createdAt)) && Number(item.createdAt) > 0
+          ? Number(item.createdAt)
+          : 0,
       };
     })
-    .filter(item => item.title.length > 0);
+    .filter(item => item.title.length > 0 && item.message.length > 0)
+    .slice(0, 30);
 };
 
 const readNotifications = () => {
