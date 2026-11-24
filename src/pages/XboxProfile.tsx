@@ -101,7 +101,7 @@ export default function XboxProfileScreen({navigation}) {
             </View>
           )) : <Text style={styles.statsNote}>No catalog activity yet. Open a title from the Library to start your history.</Text>}
           {activity.length > 0 ? (
-            <Button mode="text" textColor="#a8e69a" compact onPress={() => {
+            <Button mode="text" textColor="#a8e69a" compact accessibilityLabel="Clear local activity history" onPress={() => {
               storage.delete('xbox.activity.history');
               setActivity([]);
             }}>Clear local history</Button>
@@ -113,7 +113,7 @@ export default function XboxProfileScreen({navigation}) {
           <Text variant="titleLarge" style={styles.sectionTitle}>Choose avatar</Text>
           <View style={styles.avatarGrid}>
             {AVATARS.map(item => (
-              <Pressable key={item} accessibilityRole="button" accessibilityLabel={'Choose avatar ' + item} onPress={() => {setAvatar(item); setSaved(false);}} style={[styles.avatarChoice, avatar === item && styles.avatarSelected]}>
+              <Pressable key={item} accessibilityRole="button" accessibilityLabel={'Choose avatar ' + item} accessibilityState={{selected: avatar === item}} onPress={() => {setAvatar(item); setSaved(false);}} style={[styles.avatarChoice, avatar === item && styles.avatarSelected]}>
                 <Text style={styles.avatarOption}>{item}</Text>
               </Pressable>
             ))}
@@ -133,7 +133,7 @@ export default function XboxProfileScreen({navigation}) {
             theme={{colors: {onSurfaceVariant: '#aab5aa'}}}
           />
           <Text variant="bodySmall" style={styles.hint}>Up to 16 characters. Saved only on this device.</Text>
-          <Button mode="contained" icon="content-save" onPress={saveProfile} style={styles.saveButton}>Save profile</Button>
+          <Button mode="contained" icon="content-save" accessibilityLabel="Save local player profile" onPress={saveProfile} style={styles.saveButton}>Save profile</Button>
           {saved ? <Text variant="bodySmall" style={styles.saved}>Profile saved on this device.</Text> : null}
         </Card.Content>
       </Card>
