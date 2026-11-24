@@ -475,221 +475,248 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_list_devices(
         ChiakiHolepunchDeviceInfo **devices, size_t *device_count,
         ChiakiLog *log)
 {
+    if(!psn_oauth2_token || !*psn_oauth2_token || !devices || !device_count)
+        return CHIAKI_ERR_INVALID_DATA;
+
+    *devices = NULL;
+    *device_count = 0;
+
+    if(console_type != CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS5)
+    {
+        CHIAKI_LOGW(log, "Only PS5 is supported by the list devices function");
+        return CHIAKI_ERR_INVALID_DATA;
+    }
+
     CURL *curl = curl_easy_init();
     if(!curl)
     {
-        CHIAKI_LOGE(log, "Curl could not init");
+        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Curl could not init");
         return CHIAKI_ERR_MEMORY;
     }
+
     char url[133];
-    char platform[4];
-    if (console_type != CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS5) {
-        CHIAKI_LOGW(log, "Only PS5 is supported by the list devices function!");
+    int url_len = snprintf(url, sizeof(url), device_list_url_fmt, "PS5");
+    if(url_len < 0 || (size_t)url_len >= sizeof(url))
+    {
         curl_easy_cleanup(curl);
         return CHIAKI_ERR_INVALID_DATA;
     }
-    snprintf(platform, sizeof(platform), "%s", "PS5");
-    snprintf(url, sizeof(url), device_list_url_fmt, platform);
 
-    char* oauth_header = NULL;
+    char *oauth_header = NULL;
+    struct curl_slist *headers = NULL;
+    HttpResponseData response_data = {
+        .data = NULL,
+        .size = 0,
+    };
+    ChiakiHolepunchDeviceInfo *parsed_devices = NULL;
+    json_tokener *tok = NULL;
+    json_object *json = NULL;
     ChiakiErrorCode err = make_oauth2_header(&oauth_header, psn_oauth2_token);
     if(err != CHIAKI_ERR_SUCCESS)
-    {
-        curl_easy_cleanup(curl);
-        return err;
-    }
-
-    HttpResponseData response_data = {
-            .data = malloc(0),
-            .size = 0,
-    };
+        goto cleanup;
 
     /* Never log OAuth authorization headers or access tokens. */
+#define APPEND_DEVICE_HEADER(value) \
+    do { \
+        struct curl_slist *new_headers = curl_slist_append(headers, value); \
+        if(!new_headers) \
+        { \
+            err = CHIAKI_ERR_MEMORY; \
+            goto cleanup; \
+        } \
+        headers = new_headers; \
+    } while(0)
+    APPEND_DEVICE_HEADER("Host: web.np.playstation.com");
+    APPEND_DEVICE_HEADER("Accept-Language: ja-JP");
+    APPEND_DEVICE_HEADER("Connection: Keep-Alive");
+    APPEND_DEVICE_HEADER("User-Agent: RpNetHttpUtilImpl");
+    APPEND_DEVICE_HEADER(oauth_header);
+#undef APPEND_DEVICE_HEADER
 
-    struct curl_slist *headers = NULL;
-    headers = curl_slist_append(headers, "Host: web.np.playstation.com");
-    headers = curl_slist_append(headers, "Accept-Language: ja-JP");
-    headers = curl_slist_append(headers, "Connection: Keep-Alive");
-    headers = curl_slist_append(headers, "User-Agent: RpNetHttpUtilImpl");
-    headers = curl_slist_append(headers, oauth_header);
+#define SET_DEVICE_CURL_OPTION(option, value) \
+    do { \
+        CURLcode setopt_err = curl_easy_setopt(curl, option, value); \
+        if(setopt_err != CURLE_OK) \
+        { \
+            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: CURL setopt " #option " failed: %s", curl_easy_strerror(setopt_err)); \
+            err = CHIAKI_ERR_NETWORK; \
+            goto cleanup; \
+        } \
+    } while(0)
+    SET_DEVICE_CURL_OPTION(CURLOPT_FAILONERROR, 0L);
+    SET_DEVICE_CURL_OPTION(CURLOPT_TIMEOUT, 5L);
+    SET_DEVICE_CURL_OPTION(CURLOPT_URL, url);
+    SET_DEVICE_CURL_OPTION(CURLOPT_HTTPHEADER, headers);
+    SET_DEVICE_CURL_OPTION(CURLOPT_WRITEFUNCTION, curl_write_cb);
+    SET_DEVICE_CURL_OPTION(CURLOPT_WRITEDATA, (void *)&response_data);
+    SET_DEVICE_CURL_OPTION(CURLOPT_SSL_VERIFYPEER, 1L);
+    SET_DEVICE_CURL_OPTION(CURLOPT_SSL_VERIFYHOST, 2L);
+#undef SET_DEVICE_CURL_OPTION
 
-    CURLcode res = curl_easy_setopt(curl, CURLOPT_FAILONERROR, 0L);
+    CURLcode res = curl_easy_perform(curl);
     if(res != CURLE_OK)
-        CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_FAILONERROR failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_TIMEOUT failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_URL, url);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_URL failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_HTTPHEADER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_WRITEFUNCTION failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&response_data);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_WRITEDATA failed with CURL error %s", curl_easy_strerror(res));
-
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_SSL_VERIFYPEER failed with CURL error %s", curl_easy_strerror(res));
-    res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-    if(res != CURLE_OK)
-        CHIAKI_LOGW(log, "chiaki_holepunch_list_devices: CURL setopt CURLOPT_SSL_VERIFYHOST failed with CURL error %s", curl_easy_strerror(res));
-
-    res = curl_easy_perform(curl);
-    curl_slist_free_all(headers);
-    if (res != CURLE_OK)
     {
-        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Fetching device list from %s failed with CURL error %s", url, curl_easy_strerror(res));
+        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Fetching device list failed: %s", curl_easy_strerror(res));
         err = CHIAKI_ERR_NETWORK;
         goto cleanup;
     }
 
     long http_code = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-    if (http_code != 200)
+    res = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    if(res != CURLE_OK)
     {
-        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Fetching device list from %s failed with HTTP code %ld", url, http_code);
-        CHIAKI_LOGV(log, "chiaki_holepunch_list_devices Response Body: %.*s.", (int)response_data.size, response_data.data);
-        if (http_code == 401 || response_indicates_invalid_token(&response_data))
-            err = CHIAKI_ERR_PSN_TOKEN_INVALID;
-        else
-            err = CHIAKI_ERR_HTTP_NONOK;
+        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Could not read HTTP response code: %s", curl_easy_strerror(res));
+        err = CHIAKI_ERR_NETWORK;
         goto cleanup;
     }
-    json_tokener *tok = json_tokener_new();
+    if(http_code != 200)
+    {
+        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Fetching device list failed with HTTP code %ld", http_code);
+        err = http_code == 401 || response_indicates_invalid_token(&response_data)
+                ? CHIAKI_ERR_PSN_TOKEN_INVALID
+                : CHIAKI_ERR_HTTP_NONOK;
+        goto cleanup;
+    }
+
+    if(!response_data.data || response_data.size == 0 || response_data.size > INT_MAX)
+    {
+        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Server returned an empty or oversized response");
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup;
+    }
+
+    tok = json_tokener_new();
     if(!tok)
     {
-        CHIAKI_LOGE(log, "Couldn't create new json tokener");
+        err = CHIAKI_ERR_MEMORY;
         goto cleanup;
     }
-    json_object *json = json_tokener_parse_ex(tok, response_data.data, response_data.size);
-    if (json == NULL)
+    json = json_tokener_parse_ex(tok, response_data.data, (int)response_data.size);
+    enum json_tokener_error json_err = json_tokener_get_error(tok);
+    if(!json || json_err != json_tokener_success)
     {
-        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Parsing JSON failed");
-        err = CHIAKI_ERR_UNKNOWN;
-        goto cleanup_json_tokener;
+        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON parsing failed: %s", json_tokener_error_desc(json_err));
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup;
     }
 
-    json_object *clients;
-    if (!json_object_object_get_ex(json, "clients", &clients))
+    json_object *clients = NULL;
+    if(!json_object_object_get_ex(json, "clients", &clients) ||
+            !json_object_is_type(clients, json_type_array))
     {
-        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON does not contain \"clients\" field");
-        if(response_indicates_invalid_token(&response_data))
-            err = CHIAKI_ERR_PSN_TOKEN_INVALID;
-        else
-            err = CHIAKI_ERR_UNKNOWN;
-        goto cleanup_json;
-    } else if (!json_object_is_type(clients, json_type_array))
-    {
-        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON \"clients\" field is not an array");
-        if(response_indicates_invalid_token(&response_data))
-            err = CHIAKI_ERR_PSN_TOKEN_INVALID;
-        else
-            err = CHIAKI_ERR_UNKNOWN;
-        goto cleanup_json;
+        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON clients field is missing or is not an array");
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup;
     }
-    CHIAKI_LOGV(log, console_type == CHIAKI_HOLEPUNCH_CONSOLE_TYPE_PS5 ? "PS5 devices: ": "PS4 devices: ");
-    const char *json_str = json_object_to_json_string_ext(clients, JSON_C_TO_STRING_PRETTY);
-    CHIAKI_LOGV(log, "chiaki_holepunch_list_devices: retrieved devices \n%s", json_str);
+
     size_t num_clients = json_object_array_length(clients);
-    *devices = malloc(sizeof(ChiakiHolepunchDeviceInfo) * num_clients);
-    if(!(*devices))
+    if(num_clients > SIZE_MAX / sizeof(*parsed_devices))
     {
-        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Memory could not be allocated for %zu devices", num_clients);
-        return CHIAKI_ERR_MEMORY;
+        err = CHIAKI_ERR_OVERFLOW;
+        goto cleanup;
     }
-    *device_count = num_clients;
-    for (size_t i = 0; i < num_clients; i++)
+    if(num_clients > 0)
     {
-        ChiakiHolepunchDeviceInfo device;
-        device.type = console_type;
-
-        json_object *client = json_object_array_get_idx(clients, i);
-        json_object *duid;
-        if (!json_object_object_get_ex(client, "duid", &duid))
+        parsed_devices = calloc(num_clients, sizeof(*parsed_devices));
+        if(!parsed_devices)
         {
-            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON does not contain \"duid\" field");
-            err = CHIAKI_ERR_UNKNOWN;
-            goto cleanup_devices;
-        } else if (!json_object_is_type(duid, json_type_string))
-        {
-            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON \"duid\" field is not a string");
-            err = CHIAKI_ERR_UNKNOWN;
-            goto cleanup_devices;
+            err = CHIAKI_ERR_MEMORY;
+            goto cleanup;
         }
-        err = hex_to_bytes(json_object_get_string(duid), device.device_uid, sizeof(device.device_uid));
+    }
+
+    for(size_t i = 0; i < num_clients; i++)
+    {
+        json_object *client = json_object_array_get_idx(clients, i);
+        if(!client || !json_object_is_type(client, json_type_object))
+        {
+            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Client entry %zu is not an object", i);
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup;
+        }
+
+        json_object *duid = NULL;
+        json_object *device_json = NULL;
+        if(!json_object_object_get_ex(client, "duid", &duid) ||
+                !json_object_is_type(duid, json_type_string) ||
+                !json_object_object_get_ex(client, "device", &device_json) ||
+                !json_object_is_type(device_json, json_type_object))
+        {
+            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Client entry %zu has an invalid DUID or device object", i);
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup;
+        }
+
+        const char *duid_str = json_object_get_string(duid);
+        if(!duid_str || strlen(duid_str) != sizeof(parsed_devices[i].device_uid) * 2)
+        {
+            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Client entry %zu has an invalid DUID length", i);
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup;
+        }
+        for(size_t j = 0; duid_str[j]; j++)
+        {
+            if(!isxdigit((unsigned char)duid_str[j]))
+            {
+                CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Client entry %zu has a non-hexadecimal DUID", i);
+                err = CHIAKI_ERR_INVALID_DATA;
+                goto cleanup;
+            }
+        }
+        err = hex_to_bytes(duid_str, parsed_devices[i].device_uid, sizeof(parsed_devices[i].device_uid));
         if(err != CHIAKI_ERR_SUCCESS)
         {
-            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Could not convert duid to bytes");
-            err = CHIAKI_ERR_UNKNOWN;
-            goto cleanup_json;
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup;
         }
 
-        json_object *device_json;
-        if (!json_object_object_get_ex(client, "device", &device_json))
+        json_object *enabled_features = NULL;
+        json_object *device_name = NULL;
+        if(!json_object_object_get_ex(device_json, "enabledFeatures", &enabled_features) ||
+                !json_object_is_type(enabled_features, json_type_array) ||
+                !json_object_object_get_ex(device_json, "name", &device_name) ||
+                !json_object_is_type(device_name, json_type_string))
         {
-            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON does not contain \"device\" field");
-            err = CHIAKI_ERR_UNKNOWN;
-            goto cleanup_devices;
-        } else if (!json_object_is_type(device_json, json_type_object))
-        {
-            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON \"device\" field is not an object");
-            err = CHIAKI_ERR_UNKNOWN;
-            goto cleanup_devices;
+            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Client entry %zu has invalid device metadata", i);
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup;
         }
 
-        json_object *enabled_features;
-        if (!json_object_object_get_ex(device_json, "enabledFeatures", &enabled_features))
-        {
-            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON does not contain \"enabledFeatures\" field");
-            err = CHIAKI_ERR_UNKNOWN;
-            goto cleanup_devices;
-        } else if (!json_object_is_type(enabled_features, json_type_array))
-        {
-            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON \"enabledFeatures\" field is not an array");
-            err = CHIAKI_ERR_UNKNOWN;
-            goto cleanup_devices;
-        }
-        device.remoteplay_enabled = false;
+        parsed_devices[i].type = console_type;
+        parsed_devices[i].remoteplay_enabled = false;
         size_t num_enabled_features = json_object_array_length(enabled_features);
-        for (size_t j = 0; j < num_enabled_features; j++)
+        for(size_t j = 0; j < num_enabled_features; j++)
         {
             json_object *feature = json_object_array_get_idx(enabled_features, j);
-            if (json_object_is_type(feature, json_type_string) && strcmp(json_object_get_string(feature), "remotePlay") == 0)
+            if(feature && json_object_is_type(feature, json_type_string) &&
+                    strcmp(json_object_get_string(feature), "remotePlay") == 0)
             {
-                device.remoteplay_enabled = true;
+                parsed_devices[i].remoteplay_enabled = true;
                 break;
             }
         }
 
-        json_object *device_name;
-        if (!json_object_object_get_ex(device_json, "name", &device_name))
+        const char *name = json_object_get_string(device_name);
+        if(!name)
         {
-            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON does not contain \"name\" field");
-            err = CHIAKI_ERR_UNKNOWN;
-            goto cleanup_devices;
-        } else if (!json_object_is_type(device_name, json_type_string))
-        {
-            CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: JSON \"name\" field is not a string");
-            err = CHIAKI_ERR_UNKNOWN;
-            goto cleanup_devices;
+            err = CHIAKI_ERR_INVALID_DATA;
+            goto cleanup;
         }
-        strncpy(device.device_name, json_object_get_string(device_name), sizeof(device.device_name));
-        (*devices)[i] = device;
+        snprintf(parsed_devices[i].device_name, sizeof(parsed_devices[i].device_name), "%s", name);
     }
 
-    cleanup_devices:
-    if (err != CHIAKI_ERR_SUCCESS)
-        chiaki_holepunch_free_device_list(devices);
-    cleanup_json:
-    json_object_put(json);
-    cleanup_json_tokener:
-    json_tokener_free(tok);
-    cleanup:
+    *devices = parsed_devices;
+    *device_count = num_clients;
+    parsed_devices = NULL;
+    err = CHIAKI_ERR_SUCCESS;
+
+cleanup:
+    free(parsed_devices);
+    if(json)
+        json_object_put(json);
+    if(tok)
+        json_tokener_free(tok);
+    curl_slist_free_all(headers);
     free(oauth_header);
     free(response_data.data);
     curl_easy_cleanup(curl);
