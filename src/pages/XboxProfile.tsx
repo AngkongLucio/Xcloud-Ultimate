@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useIsFocused} from '@react-navigation/native';
-import {ScrollView, StyleSheet, View, Pressable} from 'react-native';
+import {Alert, ScrollView, StyleSheet, View, Pressable} from 'react-native';
 import {Button, Card, Text, TextInput} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 
@@ -102,10 +102,22 @@ export default function XboxProfileScreen({navigation}) {
             </View>
           )) : <Text style={styles.statsNote}>No catalog activity yet. Open a title from the Library to start your history.</Text>}
           {activity.length > 0 ? (
-            <Button mode="text" textColor="#a8e69a" compact accessibilityLabel="Clear local activity history" onPress={() => {
-              storage.delete('xbox.activity.history');
-              setActivity([]);
-            }}>Clear local history</Button>
+            <Button mode="text" textColor="#a8e69a" compact accessibilityLabel="Clear local activity history" onPress={() => Alert.alert(
+              'Clear activity history?',
+              'This permanently deletes the saved local history entries. Your catalog open count and local badges will remain unchanged.',
+              [
+                {text: 'Cancel', style: 'cancel'},
+                {
+                  text: 'Clear history',
+                  style: 'destructive',
+                  onPress: () => {
+                    storage.delete('xbox.activity.history');
+                    setActivity([]);
+                  },
+                },
+              ],
+              {cancelable: true},
+            )}>Clear local history</Button>
           ) : null}
         </Card.Content>
       </Card>
