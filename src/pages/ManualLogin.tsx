@@ -22,8 +22,9 @@ const isPsnRedirectUrl = (value: string) => {
   try {
     const url = new URL(value);
     return (
-      url.protocol === 'https:' &&
-      url.hostname === 'remoteplay.dl.playstation.net' &&
+      url.origin === 'https://remoteplay.dl.playstation.net' &&
+      url.username === '' &&
+      url.password === '' &&
       url.pathname === '/remoteplay/redirect' &&
       Boolean(url.searchParams.get('code'))
     );
