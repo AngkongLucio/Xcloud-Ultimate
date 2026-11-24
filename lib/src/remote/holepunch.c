@@ -2154,7 +2154,13 @@ CHIAKI_EXPORT void chiaki_holepunch_main_thread_cancel(Session *session, bool st
     if(!session)
         return;
 
-    chiaki_mutex_lock(&session->stop_mutex);
+    ChiakiErrorCode err = chiaki_mutex_lock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(session->log, "Could not lock stop mutex while canceling holepunch session: %d", err);
+        return;
+    }
+
     if(stop_thread)
     {
         session->ws_thread_should_stop = true;
@@ -2163,7 +2169,14 @@ CHIAKI_EXPORT void chiaki_holepunch_main_thread_cancel(Session *session, bool st
     else
         CHIAKI_LOGI(session->log, "Canceling establishing connection over PSN");
     session->main_should_stop = true;
-    chiaki_mutex_unlock(&session->stop_mutex);
+
+    err = chiaki_mutex_unlock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(session->log, "Could not unlock stop mutex after canceling holepunch session: %d", err);
+        return;
+    }
+
     chiaki_cond_signal(&session->notif_cond);
     chiaki_cond_signal(&session->state_cond);
 }
