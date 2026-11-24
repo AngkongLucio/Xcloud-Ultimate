@@ -15,8 +15,14 @@ const quickLinks = [
 export default function XboxDashboardScreen({navigation}) {
   const isFocused = useIsFocused();
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
+  const [lastTitle, setLastTitle] = useState(() => storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
+  const [lastOpenedAt, setLastOpenedAt] = useState(() => storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
   useEffect(() => {
-    if (isFocused) setFocusOutline(storage.getBoolean('xbox.ui.focusOutline') ?? true);
+    if (isFocused) {
+      setFocusOutline(storage.getBoolean('xbox.ui.focusOutline') ?? true);
+      setLastTitle(storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
+      setLastOpenedAt(storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
+    }
   }, [isFocused]);
   const openCloud = () => Linking.openURL(XBOX_PLAY).catch(() => {});
   const openGamePass = () => Linking.openURL('https://www.xbox.com/xbox-game-pass').catch(() => {});
@@ -57,6 +63,14 @@ export default function XboxDashboardScreen({navigation}) {
           Settings
         </Button>
       </View>
+      <Card style={styles.recentCard} mode="outlined">
+        <Card.Content>
+          <Text variant="labelLarge" style={styles.recentEyebrow}>RECENT ACTIVITY</Text>
+          <Text variant="titleLarge" style={styles.recentTitle}>{lastTitle}</Text>
+          <Text variant="bodySmall" style={styles.muted}>{lastOpenedAt ? 'Last catalog launch: ' + new Date(lastOpenedAt).toLocaleString() : 'Your catalog launch activity will appear here.'}</Text>
+          <Button compact mode="text" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxLibrary')} style={styles.recentButton}>Open Game Library</Button>
+        </Card.Content>
+      </Card>
       <Text variant="titleLarge" style={styles.sectionTitle}>Explore</Text>
       {quickLinks.map(item => (
         <Pressable
@@ -100,6 +114,10 @@ const styles = StyleSheet.create({
   heroCopy: {color: '#d6e8d5', marginTop: 8, marginBottom: 18, maxWidth: 440},
   playButton: {alignSelf: 'flex-start', backgroundColor: '#107c10'},
   sectionTitle: {color: '#fff', fontWeight: '700', marginBottom: 12},
+  recentCard: {backgroundColor: '#1b211c', borderColor: '#425342', borderRadius: 14, marginBottom: 22},
+  recentEyebrow: {color: '#9cdb8a', letterSpacing: 1.4, fontWeight: '700'},
+  recentTitle: {color: '#fff', fontWeight: '700', marginTop: 7, marginBottom: 4},
+  recentButton: {alignSelf: 'flex-start', marginTop: 5},
   libraryButton: {alignSelf: 'flex-start', borderColor: '#527b52', marginBottom: 14},
   actionRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14},
   actionButton: {borderColor: '#527b52'},
