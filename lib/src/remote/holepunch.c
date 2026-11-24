@@ -1685,6 +1685,12 @@ static ChiakiErrorCode http_ps4_session_wakeup(Session *session)
         err = CHIAKI_ERR_OVERFLOW;
         goto cleanup_json;
     }
+#define APPEND_WAKEUP_HEADER(value) \
+    do { \
+        struct curl_slist *new_headers = curl_slist_append(headers, value); \
+        if(!new_headers) { err = CHIAKI_ERR_MEMORY; goto cleanup_json; } \
+        headers = new_headers; \
+    } while(0)
     APPEND_WAKEUP_HEADER(session->oauth_header);
     APPEND_WAKEUP_HEADER(host_url_string);
     APPEND_WAKEUP_HEADER("Connection: Keep-Alive");
