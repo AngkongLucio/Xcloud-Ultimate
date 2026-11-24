@@ -2,15 +2,24 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Alert, Linking, ScrollView, StyleSheet, View} from 'react-native';
 import {Button, Card, Divider, Switch, Text} from 'react-native-paper';
 import NetInfo from '@react-native-community/netinfo';
+import {useIsFocused} from '@react-navigation/native';
 import {storage} from '../store/mmkv';
 
 export default function XboxSettingsScreen() {
+  const isFocused = useIsFocused();
   const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
   const [hapticsEnabled, setHapticsEnabled] = useState(() => storage.getBoolean('xbox.ui.haptics') ?? true);
   const [network, setNetwork] = useState({type: 'Checking…', connected: null, reachable: null});
   const [networkRefreshing, setNetworkRefreshing] = useState(false);
   const networkRequestId = useRef(0);
+
+  useEffect(() => {
+    if (!isFocused) return;
+    setCompactCards(storage.getBoolean('xbox.ui.compactCards') ?? false);
+    setFocusOutline(storage.getBoolean('xbox.ui.focusOutline') ?? true);
+    setHapticsEnabled(storage.getBoolean('xbox.ui.haptics') ?? true);
+  }, [isFocused]);
 
   useEffect(() => {
     let active = true;
