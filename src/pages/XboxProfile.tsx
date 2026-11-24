@@ -6,6 +6,11 @@ import {storage} from '../store/mmkv';
 
 const AVATARS = ['🎮', '🛡️', '🚀', '🐉', '⚡', '👾', '🏎️', '🌌'];
 
+const normalizeActivityHistory = value =>
+  Array.isArray(value)
+    ? value.filter(entry => entry !== null && typeof entry === 'object' && !Array.isArray(entry))
+    : [];
+
 export default function XboxProfileScreen({navigation}) {
   const isFocused = useIsFocused();
   const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
@@ -16,7 +21,7 @@ export default function XboxProfileScreen({navigation}) {
     try {
       const saved = storage.getString('xbox.activity.history');
       const parsed = saved ? JSON.parse(saved) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      return normalizeActivityHistory(parsed);
     } catch (_) {
       return [];
     }
@@ -153,7 +158,7 @@ export default function XboxProfileScreen({navigation}) {
       try {
         const saved = storage.getString('xbox.activity.history');
         const parsed = saved ? JSON.parse(saved) : [];
-        setActivity(Array.isArray(parsed) ? parsed : []);
+        setActivity(normalizeActivityHistory(parsed));
       } catch (_) {
         setActivity([]);
       }
