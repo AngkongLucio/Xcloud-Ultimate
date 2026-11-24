@@ -6,13 +6,28 @@ import {storage} from '../store/mmkv';
 
 const AVATARS = ['🎮', '👾', '🚀', '🐉', '🏎️', '⚡'];
 
+const normalizeFriends = value => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(item => item && typeof item === 'object' && !Array.isArray(item))
+    .map((item, index) => ({
+      id: String(item.id || 'legacy-' + index),
+      name: String(item.name || '').trim().slice(0, 20),
+      avatar: AVATARS.includes(item.avatar) ? item.avatar : '🎮',
+      addedAt: Number.isFinite(Number(item.addedAt)) && Number(item.addedAt) > 0
+        ? Number(item.addedAt)
+        : 0,
+    }))
+    .filter(item => item.name.length > 0);
+};
+
 export default function XboxFriendsScreen() {
   const isFocused = useIsFocused();
   const [friends, setFriends] = useState(() => {
     try {
       const raw = storage.getString('xbox.friends.local');
       const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      return normalizeFriends(parsed);
     } catch (_) { return []; }
   });
   const [name, setName] = useState('');
@@ -25,7 +40,7 @@ export default function XboxFriendsScreen() {
     try {
       const raw = storage.getString('xbox.friends.local');
       const parsed = raw ? JSON.parse(raw) : [];
-      setFriends(Array.isArray(parsed) ? parsed : []);
+      setFriends(normalizeFriends(parsed));
     } catch (_) { setFriends([]); }
   };
 
