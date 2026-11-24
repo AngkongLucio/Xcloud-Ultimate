@@ -51,6 +51,11 @@ export default function XboxLibraryScreen({navigation}) {
     return matchesSearch && (category === 'All' || game.genre === category) && (!favoritesOnly || favoriteTitles.includes(game.title));
   }), [search, category, favoritesOnly, favoriteTitles]);
 
+  const categoryCount = item => GAMES.filter(game => {
+    const matchesSearch = game.title.toLowerCase().includes(search.trim().toLowerCase());
+    return matchesSearch && (item === 'All' || game.genre === item) && (!favoritesOnly || favoriteTitles.includes(game.title));
+  }).length;
+
   const toggleFavorite = title => {
     setFavoriteTitles(current => {
       const next = current.includes(title) ? current.filter(item => item !== title) : [...current, title];
@@ -149,14 +154,14 @@ export default function XboxLibraryScreen({navigation}) {
           <Chip
             key={item}
             accessibilityRole="button"
-            accessibilityLabel={"Filter games by " + item}
+            accessibilityLabel={"Filter games by " + item + ", " + categoryCount(item) + (categoryCount(item) === 1 ? " title" : " titles")}
             accessibilityHint={category === item ? "Currently selected category filter." : "Applies the " + item + " category filter."}
             accessibilityState={{selected: category === item}}
             selected={category === item}
             onPress={() => { haptic(); setCategory(item); setSelectedIndex(0); }}
             style={styles.chip}
             textStyle={styles.chipText}>
-            {item}
+            {item} ({categoryCount(item)})
           </Chip>
         ))}
       </ScrollView>
