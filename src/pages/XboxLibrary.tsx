@@ -96,6 +96,8 @@ export default function XboxLibraryScreen({navigation}) {
       </Text>
 
       <Searchbar
+        accessibilityLabel="Search example game titles"
+        accessibilityHint="Filters the example game list by title as you type."
         placeholder="Search games"
         value={search}
         onChangeText={value => { setSearch(value); setSelectedIndex(0); }}
@@ -108,6 +110,8 @@ export default function XboxLibraryScreen({navigation}) {
         {CATEGORIES.map(item => (
           <Chip
             key={item}
+            accessibilityLabel={"Filter games by " + item}
+            accessibilityHint={category === item ? "Currently selected category filter." : "Applies the " + item + " category filter."}
             selected={category === item}
             onPress={() => { haptic(); setCategory(item); setSelectedIndex(0); }}
             style={styles.chip}
@@ -155,12 +159,12 @@ export default function XboxLibraryScreen({navigation}) {
           <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Move selection down" onPress={() => moveSelection('down')}>↓</Button>
           <Button compact mode="text" textColor="#9cdb8a" accessibilityLabel="Go back to previous screen" onPress={() => { haptic('impactLight'); navigation.goBack(); }}>B · Back</Button>
         </View>
-        <Text variant="bodySmall" accessibilityLiveRegion="polite" style={styles.controllerHint}>Selected: {visibleGames[selectedIndex]?.title ?? 'No title'}</Text>
+        <Text variant="bodySmall" accessibilityLiveRegion="polite" accessibilityLabel={visibleGames.length + (visibleGames.length === 1 ? " matching game" : " matching games") + ". Selected: " + (visibleGames[selectedIndex]?.title ?? "No title")} style={styles.controllerHint}>Selected: {visibleGames[selectedIndex]?.title ?? 'No title'}</Text>
         <Text variant="bodySmall" style={styles.controllerHint}>D-pad controls move within the two-column grid; A opens the selected title in the official Xbox catalog. Physical controller input depends on iPadOS and is not directly captured by this screen.</Text>
       </View>
 
       {visibleGames.length === 0 && (
-        <Text variant="bodyMedium" style={styles.empty}>No matching titles. Try another search.</Text>
+        <Text accessibilityRole="alert" variant="bodyMedium" style={styles.empty}>No matching titles. Try another search.</Text>
       )}
 
       <Button mode="contained" icon="microsoft-xbox" onPress={() => openXbox('Xbox Catalog')} style={styles.catalogButton}>
