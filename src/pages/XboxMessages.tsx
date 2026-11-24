@@ -182,9 +182,15 @@ export default function XboxMessagesScreen() {
   };
 
   const removeThread = (friendId, friendName) => {
+    const snapshot = readThreads().find(item => item.friendId === friendId);
+    if (!snapshot) {
+      setThreads(readThreads());
+      return;
+    }
+    const messageIdsToDelete = new Set(snapshot.messages.map(message => message.id));
     Alert.alert(
       'Delete local conversation?',
-      'This will permanently remove the conversation with ' + friendName + ' from this device.',
+      'This removes the messages currently in the conversation. New messages added while this confirmation is open will be kept.',
       [
         {text: 'Cancel', style: 'cancel'},
         {
@@ -192,8 +198,22 @@ export default function XboxMessagesScreen() {
           style: 'destructive',
           onPress: () => {
             const latestThreads = readThreads();
-            saveThreads(latestThreads.filter(item => item.friendId !== friendId));
-            setFeedback('Local conversation with ' + friendName + ' deleted.');
+            const target = latestThreads.find(item => item.friendId === friendId);
+            if (!target) {
+              setThreads(latestThreads);
+              setFeedback('That local conversation was already removed.');
+              return;
+            }
+            const remainingMessages = target.messages.filter(message => !messageIdsToDelete.has(message.id));
+            const nextThreads = remainingMessages.length
+              ? latestThreads.map(item => item.friendId === friendId
+                ? {...item, messages: remainingMessages}
+                : item)
+              : latestThreads.filter(item => item.friendId !== friendId);
+            saveThreads(nextThreads);
+            setFeedback(remainingMessages.length
+              ? 'Earlier messages with ' + friendName + ' were deleted. Newer messages were kept.'
+              : 'Local conversation with ' + friendName + ' deleted.');
           },
         },
       ],
