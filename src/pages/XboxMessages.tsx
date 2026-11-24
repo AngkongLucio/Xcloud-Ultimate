@@ -62,7 +62,16 @@ export default function XboxMessagesScreen() {
             <Text variant="titleLarge" style={styles.headerName}>{activeFriend.avatar || '🎮'}  {activeFriend.name}</Text>
             <Text style={styles.localTag}>LOCAL CHAT</Text>
           </View>
-          <ScrollView style={styles.messageScroll} contentContainerStyle={styles.messageContent}>
+          <ScrollView
+            style={styles.messageScroll}
+            contentContainerStyle={styles.messageContent}
+            accessibilityLabel={"Conversation with " + activeFriend.name}>
+            <Text
+              accessibilityLiveRegion="polite"
+              accessibilityLabel={(threads.find(item => item.friendId === activeFriend.id)?.messages || []).length + " messages in conversation with " + activeFriend.name}
+              style={styles.conversationCount}>
+              {(threads.find(item => item.friendId === activeFriend.id)?.messages || []).length} messages
+            </Text>
             {(threads.find(item => item.friendId === activeFriend.id)?.messages || []).map(message => (
               <View key={message.id} accessible accessibilityRole="text" accessibilityLabel={(message.sender === 'me' ? "You: " : friendNameForMessage(activeFriend, message) + ": ") + message.body + (message.sentAt ? ", " + new Date(message.sentAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : "")} style={[styles.messageBubble, message.sender === 'me' ? styles.myMessage : styles.theirMessage]}>
                 <Text style={styles.messageText}>{message.body}</Text>
@@ -83,7 +92,15 @@ export default function XboxMessagesScreen() {
           <Text variant="labelLarge" style={styles.eyebrow}>XCLOUD ULTIMATE</Text>
           <Text variant="headlineMedium" style={styles.heading}>Messages</Text>
           <Text variant="bodyMedium" style={styles.intro}>A local chat mock-up for players in your companion friends list. Messages stay on this device.</Text>
-          <Text variant="titleLarge" style={styles.sectionTitle}>Conversations</Text>
+          <View style={styles.conversationsHeader}>
+            <Text variant="titleLarge" style={styles.sectionTitle}>Conversations</Text>
+            <Text
+              accessibilityLiveRegion="polite"
+              accessibilityLabel={orderedThreads.length + (orderedThreads.length === 1 ? " conversation" : " conversations")}
+              style={styles.conversationCount}>
+              {orderedThreads.length}
+            </Text>
+          </View>
           {orderedThreads.length ? orderedThreads.map(thread => {
             const friend = friends.find(item => item.id === thread.friendId) || {id: thread.friendId, name: thread.friendName || 'Player', avatar: thread.avatar || '🎮'};
             const last = thread.messages?.[thread.messages.length - 1];
@@ -132,6 +149,8 @@ const styles = StyleSheet.create({
   heading: {color: '#fff', fontWeight: '800', marginTop: 5},
   intro: {color: '#aebcaf', lineHeight: 21, marginTop: 8, marginBottom: 20},
   sectionTitle: {color: '#fff', fontWeight: '700', marginBottom: 12},
+  conversationsHeader: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12},
+  conversationCount: {color: '#9cdb8a', fontSize: 12, fontWeight: '700'},
   threadCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 14, marginBottom: 9},
   threadRow: {flexDirection: 'row', alignItems: 'center', gap: 11},
   avatar: {width: 46, height: 46, borderRadius: 23, backgroundColor: '#294d30', alignItems: 'center', justifyContent: 'center'},
