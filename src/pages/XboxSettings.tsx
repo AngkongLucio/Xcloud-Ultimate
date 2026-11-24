@@ -7,6 +7,7 @@ import {storage} from '../store/mmkv';
 export default function XboxSettingsScreen() {
   const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
+  const [hapticsEnabled, setHapticsEnabled] = useState(() => storage.getBoolean('xbox.ui.haptics') ?? true);
   const [network, setNetwork] = useState({type: 'Checking…', connected: null, reachable: null});
 
   useEffect(() => {
@@ -64,6 +65,14 @@ export default function XboxSettingsScreen() {
               <Text variant="bodySmall" style={styles.muted}>Show a visible outline on focused controls.</Text>
             </View>
             <Switch value={focusOutline} onValueChange={value => { setFocusOutline(value); storage.set("xbox.ui.focusOutline", value); }} accessibilityRole="switch" accessibilityLabel="Focus highlight" accessibilityHint="Shows or hides the visible focus outline." />
+          </View>
+          <Divider style={styles.divider} />
+          <View style={styles.settingRow}>
+            <View style={styles.settingCopy}>
+              <Text variant="titleMedium" style={styles.itemTitle}>Haptic feedback</Text>
+              <Text variant="bodySmall" style={styles.muted}>Enable vibration feedback for supported menu actions.</Text>
+            </View>
+            <Switch value={hapticsEnabled} onValueChange={value => { setHapticsEnabled(value); storage.set("xbox.ui.haptics", value); }} accessibilityRole="switch" accessibilityLabel="Haptic feedback" accessibilityHint="Turns supported menu vibration feedback on or off." />
           </View>
           <View style={styles.preview}>
             <View style={[styles.previewTile, compactCards && styles.compactTile, focusOutline && styles.focusedTile]}>
