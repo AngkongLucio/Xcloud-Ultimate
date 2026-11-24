@@ -13,10 +13,39 @@ const readArray = key => {
   } catch (_) { return []; }
 };
 
+const normalizeFriends = value => Array.isArray(value)
+  ? value.filter(item => item && typeof item === 'object' && !Array.isArray(item)
+    && typeof item.id === 'string' && typeof item.name === 'string' && item.name.trim())
+    .map(item => ({...item, name: item.name.trim(), avatar: typeof item.avatar === 'string' ? item.avatar : '🎮'}))
+  : [];
+
+const normalizeThreads = value => Array.isArray(value)
+  ? value.filter(thread => thread && typeof thread === 'object' && !Array.isArray(thread)
+    && thread.friendId !== undefined && Array.isArray(thread.messages))
+    .map(thread => ({
+      ...thread,
+      friendId: String(thread.friendId),
+      friendName: typeof thread.friendName === 'string' && thread.friendName.trim() ? thread.friendName.trim() : 'Player',
+      avatar: typeof thread.avatar === 'string' ? thread.avatar : '🎮',
+      messages: thread.messages.filter(message => message && typeof message === 'object' && !Array.isArray(message)
+        && typeof message.body === 'string').map((message, index) => ({
+          ...message,
+          id: String(message.id || 'legacy-' + index),
+          body: message.body.slice(0, 500),
+          sender: message.sender === 'me' ? 'me' : 'them',
+          sentAt: Number.isFinite(Number(message.sentAt)) && Number(message.sentAt) > 0 ? Number(message.sentAt) : 0,
+        })),
+      updatedAt: Number.isFinite(Number(thread.updatedAt)) && Number(thread.updatedAt) > 0 ? Number(thread.updatedAt) : 0,
+    }))
+  : [];
+
+const readFriends = () => normalizeFriends(readArray('xbox.friends.local'));
+const readThreads = () => normalizeThreads(readArray('xbox.messages.local'));
+
 export default function XboxMessagesScreen() {
   const isFocused = useIsFocused();
-  const [friends, setFriends] = useState(() => readArray('xbox.friends.local'));
-  const [threads, setThreads] = useState(() => readArray('xbox.messages.local'));
+  const [friends, setFriends] = useState(readFriends);
+  const [threads, setThreads] = useState(readThreads);
   const [activeFriend, setActiveFriend] = useState(null);
   const [draft, setDraft] = useState('');
   const [inboxSearch, setInboxSearch] = useState('');
@@ -25,8 +54,8 @@ export default function XboxMessagesScreen() {
   const [feedback, setFeedback] = useState('');
 
   const refresh = () => {
-    setFriends(readArray('xbox.friends.local'));
-    setThreads(readArray('xbox.messages.local'));
+    setFriends(readFriends());
+    setThreads(readThreads());
   };
   useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
 
