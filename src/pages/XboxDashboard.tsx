@@ -8,11 +8,15 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 const DASHBOARD_AVATARS = ['🎮', '🛡️', '🚀', '🐉', '⚡', '👾', '🏎️', '🌌'];
 const readLocalGamertag = () => {
   const value = storage.getString('xbox.profile.gamertag');
-  return typeof value === 'string' ? value.trim().slice(0, 16) || 'Player' : 'Player';
+  const normalized = typeof value === 'string' ? value.trim().slice(0, 16) || 'Player' : 'Player';
+  if (value !== normalized) storage.set('xbox.profile.gamertag', normalized);
+  return normalized;
 };
 const readLocalAvatar = () => {
   const value = storage.getString('xbox.profile.avatar');
-  return DASHBOARD_AVATARS.includes(value) ? value : '🎮';
+  const normalized = DASHBOARD_AVATARS.includes(value) ? value : '🎮';
+  if (value !== normalized) storage.set('xbox.profile.avatar', normalized);
+  return normalized;
 };
 const readLastActivityTitle = () => {
   const value = storage.getString('xbox.activity.lastTitle');
