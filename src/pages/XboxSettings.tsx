@@ -9,6 +9,7 @@ export default function XboxSettingsScreen() {
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
   const [hapticsEnabled, setHapticsEnabled] = useState(() => storage.getBoolean('xbox.ui.haptics') ?? true);
   const [network, setNetwork] = useState({type: 'Checking…', connected: null, reachable: null});
+  const [networkRefreshing, setNetworkRefreshing] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -37,6 +38,22 @@ export default function XboxSettingsScreen() {
       unsubscribe();
     };
   }, []);
+
+  const refreshNetwork = async () => {
+    setNetworkRefreshing(true);
+    try {
+      const state = await NetInfo.fetch();
+      setNetwork({
+        type: state.type || 'unknown',
+        connected: state.isConnected,
+        reachable: state.isInternetReachable,
+      });
+    } catch (_) {
+      setNetwork({type: 'Unavailable', connected: null, reachable: null});
+    } finally {
+      setNetworkRefreshing(false);
+    }
+  };
 
   const statusText = value => value === true ? 'Yes' : value === false ? 'No' : 'Unknown';
 
@@ -106,6 +123,9 @@ export default function XboxSettingsScreen() {
           <Text variant="bodySmall" accessibilityLiveRegion="polite" accessibilityLabel={"Network status. Connection type " + network.type + ". Connected " + statusText(network.connected) + ". Internet reachable " + statusText(network.reachable) + "."} style={styles.note}>
             These are device network-status readings, not Xbox latency, stream bitrate, or server diagnostics.
           </Text>
+          <Button mode="outlined" textColor="#a8e69a" loading={networkRefreshing} disabled={networkRefreshing} accessibilityLabel="Refresh device network information" accessibilityHint="Checks the current connection type and internet reachability again." onPress={refreshNetwork} style={styles.actionButton}>
+            Refresh network status
+          </Button>
           <Button mode="outlined" textColor="#a8e69a" accessibilityLabel="Open iPad device settings" onPress={() => Linking.openSettings().catch(() => {})} style={styles.actionButton}>
             Open device settings
           </Button>
