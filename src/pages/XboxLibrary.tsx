@@ -17,6 +17,7 @@ const CATEGORIES = ['All', 'Action', 'Adventure', 'Racing', 'Simulation'];
 export default function XboxLibraryScreen() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const visibleGames = useMemo(() => GAMES.filter(game => {
     const matchesSearch = game.title.toLowerCase().includes(search.trim().toLowerCase());
@@ -24,6 +25,14 @@ export default function XboxLibraryScreen() {
   }), [search, category]);
 
   const openXbox = () => Linking.openURL(XBOX_PLAY).catch(() => {});
+  const moveSelection = offset => {
+    if (!visibleGames.length) { return; }
+    setSelectedIndex(current => (current + offset + visibleGames.length) % visibleGames.length);
+  };
+  const openSelectedGame = () => {
+    if (visibleGames.length) { openXbox(); }
+  };
+  const resetSelection = () => setSelectedIndex(0);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -56,7 +65,7 @@ export default function XboxLibraryScreen() {
       </ScrollView>
 
       <View style={styles.grid}>
-        {visibleGames.map(game => (
+        {visibleGames.map((game, index) => (
           <Pressable
             key={game.title}
             focusable
@@ -64,7 +73,7 @@ export default function XboxLibraryScreen() {
             accessibilityRole="button"
             accessibilityLabel={game.title + ', ' + game.genre + '. Open Xbox catalog.'}
             onPress={openXbox}
-            style={({focused}) => [styles.gameCardPressable, focused && styles.focusedGameCard]}>
+            style={({focused}) => [styles.gameCardPressable, (focused || selectedIndex === index) && styles.focusedGameCard]}>
           <Card mode="outlined" style={styles.gameCard}>
             <Card.Content>
               <Text variant="displaySmall" style={styles.gameMark}>{game.mark}</Text>
@@ -75,6 +84,23 @@ export default function XboxLibraryScreen() {
           </Card>
           </Pressable>
         ))}
+      </View>
+
+      <View style={styles.controllerPanel}>
+        <Text variant="titleMedium" style={styles.controllerTitle}>Controller navigation</Text>
+        <View style={styles.dpadRow}>
+          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection(-2)}>↑</Button>
+        </View>
+        <View style={styles.dpadRow}>
+          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection(-1)}>←</Button>
+          <Button compact mode="contained" buttonColor="#107c10" onPress={openSelectedGame}>A · Select</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection(1)}>→</Button>
+        </View>
+        <View style={styles.dpadRow}>
+          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection(2)}>↓</Button>
+          <Button compact mode="text" textColor="#9cdb8a" onPress={resetSelection}>B · Back</Button>
+        </View>
+        <Text variant="bodySmall" style={styles.controllerHint}>Use these on-screen controls to move the highlight and open the selected title in Xbox.</Text>
       </View>
 
       {visibleGames.length === 0 && (
@@ -111,6 +137,10 @@ const styles = StyleSheet.create({
   genre: {color: '#aab5aa', marginTop: 4},
   selectHint: {color: '#9cdb8a', marginTop: 12},
   empty: {color: '#cbd5cb', textAlign: 'center', marginVertical: 28},
+  controllerPanel: {marginTop: 22, padding: 14, backgroundColor: '#1b211c', borderColor: '#344235', borderWidth: 1, borderRadius: 14},
+  controllerTitle: {color: '#fff', textAlign: 'center', marginBottom: 10},
+  dpadRow: {flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginBottom: 6},
+  controllerHint: {color: '#aab5aa', textAlign: 'center', marginTop: 8},
   catalogButton: {marginTop: 22, backgroundColor: '#107c10'},
   footer: {color: '#829082', marginTop: 14, lineHeight: 19},
 });
