@@ -70,6 +70,10 @@ export default function XboxProfileScreen({navigation}) {
               <Text variant="headlineMedium" style={styles.statNumber}>{launchCount >= 1 ? '✓' : '—'}</Text>
               <Text variant="labelSmall" style={styles.statLabel}>FIRST VISIT</Text>
             </View>
+            <View style={styles.statTile}>
+              <Text variant="headlineMedium" accessibilityLabel={activity.length + " recent catalog entries saved"} style={styles.statNumber}>{activity.length}</Text>
+              <Text variant="labelSmall" style={styles.statLabel}>SAVED ENTRIES</Text>
+            </View>
           </View>
           <Text variant="titleMedium" style={styles.milestoneTitle}>Local milestones</Text>
           {[
