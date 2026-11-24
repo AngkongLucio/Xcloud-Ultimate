@@ -145,7 +145,7 @@ export const getUserInfoFromToken = (
         },
       )
       .then(res => {
-        if (!res.data || typeof res.data.user_id !== 'string' || !/^\\d+$/.test(res.data.user_id)) {
+        if (!res.data || typeof res.data.user_id !== 'string' || !/^[0-9]+$/.test(res.data.user_id)) {
           resolve(null);
           return;
         }
