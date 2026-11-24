@@ -19,6 +19,7 @@ export default function XboxDashboardScreen({navigation}) {
   const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
   const [hapticsEnabled, setHapticsEnabled] = useState(() => storage.getBoolean('xbox.ui.haptics') ?? true);
   const [quickSettingsVisible, setQuickSettingsVisible] = useState(false);
+  const quickPanelAnim = React.useRef(new Animated.Value(0)).current;
   const [guideVisible, setGuideVisible] = useState(false);
   const [bootVisible, setBootVisible] = useState(true);
   const bootOpacity = React.useRef(new Animated.Value(1)).current;
@@ -53,6 +54,14 @@ export default function XboxDashboardScreen({navigation}) {
       setAvatar(storage.getString('xbox.profile.avatar') ?? '🎮');
     }
   }, [isFocused]);
+  useEffect(() => {
+    if (quickSettingsVisible) {
+      Animated.spring(quickPanelAnim, {toValue: 1, useNativeDriver: true, damping: 18, stiffness: 180}).start();
+    }
+  }, [quickSettingsVisible, quickPanelAnim]);
+  const closeQuickSettings = () => {
+    Animated.timing(quickPanelAnim, {toValue: 0, duration: 160, useNativeDriver: true}).start(() => setQuickSettingsVisible(false));
+  };
   const haptic = (type = 'selection') => {
     if (!hapticsEnabled) return;
     try { ReactNativeHapticFeedback.trigger(type, {enableVibrateFallback: true, ignoreAndroidSystemSettings: false}); } catch (_) {}
@@ -109,7 +118,7 @@ export default function XboxDashboardScreen({navigation}) {
     {label: 'Focus highlight', run: () => updateFocusOutline(!focusOutline)},
     {label: 'Controller feedback', run: () => updateHaptics(!hapticsEnabled)},
     {label: 'Compact game cards', run: () => updateCompactCards(!compactCards)},
-    {label: 'All settings', run: () => { setQuickSettingsVisible(false); navigation.navigate('XboxSettings'); }},
+    {label: 'All settings', run: () => { closeQuickSettings(); navigation.navigate('XboxSettings'); }},
     {label: 'Notifications', run: () => { setQuickSettingsVisible(false); navigation.navigate('XboxNotifications'); }},
     {label: 'Launch cloud', run: () => { setQuickSettingsVisible(false); openCloud(); }},
   ];
@@ -145,7 +154,7 @@ export default function XboxDashboardScreen({navigation}) {
         </View>
       </View>
 
-      <Modal visible={guideVisible} transparent animationType="fade" onRequestClose={() => setGuideVisible(false)}>
+      <Modal visible={guideVisible} transparent animationType="slide" onRequestClose={() => setGuideVisible(false)}>
         <View style={styles.guideOverlay}>
           <Pressable style={styles.guideBackdrop} onPress={() => setGuideVisible(false)} accessibilityRole="button" accessibilityLabel="Close guide" />
           <View style={styles.guideDrawer}>
@@ -184,6 +193,7 @@ export default function XboxDashboardScreen({navigation}) {
       </Modal>
 
       {quickSettingsVisible ? (
+        <Animated.View style={[styles.quickPanelMotion, {opacity: quickPanelAnim, transform: [{translateY: quickPanelAnim.interpolate({inputRange: [0, 1], outputRange: [-14, 0]})}]}]}>
         <Card style={styles.quickPanel} mode="outlined">
           <Card.Content>
             <View style={styles.quickHeader}>
@@ -220,6 +230,7 @@ export default function XboxDashboardScreen({navigation}) {
             </View>
           </Card.Content>
         </Card>
+        </Animated.View>
       ) : null}
 
       <Card style={styles.hero} mode="contained">
@@ -358,6 +369,7 @@ const styles = StyleSheet.create({
   guideFoot: {color: '#788879', fontSize: 10, marginTop: 16, lineHeight: 15},
   quickButton: {width: 34, height: 34, borderRadius: 17, backgroundColor: '#26372a', alignItems: 'center', justifyContent: 'center'},
   quickButtonText: {color: '#b8e7ad', fontSize: 22, fontWeight: '700'},
+  quickPanelMotion: {marginBottom: 14},
   quickPanel: {backgroundColor: '#1b211c', borderColor: '#66845f', borderWidth: 1, borderRadius: 16, marginBottom: 18},
   quickHeader: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8},
   quickTitle: {color: '#fff', fontWeight: '800'},
