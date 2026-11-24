@@ -7,9 +7,9 @@ TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/peasyo-ios-scaffold.XXXXXX")"
 cleanup() { rm -rf "$TMP_DIR"; }
 trap cleanup EXIT
 
-for tool in node npm npx; do
+for tool in node npm npx git; do
   if ! command -v "$tool" >/dev/null 2>&1; then
-    echo "Error: $tool is required. Run this script on macOS with Node.js installed." >&2
+    echo "Error: $tool is required. Run this script on macOS with Node.js and Git installed." >&2
     exit 2
   fi
 done
@@ -29,11 +29,29 @@ if ! xcode-select -p >/dev/null 2>&1; then
   exit 2
 fi
 
-echo "Generating a clean React Native 0.72.17 iOS template..."
+echo "Fetching the official React Native 0.72.17 template source..."
+git clone --depth 1 --filter=blob:none --sparse --branch v0.72.17 \
+  https://github.com/react/react-native.git "$TMP_DIR/react-native-source"
+git -C "$TMP_DIR/react-native-source" sparse-checkout set \
+  packages/react-native/template \
+  packages/react-native/template.config.js
+
+CUSTOM_TEMPLATE="$TMP_DIR/rn072-template"
+mkdir -p "$CUSTOM_TEMPLATE"
+cp "$TMP_DIR/react-native-source/packages/react-native/template.config.js" "$CUSTOM_TEMPLATE/template.config.js"
+cp -R "$TMP_DIR/react-native-source/packages/react-native/template" "$CUSTOM_TEMPLATE/template"
+
+if [[ ! -f "$CUSTOM_TEMPLATE/template.config.js" || ! -f "$CUSTOM_TEMPLATE/template/package.json" || ! -f "$CUSTOM_TEMPLATE/template/ios/Podfile" ]]; then
+  echo "Error: official React Native 0.72.17 template source is incomplete." >&2
+  exit 3
+fi
+
+echo "Generating the iOS project with the pinned React Native 0.72.17 template..."
 cd "$TMP_DIR"
-# React Native 0.72.17 uses the 0.72 template and CLI 11.4.1.
-# Pin the template to the same published version used by the app.
-npx --yes @react-native-community/cli@11.4.1 init Peasyo --version 0.72.17 --skip-install
+npx --yes @react-native-community/cli@11.4.1 init Peasyo \
+  --version 0.72.17 \
+  --template "file://$CUSTOM_TEMPLATE" \
+  --skip-install
 
 if [[ ! -d "$TMP_DIR/Peasyo/ios/Peasyo.xcodeproj" || ! -f "$TMP_DIR/Peasyo/ios/Podfile" ]]; then
   echo "Error: React Native CLI did not produce the expected iOS project structure." >&2
@@ -62,7 +80,7 @@ if ! /usr/libexec/PlistBuddy -c 'Print :NSLocalNetworkUsageDescription' "$APP_IN
 fi
 
 echo
-echo "Created $IOS_DIR from the official React Native 0.72.17 template."
+echo "Created $IOS_DIR from the official React Native 0.72.17 source template."
 echo "Bundle identifier: com.peasyo"
 echo "AppRegistry module name: peasyo"
 echo
