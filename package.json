@@ -5,7 +5,7 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "lint": "eslint index.js babel.config.js metro.config.js src --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint index.js babel.config.js metro.config.js src --ext .js,.jsx,.ts,.tsx --fix",
     "start": "react-native start",
     "release:android": "cd ./android && ./gradlew assembleRelease",
     "postinstall": "patch-package"
