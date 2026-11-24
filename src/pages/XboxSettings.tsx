@@ -2,10 +2,11 @@ import React, {useEffect, useState} from 'react';
 import {Linking, ScrollView, StyleSheet, View} from 'react-native';
 import {Button, Card, Divider, Switch, Text} from 'react-native-paper';
 import NetInfo from '@react-native-community/netinfo';
+import {storage} from '../store/mmkv';
 
 export default function XboxSettingsScreen() {
-  const [compactCards, setCompactCards] = useState(false);
-  const [focusOutline, setFocusOutline] = useState(true);
+  const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
+  const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
   const [network, setNetwork] = useState({type: 'Checking…', connected: null, reachable: null});
 
   useEffect(() => {
@@ -118,7 +119,7 @@ export default function XboxSettingsScreen() {
           </Button>
         </Card.Content>
       </Card>
-      <Text variant="bodySmall" style={styles.footer}>Settings are currently session-only and reset when the screen/app is restarted.</Text>
+      <Text variant="bodySmall" style={styles.footer}>Display preferences are saved on this device and remain after the app is restarted.</Text>
     </ScrollView>
   );
 }
