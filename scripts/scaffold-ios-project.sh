@@ -48,9 +48,9 @@ if [[ ! -f "$CUSTOM_TEMPLATE/template.config.js" || ! -f "$CUSTOM_TEMPLATE/templ
 fi
 
 echo "Generating the iOS project with the pinned React Native 0.72.17 template..."
-# React Native CLI 11 invokes `yarn add file://...`; Yarn 4 rejects that
-# local-template form. Install Yarn Classic into an isolated temporary prefix
-# so the runner's pre-existing Corepack/Yarn shims are never overwritten.
+# React Native CLI 11 invokes yarn from its own temporary directory. Pass the
+# template as an absolute path so that Yarn can resolve it from that directory.
+# Keep Yarn Classic isolated so the runner's Corepack shims are untouched.
 YARN_PREFIX="$TMP_DIR/yarn-classic"
 npm install --prefix "$YARN_PREFIX" --no-save --no-audit --no-fund yarn@1.22.22
 YARN_CLASSIC_JS="$YARN_PREFIX/node_modules/yarn/bin/yarn.js"
@@ -67,7 +67,6 @@ YARN_SHIM
 chmod +x "$YARN_SHIM_DIR/yarn"
 export YARN_CLASSIC_JS
 export PATH="$YARN_SHIM_DIR:$PATH"
-cd "$TMP_DIR"
 if [[ "$(yarn --version)" != "1.22.22" ]]; then
   echo "Error: React Native 0.72.17 scaffolding requires Yarn Classic 1.22.22." >&2
   exit 2
@@ -76,7 +75,7 @@ fi
 # rejects combining --version with --template, so the template is the
 # single source of truth for the React Native version.
 npx --yes @react-native-community/cli@11.4.1 init Peasyo \
-  --template "file:./rn072-template" \
+  --template "$CUSTOM_TEMPLATE" \
   --skip-install
 
 if [[ ! -d "$TMP_DIR/Peasyo/ios/Peasyo.xcodeproj" || ! -f "$TMP_DIR/Peasyo/ios/Podfile" ]]; then
