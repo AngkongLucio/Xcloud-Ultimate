@@ -13,11 +13,29 @@ const readArray = key => {
   } catch (_) { return []; }
 };
 
-const normalizeFriends = value => Array.isArray(value)
-  ? value.filter(item => item && typeof item === 'object' && !Array.isArray(item)
-    && typeof item.id === 'string' && typeof item.name === 'string' && item.name.trim())
-    .map(item => ({...item, name: item.name.trim(), avatar: typeof item.avatar === 'string' ? item.avatar : '🎮'}))
-  : [];
+const normalizeFriends = value => {
+  if (!Array.isArray(value)) return [];
+  const allowedAvatars = ['🎮', '👾', '🚀', '🐉', '🏎️', '⚡'];
+  const seenIds = new Set();
+  return value
+    .filter(item => item && typeof item === 'object' && !Array.isArray(item)
+      && typeof item.name === 'string' && item.name.trim())
+    .map((item, index) => {
+      const baseId = String(item.id || 'legacy-' + index).trim().slice(0, 100) || 'legacy-' + index;
+      let id = baseId;
+      let suffix = 1;
+      while (seenIds.has(id)) {
+        id = (baseId.slice(0, 88) + '-' + suffix).slice(0, 100);
+        suffix += 1;
+      }
+      seenIds.add(id);
+      return {
+        id,
+        name: item.name.trim().slice(0, 20),
+        avatar: allowedAvatars.includes(item.avatar) ? item.avatar : '🎮',
+      };
+    });
+};
 
 const normalizeThreads = value => {
   if (!Array.isArray(value)) return [];
