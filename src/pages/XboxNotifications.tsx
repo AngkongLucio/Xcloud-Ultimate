@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useIsFocused} from '@react-navigation/native';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {Pressable, ScrollView, StyleSheet, View} from 'react-native';
 import {Button, Card, Text} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 
@@ -34,6 +34,12 @@ export default function XboxNotificationsScreen() {
     storage.delete('xbox.notifications.local');
     setItems([]);
   };
+
+  const markRead = id => {
+    const next = items.map(item => item.id === id ? {...item, read: true} : item);
+    storage.set('xbox.notifications.local', JSON.stringify(next));
+    setItems(next);
+  };
   const unread = items.filter(item => !item.read).length;
 
   return (
@@ -43,11 +49,12 @@ export default function XboxNotificationsScreen() {
       <Text variant="bodyMedium" style={styles.intro}>Your local activity updates and companion-app alerts.</Text>
       <View style={styles.toolbar}>
         <Text style={styles.unread}>{unread} UNREAD</Text>
-        <Button compact mode="text" textColor="#9cdb8a" onPress={markAllRead} disabled={!unread}>Mark all read</Button>
-        <Button compact mode="text" textColor="#e5a0a0" onPress={clearAll} disabled={!items.length}>Clear all</Button>
+        <Button compact mode="text" textColor="#9cdb8a" accessibilityLabel="Mark all notifications as read" onPress={markAllRead} disabled={!unread}>Mark all read</Button>
+        <Button compact mode="text" textColor="#e5a0a0" accessibilityLabel="Clear all local notifications" onPress={clearAll} disabled={!items.length}>Clear all</Button>
       </View>
       {items.length ? items.map(item => (
-        <Card key={item.id} style={[styles.itemCard, !item.read && styles.unreadCard]}>
+        <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={(item.read ? "Read notification: " : "Unread notification: ") + item.title + ". " + item.message} accessibilityState={{selected: !!item.read}} onPress={() => markRead(item.id)}>
+        <Card style={[styles.itemCard, !item.read && styles.unreadCard]}>
           <Card.Content>
             <View style={styles.itemHeader}>
               <Text style={styles.kind}>{item.kind === 'message' ? '💬 MESSAGE' : item.kind === 'friend' ? '👥 FRIENDS' : '🎮 ACTIVITY'}</Text>
@@ -58,6 +65,7 @@ export default function XboxNotificationsScreen() {
             <Text style={styles.time}>{item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Time unavailable'}</Text>
           </Card.Content>
         </Card>
+        </Pressable>
       )) : (
         <Card style={styles.emptyCard}><Card.Content style={styles.emptyContent}>
           <Text style={styles.emptyIcon}>🔔</Text>
