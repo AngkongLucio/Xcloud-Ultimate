@@ -19,6 +19,7 @@ export default function XboxMessagesScreen() {
   const [threads, setThreads] = useState(() => readArray('xbox.messages.local'));
   const [activeFriend, setActiveFriend] = useState(null);
   const [draft, setDraft] = useState('');
+  const [feedback, setFeedback] = useState('');
 
   const refresh = () => {
     setFriends(readArray('xbox.friends.local'));
@@ -34,6 +35,7 @@ export default function XboxMessagesScreen() {
   const openThread = friend => {
     setActiveFriend(friend);
     setDraft('');
+    setFeedback('');
   };
 
   const sendMessage = () => {
@@ -48,9 +50,13 @@ export default function XboxMessagesScreen() {
     saveThreads(next);
     addLocalNotification('Local message saved', 'A message to ' + activeFriend.name + ' was saved on this device.', 'message');
     setDraft('');
+    setFeedback('Message saved locally for ' + activeFriend.name + '. It was not sent to Xbox Network.');
   };
 
-  const removeThread = friendId => saveThreads(threads.filter(item => item.friendId !== friendId));
+  const removeThread = (friendId, friendName) => {
+    saveThreads(threads.filter(item => item.friendId !== friendId));
+    setFeedback('Local conversation with ' + friendName + ' deleted.');
+  };
   const orderedThreads = [...threads].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
   return (
@@ -83,7 +89,10 @@ export default function XboxMessagesScreen() {
             ) : null}
           </ScrollView>
           <View style={styles.composer}>
+            <View style={styles.composerFields}>
             <TextInput mode="outlined" value={draft} onChangeText={setDraft} placeholder="Write a message..." accessibilityLabel={"Message to " + activeFriend.name} accessibilityHint="This message is saved locally on this device only." multiline textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.composerInput} />
+            <Text accessibilityRole="alert" accessibilityLiveRegion="polite" accessibilityLabel={feedback} style={styles.feedback}>{feedback}</Text>
+            </View>
             <Button mode="contained" icon="send" accessibilityLabel={"Save local message to " + activeFriend.name} accessibilityHint="Saves this message only on this device. It is not sent over Xbox Network." onPress={sendMessage} disabled={!draft.trim()} style={styles.sendButton}>Send</Button>
           </View>
         </>
@@ -92,6 +101,7 @@ export default function XboxMessagesScreen() {
           <Text variant="labelLarge" style={styles.eyebrow}>XCLOUD ULTIMATE</Text>
           <Text variant="headlineMedium" style={styles.heading}>Messages</Text>
           <Text variant="bodyMedium" style={styles.intro}>A local chat mock-up for players in your companion friends list. Messages stay on this device.</Text>
+          <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.inboxFeedback}>{feedback}</Text>
           <View style={styles.conversationsHeader}>
             <Text variant="titleLarge" style={styles.sectionTitle}>Conversations</Text>
             <Text
@@ -114,7 +124,7 @@ export default function XboxMessagesScreen() {
                       <Text numberOfLines={1} style={styles.preview}>{last?.body || 'Start a conversation'}</Text>
                     </View>
                   </Pressable>
-                  <Button compact mode="text" textColor="#e5a0a0" accessibilityLabel={"Delete conversation with " + friend.name} onPress={() => removeThread(thread.friendId)}>Delete</Button>
+                  <Button compact mode="text" textColor="#e5a0a0" accessibilityLabel={"Delete conversation with " + friend.name} onPress={() => removeThread(thread.friendId, friend.name)}>Delete</Button>
                 </Card.Content>
               </Card>
             );
@@ -178,6 +188,9 @@ const styles = StyleSheet.create({
   messageTime: {color: '#c3d4c3', fontSize: 10, textAlign: 'right', marginTop: 5},
   emptyHint: {color: '#829082', textAlign: 'center', marginVertical: 24},
   composer: {flexDirection: 'row', alignItems: 'flex-end', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: '#354136'},
+  composerFields: {flex: 1},
+  feedback: {color: '#9cdb8a', fontSize: 11, marginTop: 5},
+  inboxFeedback: {color: '#9cdb8a', fontSize: 12, marginBottom: 10},
   composerInput: {flex: 1, maxHeight: 110, backgroundColor: '#1b211c'},
   sendButton: {backgroundColor: '#107c10', marginBottom: 5},
 });
