@@ -69,7 +69,7 @@ export default function XboxDashboardScreen({navigation}) {
       ))}
 
       <Text variant="bodySmall" style={styles.footer}>
-        This dashboard is a launcher and companion interface. Xbox sign-in and game streaming are handled by the official Xbox website.
+        This dashboard is a launcher and companion interface. Focusable shortcuts support accessible navigation; actual D-pad behavior depends on the connected device and iPadOS. Xbox sign-in and streaming stay on the official Xbox website.
       </Text>
     </ScrollView>
   );
