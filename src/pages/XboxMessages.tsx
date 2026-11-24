@@ -3,6 +3,7 @@ import {useIsFocused} from '@react-navigation/native';
 import {KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, Pressable} from 'react-native';
 import {Button, Card, Text, TextInput} from 'react-native-paper';
 import {storage} from '../store/mmkv';
+import {addLocalNotification} from './XboxNotifications';
 
 const readArray = key => {
   try {
@@ -45,6 +46,7 @@ export default function XboxMessagesScreen() {
       ? threads.map(item => item.friendId === activeFriend.id ? {...item, messages: nextMessages, updatedAt: Date.now()} : item)
       : [...threads, {friendId: activeFriend.id, friendName: activeFriend.name, avatar: activeFriend.avatar || '🎮', messages: nextMessages, updatedAt: Date.now()}];
     saveThreads(next);
+    addLocalNotification('Local message saved', 'A message to ' + activeFriend.name + ' was saved on this device.', 'message');
     setDraft('');
   };
 
