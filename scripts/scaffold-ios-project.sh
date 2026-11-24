@@ -49,8 +49,10 @@ fi
 
 echo "Generating the iOS project with the pinned React Native 0.72.17 template..."
 cd "$TMP_DIR"
+# The custom template's package.json pins React Native 0.72.17. The CLI
+# rejects combining --version with --template, so the template is the
+# single source of truth for the React Native version.
 npx --yes @react-native-community/cli@11.4.1 init Peasyo \
-  --version 0.72.17 \
   --template "file://$CUSTOM_TEMPLATE" \
   --skip-install
 
