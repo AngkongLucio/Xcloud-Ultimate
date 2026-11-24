@@ -48,12 +48,12 @@ export default function XboxNotificationsScreen() {
       <Text variant="headlineMedium" style={styles.heading}>Notifications</Text>
       <Text variant="bodyMedium" style={styles.intro}>Your local activity updates and companion-app alerts.</Text>
       <View style={styles.toolbar}>
-        <Text style={styles.unread}>{unread} UNREAD</Text>
+        <Text accessibilityLiveRegion="polite" accessibilityLabel={unread + (unread === 1 ? " unread notification" : " unread notifications")} style={styles.unread}>{unread} UNREAD</Text>
         <Button compact mode="text" textColor="#9cdb8a" accessibilityLabel="Mark all notifications as read" onPress={markAllRead} disabled={!unread}>Mark all read</Button>
         <Button compact mode="text" textColor="#e5a0a0" accessibilityLabel="Clear all local notifications" onPress={clearAll} disabled={!items.length}>Clear all</Button>
       </View>
       {items.length ? items.map(item => (
-        <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={(item.read ? "Read notification: " : "Unread notification: ") + item.title + ". " + item.message} accessibilityState={{selected: !!item.read}} onPress={() => markRead(item.id)}>
+        <Pressable key={item.id} accessible accessibilityRole="button" accessibilityLabel={(item.read ? "Read notification: " : "Unread notification: ") + item.title + ". " + item.message + (item.createdAt ? ". " + new Date(item.createdAt).toLocaleString() : "")} accessibilityHint={item.read ? "This notification has already been read." : "Marks this notification as read on this device."} onPress={() => markRead(item.id)}>
         <Card style={[styles.itemCard, !item.read && styles.unreadCard]}>
           <Card.Content>
             <View style={styles.itemHeader}>
@@ -69,7 +69,7 @@ export default function XboxNotificationsScreen() {
       )) : (
         <Card style={styles.emptyCard}><Card.Content style={styles.emptyContent}>
           <Text style={styles.emptyIcon}>🔔</Text>
-          <Text variant="titleMedium" style={styles.itemTitle}>You're all caught up</Text>
+          <Text accessibilityLiveRegion="polite" variant="titleMedium" style={styles.itemTitle}>You're all caught up</Text>
           <Text style={styles.itemMessage}>New local activity notifications will appear here.</Text>
         </Card.Content></Card>
       )}
