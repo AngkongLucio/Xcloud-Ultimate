@@ -40,8 +40,15 @@ const readNotifications = () => {
   try {
     const raw = storage.getString('xbox.notifications.local');
     const parsed = raw ? JSON.parse(raw) : [];
-    return normalizeNotifications(parsed);
-  } catch (_) { return []; }
+    const normalized = normalizeNotifications(parsed);
+    if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+      storage.set('xbox.notifications.local', JSON.stringify(normalized));
+    }
+    return normalized;
+  } catch (_) {
+    storage.delete('xbox.notifications.local');
+    return [];
+  }
 };
 
 export const addLocalNotification = (title, message, kind = 'activity') => {
