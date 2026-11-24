@@ -30,6 +30,7 @@ import XboxSettingsScreen from './pages/XboxSettings';
 import XboxProfileScreen from './pages/XboxProfile';
 import XboxAchievementsScreen from './pages/XboxAchievements';
 import XboxFriendsScreen from './pages/XboxFriends';
+import XboxMessagesScreen from './pages/XboxMessages';
 import OptionsScreen from './pages/Options';
 import LoginScreen from './pages/Login';
 import LoginUsernameScreen from './pages/LoginUsername';
@@ -185,6 +186,11 @@ function App() {
                     name="XboxFriends"
                     component={XboxFriendsScreen}
                     options={{title: 'Friends'}}
+                  />
+                  <RootStack.Screen
+                    name="XboxMessages"
+                    component={XboxMessagesScreen}
+                    options={{title: 'Messages'}}
                   />
                   <RootStack.Screen
                     name="XboxCloud"
