@@ -52,7 +52,7 @@ export default function XboxProfileScreen({navigation}) {
       <Card style={styles.profileCard}>
         <Card.Content style={styles.profileContent}>
           <View style={styles.avatarCircle}><Text style={styles.avatarLarge}>{avatar}</Text></View>
-          <Text variant="headlineSmall" style={styles.profileName}>{gamertag.trim() || 'Player'}</Text>
+          <Text variant="headlineSmall" accessibilityLiveRegion="polite" accessibilityLabel={"Profile preview name: " + (gamertag.trim() || 'Player')} style={styles.profileName}>{gamertag.trim() || 'Player'}</Text>
           <Text variant="labelMedium" style={styles.profileCaption}>LOCAL PLAYER PROFILE</Text>
         </Card.Content>
       </Card>
@@ -91,6 +91,7 @@ export default function XboxProfileScreen({navigation}) {
       <Card style={styles.statsCard}>
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Recent activity</Text>
+          <Text variant="bodySmall" accessibilityLiveRegion="polite" accessibilityLabel={activity.length + (activity.length === 1 ? " recent catalog entry" : " recent catalog entries")} style={styles.statsNote}>{activity.length} {activity.length === 1 ? 'entry' : 'entries'} · Maximum 10 saved</Text>
           {activity.length ? activity.map((entry, index) => (
             <View key={String(entry.openedAt) + '-' + index} accessible accessibilityRole="text" accessibilityLabel={(entry.title || "Xbox Catalog") + (entry.openedAt ? ", opened " + new Date(entry.openedAt).toLocaleString() : ", time unavailable")} style={styles.activityRow}>
               <View style={styles.activityIcon}><Text style={styles.activityEmoji}>▶</Text></View>
@@ -135,8 +136,8 @@ export default function XboxProfileScreen({navigation}) {
             theme={{colors: {onSurfaceVariant: '#aab5aa'}}}
           />
           <Text variant="bodySmall" style={styles.hint}>Up to 16 characters. Saved only on this device.</Text>
-          <Button mode="contained" icon="content-save" accessibilityLabel="Save local player profile" onPress={saveProfile} style={styles.saveButton}>Save profile</Button>
-          {saved ? <Text variant="bodySmall" style={styles.saved}>Profile saved on this device.</Text> : null}
+          <Button mode="contained" icon="content-save" accessibilityLabel="Save local player profile" accessibilityHint="Saves the display name and avatar only on this device." onPress={saveProfile} style={styles.saveButton}>Save profile</Button>
+          {saved ? <Text variant="bodySmall" accessibilityLiveRegion="polite" accessibilityLabel="Profile saved successfully on this device" style={styles.saved}>Profile saved on this device.</Text> : null}
         </Card.Content>
       </Card>
       <Text variant="bodySmall" style={styles.footer}>Your Xbox sign-in, achievements, friends, and official account details are not accessed or modified by this local profile.</Text>
