@@ -111,8 +111,14 @@ export default function XboxLibraryScreen({navigation}) {
     setFavoriteTitles(next);
   };
 
-  const openXbox = title => {
+  const openXbox = async title => {
     haptic('impactLight');
+    try {
+      await Linking.openURL(XBOX_PLAY);
+    } catch (_) {
+      Alert.alert('Unable to open Xbox Cloud Gaming', 'Suriin ang internet connection o buksan ang https://www.xbox.com/play sa Safari.');
+      return;
+    }
     if (title) {
       const openedAt = Date.now();
       addLocalNotification('Catalog opened', 'You opened ' + title + '.', 'activity');
@@ -138,9 +144,6 @@ export default function XboxLibraryScreen({navigation}) {
       history.unshift({title, openedAt});
       storage.set('xbox.activity.history', JSON.stringify(history.slice(0, 10)));
     }
-    Linking.openURL(XBOX_PLAY).catch(() => {
-      Alert.alert('Unable to open Xbox Cloud Gaming', 'Suriin ang internet connection o buksan ang https://www.xbox.com/play sa Safari.');
-    });
   };
   const moveSelection = direction => {
     if (!visibleGames.length) { return; }
