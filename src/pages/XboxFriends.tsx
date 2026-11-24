@@ -49,7 +49,11 @@ export default function XboxFriendsScreen() {
     setFormMessage(clean + ' was added to your local list.');
   };
 
-  const removeFriend = id => save(friends.filter(item => item.id !== id));
+  const removeFriend = id => {
+    const removed = friends.find(item => item.id === id);
+    save(friends.filter(item => item.id !== id));
+    if (removed) setFormMessage(removed.name + ' was removed from your local list.');
+  };
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -60,7 +64,7 @@ export default function XboxFriendsScreen() {
       <Card style={styles.addCard}>
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Add a player</Text>
-          <TextInput mode="outlined" label="Player display name" accessibilityLabel="Player display name" value={name} onChangeText={value => {setName(value); setFormMessage("");}} maxLength={20} autoCapitalize="words" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.input} />
+          <TextInput mode="outlined" label="Player display name" accessibilityLabel="Player display name" accessibilityHint="Enter a name of up to 20 characters. This adds a local entry only." value={name} onChangeText={value => {setName(value); setFormMessage("");}} maxLength={20} autoCapitalize="words" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.input} />
           <Text style={styles.avatarLabel}>Choose avatar</Text>
           <View style={styles.avatarRow}>
             {AVATARS.map(item => (
@@ -70,13 +74,13 @@ export default function XboxFriendsScreen() {
             ))}
           </View>
           <Button mode="contained" icon="account-plus" accessibilityLabel="Add player to local friends list" onPress={addFriend} disabled={!name.trim()} style={styles.addButton}>Add to local list</Button>
-          {formMessage ? <Text accessibilityRole="alert" style={styles.formMessage}>{formMessage}</Text> : null}
+          {formMessage ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.formMessage}>{formMessage}</Text> : null}
         </Card.Content>
       </Card>
 
       <View style={styles.listHeader}>
         <Text variant="titleLarge" style={styles.sectionTitle}>My players</Text>
-        <Text style={styles.count} accessibilityLiveRegion="polite" accessibilityLabel={friends.length + (friends.length === 1 ? " local player" : " local players")}>{friends.length}</Text>
+        <Text style={styles.count} accessibilityLiveRegion="polite" accessibilityLabel={"Local friends list contains " + friends.length + (friends.length === 1 ? " player" : " players")}>{friends.length}</Text>
       </View>
       {friends.length ? friends.map(friend => (
         <Card key={friend.id} style={styles.friendCard} accessible accessibilityLabel={"Local player " + friend.name + (friend.addedAt ? ", added " + new Date(friend.addedAt).toLocaleDateString() : "")}>
