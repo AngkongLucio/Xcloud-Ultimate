@@ -83,7 +83,20 @@ const normalizeThreads = value => {
 };
 
 const readFriends = () => normalizeFriends(readArray('xbox.friends.local'));
-const readThreads = () => normalizeThreads(readArray('xbox.messages.local'));
+const readThreads = () => {
+  try {
+    const raw = storage.getString('xbox.messages.local');
+    const parsed = raw ? JSON.parse(raw) : [];
+    const normalized = normalizeThreads(parsed);
+    if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+      storage.set('xbox.messages.local', JSON.stringify(normalized));
+    }
+    return normalized;
+  } catch (_) {
+    storage.delete('xbox.messages.local');
+    return [];
+  }
+};
 
 export default function XboxMessagesScreen() {
   const isFocused = useIsFocused();
