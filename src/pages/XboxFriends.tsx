@@ -40,8 +40,15 @@ export default function XboxFriendsScreen() {
     try {
       const raw = storage.getString('xbox.friends.local');
       const parsed = raw ? JSON.parse(raw) : [];
-      return normalizeFriends(parsed);
-    } catch (_) { return []; }
+      const normalized = normalizeFriends(parsed);
+      if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+        storage.set('xbox.friends.local', JSON.stringify(normalized));
+      }
+      return normalized;
+    } catch (_) {
+      storage.delete('xbox.friends.local');
+      return [];
+    }
   });
   const [name, setName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
