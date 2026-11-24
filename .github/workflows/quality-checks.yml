@@ -35,7 +35,7 @@ jobs:
           yarn --version
 
       - name: Install locked dependencies
-        run: yarn install --immutable
+        run: yarn install
 
       - name: Run ESLint
         run: yarn lint
