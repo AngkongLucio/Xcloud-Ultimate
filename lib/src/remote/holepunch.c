@@ -2985,7 +2985,8 @@ static void* websocket_thread_func(void *user) {
                 SessionMessage *msg = NULL;
                 json_object *payload = session_message_get_payload(session->log, json);
                 err = session_message_parse(session->log, payload, &msg);
-                json_object_put(payload);
+                if(payload)
+                    json_object_put(payload);
                 if (err != CHIAKI_ERR_SUCCESS)
                 {
                     // Keep the original notification: the main session loop still
@@ -5808,7 +5809,8 @@ static ChiakiErrorCode wait_for_session_message(
         }
         json_object *payload = session_message_get_payload(session->log, notif->json);
         err = session_message_parse(session->log, payload, &msg);
-        json_object_put(payload);
+        if(payload)
+            json_object_put(payload);
         if (err != CHIAKI_ERR_SUCCESS)
         {
             CHIAKI_LOGE(session->log, "Failed to parse holepunch session message");
@@ -5932,6 +5934,10 @@ static ChiakiErrorCode wait_for_session_message_ack(
 static ChiakiErrorCode session_message_parse(
         ChiakiLog *log, json_object *message_json, SessionMessage **out)
 {
+    if(!message_json || !out)
+        return CHIAKI_ERR_INVALID_DATA;
+    *out = NULL;
+
     ChiakiErrorCode err = CHIAKI_ERR_SUCCESS;
     SessionMessage *msg = calloc(1, sizeof(SessionMessage));
     if(!msg)
