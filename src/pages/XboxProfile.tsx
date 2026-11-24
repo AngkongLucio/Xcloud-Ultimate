@@ -205,8 +205,16 @@ export default function XboxProfileScreen({navigation}) {
     if (isFocused) {
       const storedTag = storage.getString('xbox.profile.gamertag');
       const storedAvatar = storage.getString('xbox.profile.avatar');
-      setGamertag(typeof storedTag === 'string' ? storedTag.trim().slice(0, 16) || 'Player' : 'Player');
-      setAvatar(AVATARS.includes(storedAvatar) ? storedAvatar : '🎮');
+      const normalizedTag = typeof storedTag === 'string' ? storedTag.trim().slice(0, 16) || 'Player' : 'Player';
+      const normalizedAvatar = AVATARS.includes(storedAvatar) ? storedAvatar : '🎮';
+      setGamertag(normalizedTag);
+      setAvatar(normalizedAvatar);
+      if (storedTag !== normalizedTag) {
+        storage.set('xbox.profile.gamertag', normalizedTag);
+      }
+      if (storedAvatar !== normalizedAvatar) {
+        storage.set('xbox.profile.avatar', normalizedAvatar);
+      }
       setLaunchCount(normalizeLaunchCount(storage.getNumber('xbox.activity.launchCount')));
       try {
         const saved = storage.getString('xbox.activity.history');
