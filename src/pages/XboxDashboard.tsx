@@ -5,6 +5,14 @@ import {useIsFocused} from '@react-navigation/native';
 import {storage} from '../store/mmkv';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
+const readUnreadNotifications = () => {
+  try {
+    const raw = storage.getString('xbox.notifications.local');
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter(item => !item.read).length : 0;
+  } catch (_) { return 0; }
+};
+
 const XBOX_PLAY = 'https://www.xbox.com/play';
 
 const quickLinks = [
@@ -28,6 +36,7 @@ export default function XboxDashboardScreen({navigation}) {
   const [lastOpenedAt, setLastOpenedAt] = useState(() => storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
   const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
   const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
+  const [unreadNotifications, setUnreadNotifications] = useState(readUnreadNotifications);
   const [dashboardSelection, setDashboardSelection] = useState(0);
   const [guideSelection, setGuideSelection] = useState(0);
   const [quickSelection, setQuickSelection] = useState(0);
@@ -52,6 +61,7 @@ export default function XboxDashboardScreen({navigation}) {
       setLastOpenedAt(storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
       setGamertag(storage.getString('xbox.profile.gamertag') ?? 'Player');
       setAvatar(storage.getString('xbox.profile.avatar') ?? '🎮');
+      setUnreadNotifications(readUnreadNotifications());
     }
   }, [isFocused]);
   useEffect(() => {
@@ -183,7 +193,7 @@ export default function XboxDashboardScreen({navigation}) {
             <Text style={styles.guideSection}>COMMUNITY</Text>
             <Pressable style={[styles.guideItem, focusOutline && guideSelection === 4 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxFriends')}><Text style={styles.guideIcon}>👥</Text><Text style={styles.guideItemText}>Friends</Text></Pressable>
             <Pressable style={[styles.guideItem, focusOutline && guideSelection === 5 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxMessages')}><Text style={styles.guideIcon}>💬</Text><Text style={styles.guideItemText}>Messages</Text></Pressable>
-            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 6 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxNotifications')}><Text style={styles.guideIcon}>🔔</Text><Text style={styles.guideItemText}>Notifications</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 6 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxNotifications')} accessibilityRole="button" accessibilityLabel={unreadNotifications ? "Notifications, " + unreadNotifications + " unread" : "Notifications"}><Text style={styles.guideIcon}>🔔</Text><Text style={styles.guideItemText}>Notifications</Text>{unreadNotifications > 0 ? <View style={styles.notificationBadge}><Text style={styles.notificationBadgeText}>{unreadNotifications > 99 ? "99+" : unreadNotifications}</Text></View> : null}</Pressable>
             <View style={styles.guideSpacer} />
             <Text style={styles.guideSection}>SYSTEM</Text>
             <Pressable style={[styles.guideItem, focusOutline && guideSelection === 7 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxSettings')}><Text style={styles.guideIcon}>⚙️</Text><Text style={styles.guideItemText}>Settings</Text></Pressable>
@@ -274,7 +284,7 @@ export default function XboxDashboardScreen({navigation}) {
           Messages
         </Button>
         <Button mode={dashboardSelection === 7 ? "contained" : "outlined"} buttonColor={dashboardSelection === 7 ? "#107c10" : undefined} icon="bell" textColor={dashboardSelection === 7 ? "#ffffff" : "#9cdb8a"} onPress={() => navigation.navigate('XboxNotifications')} style={[styles.actionButton, focusOutline && dashboardSelection === 7 && styles.controllerFocusedButton]}>
-          Notifications
+          {unreadNotifications > 0 ? "Notifications (" + unreadNotifications + ")" : "Notifications"}
         </Button>
       </View>
       <Card style={styles.recentCard} mode="outlined">
@@ -356,6 +366,8 @@ const styles = StyleSheet.create({
   guideClose: {width: 36, height: 36, borderRadius: 18, backgroundColor: '#29372b', alignItems: 'center', justifyContent: 'center'},
   guideCloseText: {color: '#d9ead7', fontSize: 17},
   guideProfile: {flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13, backgroundColor: '#223126', borderRadius: 13, marginBottom: 22},
+  notificationBadge: {minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, backgroundColor: '#107c10', alignItems: 'center', justifyContent: 'center'},
+  notificationBadgeText: {color: '#fff', fontSize: 10, fontWeight: '800'},
   guideItemFocused: {borderWidth: 2, borderColor: '#9cdb8a', backgroundColor: '#29432e', transform: [{scale: 1.015}]},
   guideAvatar: {fontSize: 29},
   guideName: {color: '#fff', fontWeight: '800', fontSize: 15},
