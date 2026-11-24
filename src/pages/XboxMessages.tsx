@@ -5,14 +5,6 @@ import {Button, Card, Text, TextInput} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 import {addLocalNotification} from './XboxNotifications';
 
-const readArray = key => {
-  try {
-    const raw = storage.getString(key);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (_) { return []; }
-};
-
 const normalizeFriends = value => {
   if (!Array.isArray(value)) return [];
   const allowedAvatars = ['🎮', '👾', '🚀', '🐉', '🏎️', '⚡'];
