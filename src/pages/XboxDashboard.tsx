@@ -240,7 +240,7 @@ export default function XboxDashboardScreen({navigation}) {
             <Text variant="bodyMedium" style={styles.heroCopy}>
               Jump into Xbox Cloud Gaming using the official Xbox service.
             </Text>
-            <Button mode="contained" icon="play" onPress={openCloud} style={styles.playButton}>
+            <Button mode="contained" icon="play" onPress={openCloud} accessibilityRole="button" accessibilityLabel="Launch Xbox Cloud Gaming" style={[styles.playButton, focusOutline && dashboardSelection === 0 && styles.controllerFocusedButton]}>
               Launch Cloud Gaming
             </Button>
           </Card.Content>
