@@ -194,8 +194,13 @@ export default function XboxProfileScreen({navigation}) {
       try {
         const saved = storage.getString('xbox.activity.history');
         const parsed = saved ? JSON.parse(saved) : [];
-        setActivity(normalizeActivityHistory(parsed));
+        const normalized = normalizeActivityHistory(parsed);
+        if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+          storage.set('xbox.activity.history', JSON.stringify(normalized));
+        }
+        setActivity(normalized);
       } catch (_) {
+        storage.delete('xbox.activity.history');
         setActivity([]);
       }
     }
