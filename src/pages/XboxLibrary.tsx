@@ -1,5 +1,5 @@
 import React, {useMemo, useState} from 'react';
-import {ScrollView, StyleSheet, View, Linking} from 'react-native';
+import {ScrollView, StyleSheet, View, Linking, Pressable} from 'react-native';
 import {Button, Card, Chip, Searchbar, Text} from 'react-native-paper';
 
 const XBOX_PLAY = 'https://www.xbox.com/play';
@@ -57,7 +57,15 @@ export default function XboxLibraryScreen() {
 
       <View style={styles.grid}>
         {visibleGames.map(game => (
-          <Card key={game.title} mode="outlined" style={styles.gameCard}>
+          <Pressable
+            key={game.title}
+            focusable
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={game.title + ', ' + game.genre + '. Open Xbox catalog.'}
+            onPress={openXbox}
+            style={({focused}) => [styles.gameCardPressable, focused && styles.focusedGameCard]}>
+          <Card mode="outlined" style={styles.gameCard}>
             <Card.Content>
               <Text variant="displaySmall" style={styles.gameMark}>{game.mark}</Text>
               <Text variant="titleMedium" style={styles.gameTitle}>{game.title}</Text>
@@ -67,6 +75,7 @@ export default function XboxLibraryScreen() {
               </Button>
             </Card.Content>
           </Card>
+          </Pressable>
         ))}
       </View>
 
@@ -96,7 +105,9 @@ const styles = StyleSheet.create({
   chip: {backgroundColor: '#202920'},
   chipText: {color: '#e6eee6'},
   grid: {flexDirection: 'row', flexWrap: 'wrap', gap: 12},
-  gameCard: {width: '48%', flexGrow: 1, backgroundColor: '#1b211c', borderColor: '#344235', borderRadius: 14},
+  gameCardPressable: {width: '48%', flexGrow: 1, borderRadius: 14},
+  focusedGameCard: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 14},
+  gameCard: {backgroundColor: '#1b211c', borderColor: '#344235', borderRadius: 14},
   gameMark: {marginBottom: 10},
   gameTitle: {color: '#fff', minHeight: 48, fontWeight: '700'},
   genre: {color: '#aab5aa', marginTop: 4},
