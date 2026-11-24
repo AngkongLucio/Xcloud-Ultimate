@@ -112,7 +112,7 @@ export default function XboxProfileScreen({navigation}) {
   const repeatOpenCount = Object.values(mostOpenedTitle).reduce((total, count) => total + Math.max(count - 1, 0), 0);
 
   const activityTitleGroups = Object.entries(mostOpenedTitle)
-    .sort((a, b) => a[0].localeCompare(b[0]));
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   const activityTitleBreakdown = activityTitleGroups.map(([title, count]) => ({
     title,
     count,
