@@ -173,26 +173,30 @@ function HomeScreen({navigation, route}) {
                   // Save token(userInfo) to local storege
                   ts.load();
                   const tokens = ts.getToken();
-                  let isExist = false;
-                  tokens.forEach(item => {
-                    item.is_default = false;
-                    if (item.user_id === userInfo.user_id) {
-                      isExist = true;
-                    }
-                  });
+                  const existingIndex = tokens.findIndex(
+                    item => item.user_id === userInfo.user_id,
+                  );
+                  const nextTokens = tokens.map(item => ({
+                    ...item,
+                    is_default: false,
+                  }));
+                  const updatedUser = {
+                    ...(existingIndex >= 0 ? nextTokens[existingIndex] : {}),
+                    ...userInfo,
+                    is_default: true,
+                    accessToken,
+                    refreshToken,
+                    tokenExpiry,
+                  };
 
-                  if (!isExist) {
-                    tokens.push({
-                      is_default: true,
-                      ...userInfo,
-                      accessToken,
-                      refreshToken,
-                      tokenExpiry,
-                    });
-
-                    ts.setToken(tokens);
-                    ts.save();
+                  if (existingIndex >= 0) {
+                    nextTokens[existingIndex] = updatedUser;
+                  } else {
+                    nextTokens.push(updatedUser);
                   }
+
+                  ts.setToken(nextTokens);
+                  ts.save();
 
                   showMessage(t('Login Successful'));
                   setLoading(false);
