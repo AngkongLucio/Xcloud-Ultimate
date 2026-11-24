@@ -47,16 +47,32 @@ const readUnreadNotifications = () => {
       storage.set('xbox.notifications.local', JSON.stringify([]));
       return 0;
     }
+    const seenIds = new Set();
     const normalized = parsed
       .filter(item => item && typeof item === 'object' && !Array.isArray(item)
-        && typeof item.title === 'string' && item.title.trim()
-        && typeof item.message === 'string' && item.message.trim())
-      .map(item => ({
-        ...item,
-        title: item.title.trim().slice(0, 120),
-        message: item.message.trim().slice(0, 500),
-        read: item.read === true,
-      }))
+        && typeof item.title === 'string' && typeof item.message === 'string')
+      .map((item, index) => {
+        const baseId = String(item.id || 'legacy-' + index).trim().slice(0, 100) || 'legacy-' + index;
+        let id = baseId;
+        let suffix = 1;
+        while (seenIds.has(id)) {
+          id = (baseId.slice(0, 88) + '-' + suffix).slice(0, 100);
+          suffix += 1;
+        }
+        seenIds.add(id);
+        return {
+          ...item,
+          id,
+          title: item.title.trim().slice(0, 120),
+          message: item.message.trim().slice(0, 500),
+          kind: ['activity', 'friend', 'message'].includes(item.kind) ? item.kind : 'activity',
+          read: item.read === true,
+          createdAt: Number.isFinite(Number(item.createdAt)) && Number(item.createdAt) > 0
+            ? Number(item.createdAt)
+            : 0,
+        };
+      })
+      .filter(item => item.title.length > 0 && item.message.length > 0)
       .slice(0, 30);
     if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
       storage.set('xbox.notifications.local', JSON.stringify(normalized));
