@@ -21,6 +21,14 @@ const CATEGORIES = ['All', 'Action', 'Adventure', 'Racing', 'Simulation'];
 export default function XboxLibraryScreen({navigation}) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [favoriteTitles, setFavoriteTitles] = useState(() => {
+    try {
+      const raw = storage.getString('xbox.library.favorites');
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) { return []; }
+  });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const libraryScrollRef = useRef(null);
   const isFocused = useIsFocused();
@@ -40,8 +48,16 @@ export default function XboxLibraryScreen({navigation}) {
 
   const visibleGames = useMemo(() => GAMES.filter(game => {
     const matchesSearch = game.title.toLowerCase().includes(search.trim().toLowerCase());
-    return matchesSearch && (category === 'All' || game.genre === category);
-  }), [search, category]);
+    return matchesSearch && (category === 'All' || game.genre === category) && (!favoritesOnly || favoriteTitles.includes(game.title));
+  }), [search, category, favoritesOnly, favoriteTitles]);
+
+  const toggleFavorite = title => {
+    setFavoriteTitles(current => {
+      const next = current.includes(title) ? current.filter(item => item !== title) : [...current, title];
+      storage.set('xbox.library.favorites', JSON.stringify(next));
+      return next;
+    });
+  };
 
   const openXbox = title => {
     haptic('impactLight');
@@ -115,6 +131,19 @@ export default function XboxLibraryScreen({navigation}) {
         {visibleGames.length} {visibleGames.length === 1 ? 'title' : 'titles'} · {category}
       </Text>
 
+      <View style={styles.favoriteFilterRow}>
+        <Chip
+          accessibilityRole="button"
+          accessibilityLabel={favoritesOnly ? "Show all games, favorites filter active" : "Show favorites only"}
+          accessibilityState={{selected: favoritesOnly}}
+          selected={favoritesOnly}
+          onPress={() => { haptic(); setFavoritesOnly(value => !value); setSelectedIndex(0); }}
+          style={styles.chip}
+          textStyle={styles.chipText}>
+          ★ Favorites ({favoriteTitles.length})
+        </Chip>
+      </View>
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
         {CATEGORIES.map(item => (
           <Chip
@@ -134,24 +163,33 @@ export default function XboxLibraryScreen({navigation}) {
 
       <View style={styles.grid}>
         {visibleGames.map((game, index) => (
-          <Pressable
-            key={game.title}
-            focusable
-            accessible
-            accessibilityRole="button"
-            accessibilityLabel={(selectedIndex === index ? 'Selected. ' : '') + game.title + ', ' + game.genre + '. Open Xbox catalog.'}
-            accessibilityState={{selected: selectedIndex === index}}
-            onPress={() => openXbox(game.title)}
-            style={({focused}) => [styles.gameCardPressable, focusOutline && (focused || selectedIndex === index) && styles.focusedGameCard]}>
-          <Card mode="outlined" style={[styles.gameCard, compactCards && styles.compactGameCard]}>
-            <Card.Content style={compactCards && styles.compactGameContent}>
-              <Text variant="displaySmall" style={styles.gameMark}>{game.mark}</Text>
-              <Text variant="titleMedium" style={styles.gameTitle}>{game.title}</Text>
-              <Text variant="bodySmall" style={styles.genre}>{game.genre}</Text>
-              <Text variant="labelSmall" style={styles.selectHint}>Select to view on Xbox</Text>
-            </Card.Content>
-          </Card>
-          </Pressable>
+          <View key={game.title} style={styles.gameCardContainer}>
+            <Pressable
+              focusable
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={(selectedIndex === index ? 'Selected. ' : '') + game.title + ', ' + game.genre + '. Open Xbox catalog.'}
+              accessibilityState={{selected: selectedIndex === index}}
+              onPress={() => openXbox(game.title)}
+              style={({focused}) => [styles.gameCardPressable, focusOutline && (focused || selectedIndex === index) && styles.focusedGameCard]}>
+              <Card mode="outlined" style={[styles.gameCard, compactCards && styles.compactGameCard]}>
+                <Card.Content style={compactCards && styles.compactGameContent}>
+                  <Text variant="displaySmall" style={styles.gameMark}>{game.mark}</Text>
+                  <Text variant="titleMedium" style={styles.gameTitle}>{game.title}</Text>
+                  <Text variant="bodySmall" style={styles.genre}>{game.genre}</Text>
+                  <Text variant="labelSmall" style={styles.selectHint}>Select to view on Xbox</Text>
+                </Card.Content>
+              </Card>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={(favoriteTitles.includes(game.title) ? 'Remove ' : 'Add ') + game.title + (favoriteTitles.includes(game.title) ? ' from' : ' to') + ' favorites'}
+              accessibilityState={{selected: favoriteTitles.includes(game.title)}}
+              onPress={() => { haptic(); toggleFavorite(game.title); }}
+              style={styles.favoriteButton}>
+              <Text style={styles.favoriteButtonText}>{favoriteTitles.includes(game.title) ? '★' : '☆'}</Text>
+            </Pressable>
+          </View>
         ))}
       </View>
 
@@ -200,8 +238,12 @@ const styles = StyleSheet.create({
   filters: {gap: 8, paddingBottom: 16},
   chip: {backgroundColor: '#202920'},
   chipText: {color: '#e6eee6'},
+  favoriteFilterRow: {flexDirection: 'row', marginBottom: 8},
   grid: {flexDirection: 'row', flexWrap: 'wrap', gap: 12},
-  gameCardPressable: {width: '48%', flexGrow: 1, borderRadius: 14},
+  gameCardContainer: {width: '48%', flexGrow: 1, position: 'relative'},
+  gameCardPressable: {width: '100%', borderRadius: 14},
+  favoriteButton: {position: 'absolute', top: 8, right: 8, width: 34, height: 34, borderRadius: 17, backgroundColor: '#101510', borderWidth: 1, borderColor: '#789d70', alignItems: 'center', justifyContent: 'center', zIndex: 2},
+  favoriteButtonText: {color: '#9cdb8a', fontSize: 23, lineHeight: 27},
   focusedGameCard: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 14, transform: [{scale: 1.015}]},
   gameCard: {backgroundColor: '#1b211c', borderColor: '#344235', borderRadius: 14},
   compactGameCard: {borderRadius: 10},
