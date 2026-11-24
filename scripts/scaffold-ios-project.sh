@@ -48,7 +48,16 @@ if [[ ! -f "$CUSTOM_TEMPLATE/template.config.js" || ! -f "$CUSTOM_TEMPLATE/templ
 fi
 
 echo "Generating the iOS project with the pinned React Native 0.72.17 template..."
+# React Native CLI 11 invokes `yarn add file://...`; Yarn 4 rejects that
+# local-template form, so pin the compatible Yarn Classic CLI for scaffolding.
+if command -v corepack >/dev/null 2>&1; then
+  corepack prepare yarn@1.22.22 --activate
+fi
 cd "$TMP_DIR"
+if ! yarn --version | grep -q "^1\\."; then
+  echo "Error: React Native 0.72.17 scaffolding requires Yarn Classic 1.x." >&2
+  exit 2
+fi
 # The custom template's package.json pins React Native 0.72.17. The CLI
 # rejects combining --version with --template, so the template is the
 # single source of truth for the React Native version.
