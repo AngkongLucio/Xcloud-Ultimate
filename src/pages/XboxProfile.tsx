@@ -22,6 +22,13 @@ export default function XboxProfileScreen({navigation}) {
     }
   });
 
+  const [activitySort, setActivitySort] = useState('Newest');
+  const sortedActivity = [...activity].sort((a, b) => {
+    const aTime = Number(a?.openedAt) || 0;
+    const bTime = Number(b?.openedAt) || 0;
+    return activitySort === 'Oldest' ? aTime - bTime : bTime - aTime;
+  });
+
   useEffect(() => {
     if (isFocused) {
       setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
@@ -103,7 +110,22 @@ export default function XboxProfileScreen({navigation}) {
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Recent activity</Text>
           <Text variant="bodySmall" accessibilityLiveRegion="polite" accessibilityLabel={activity.length + (activity.length === 1 ? " recent catalog entry" : " recent catalog entries")} style={styles.statsNote}>{activity.length} {activity.length === 1 ? 'entry' : 'entries'} · Maximum 10 saved</Text>
-          {activity.length ? activity.map((entry, index) => (
+          {activity.length > 1 ? (
+            <View style={styles.activitySortRow} accessibilityLabel="Sort recent activity">
+              {['Newest', 'Oldest'].map(option => (
+                <Pressable
+                  key={option}
+                  accessibilityRole="button"
+                  accessibilityLabel={"Sort activity: " + option}
+                  accessibilityState={{selected: activitySort === option}}
+                  onPress={() => setActivitySort(option)}
+                  style={[styles.activitySortChip, activitySort === option && styles.activitySortChipSelected]}>
+                  <Text style={[styles.activitySortText, activitySort === option && styles.activitySortTextSelected]}>{option}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+          {activity.length ? sortedActivity.map((entry, index) => (
             <View key={String(entry.openedAt) + '-' + index} accessible accessibilityRole="text" accessibilityLabel={(entry.title || "Xbox Catalog") + (entry.openedAt ? ", opened " + new Date(entry.openedAt).toLocaleString() : ", time unavailable")} style={styles.activityRow}>
               <View style={styles.activityIcon}><Text style={styles.activityEmoji}>▶</Text></View>
               <View style={styles.activityCopy}>
@@ -196,6 +218,11 @@ const styles = StyleSheet.create({
   milestoneProgress: {height: 5, borderRadius: 5, backgroundColor: '#344235', marginTop: 7},
   milestoneStatus: {color: '#9cdb8a', fontSize: 22, fontWeight: '800'},
   statsNote: {color: '#829082', lineHeight: 18, marginTop: 12},
+  activitySortRow: {flexDirection: 'row', gap: 8, marginTop: 10, marginBottom: 4},
+  activitySortChip: {paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, backgroundColor: '#202920', borderWidth: 1, borderColor: '#354136'},
+  activitySortChipSelected: {backgroundColor: '#294d30', borderColor: '#9cdb8a'},
+  activitySortText: {color: '#aab5aa', fontSize: 11, fontWeight: '700'},
+  activitySortTextSelected: {color: '#fff'},
   activityRow: {flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#354136', gap: 12},
   activityIcon: {width: 34, height: 34, borderRadius: 17, backgroundColor: '#294d30', alignItems: 'center', justifyContent: 'center'},
   activityEmoji: {color: '#9cdb8a', fontWeight: '800'},
