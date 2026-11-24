@@ -7,7 +7,7 @@ import {
   adaptNavigationTheme,
 } from 'react-native-paper';
 
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, CardStyleInterpolators, TransitionSpecs} from '@react-navigation/stack';
 import {
   NavigationContainer,
   DarkTheme as NavigationDarkTheme,
@@ -144,6 +144,15 @@ function App() {
     paperTheme = paperLightTheme;
     navigationTheme = CombinedDefaultTheme;
   }
+
+  const xboxTransition = {
+    gestureEnabled: true,
+    cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+    transitionSpec: {
+      open: TransitionSpecs.TransitionIOSSpec,
+      close: TransitionSpecs.TransitionIOSSpec,
+    },
+  };
 
   return (
     <>
