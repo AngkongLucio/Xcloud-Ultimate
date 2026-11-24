@@ -157,6 +157,15 @@ export default function XboxMessagesScreen() {
   const sendMessage = () => {
     const body = draft.trim();
     if (!body || !activeFriend) return;
+    const latestFriends = readFriends();
+    setFriends(latestFriends);
+    const currentFriend = latestFriends.find(friend => friend.id === activeFriend.id);
+    if (!currentFriend) {
+      setActiveFriend(null);
+      setDraft('');
+      setFeedback('That player is no longer in your friends list. The message was not saved.');
+      return;
+    }
     const latestThreads = readThreads();
     const existing = latestThreads.find(item => item.friendId === activeFriend.id);
     const messages = existing ? existing.messages : [];
@@ -167,9 +176,9 @@ export default function XboxMessagesScreen() {
       ? latestThreads.map(item => item.friendId === activeFriend.id ? {...item, messages: nextMessages, updatedAt: now} : item)
       : [...latestThreads, {friendId: activeFriend.id, friendName: activeFriend.name, avatar: activeFriend.avatar || '🎮', messages: nextMessages, updatedAt: now}];
     saveThreads(next);
-    addLocalNotification('Local message saved', 'A message to ' + activeFriend.name + ' was saved on this device.', 'message');
+    addLocalNotification('Local message saved', 'A message to ' + currentFriend.name + ' was saved on this device.', 'message');
     setDraft('');
-    setFeedback('Message saved locally for ' + activeFriend.name + '. It was not sent to Xbox Network.');
+    setFeedback('Message saved locally for ' + currentFriend.name + '. It was not sent to Xbox Network.');
   };
 
   const removeThread = (friendId, friendName) => {
