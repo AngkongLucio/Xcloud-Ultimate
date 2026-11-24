@@ -70,9 +70,7 @@ export default function XboxLibraryScreen() {
               <Text variant="displaySmall" style={styles.gameMark}>{game.mark}</Text>
               <Text variant="titleMedium" style={styles.gameTitle}>{game.title}</Text>
               <Text variant="bodySmall" style={styles.genre}>{game.genre}</Text>
-              <Button compact mode="text" onPress={openXbox} textColor="#9cdb8a">
-                Check on Xbox
-              </Button>
+              <Text variant="labelSmall" style={styles.selectHint}>Select to view on Xbox</Text>
             </Card.Content>
           </Card>
           </Pressable>
@@ -87,7 +85,7 @@ export default function XboxLibraryScreen() {
         Browse Official Xbox Catalog
       </Button>
       <Text variant="bodySmall" style={styles.footer}>
-        Example list only — not a live Game Pass feed. Game availability changes by region, plan, and date. No Xbox account credentials are requested here.
+        Example list only — not a live Game Pass feed. Focusable cards open the official Xbox catalog; game availability changes by region, plan, and date.
       </Text>
     </ScrollView>
   );
@@ -111,6 +109,7 @@ const styles = StyleSheet.create({
   gameMark: {marginBottom: 10},
   gameTitle: {color: '#fff', minHeight: 48, fontWeight: '700'},
   genre: {color: '#aab5aa', marginTop: 4},
+  selectHint: {color: '#9cdb8a', marginTop: 12},
   empty: {color: '#cbd5cb', textAlign: 'center', marginVertical: 28},
   catalogButton: {marginTop: 22, backgroundColor: '#107c10'},
   footer: {color: '#829082', marginTop: 14, lineHeight: 19},
