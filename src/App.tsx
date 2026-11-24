@@ -115,7 +115,12 @@ function App() {
               text: t('Download'),
               style: 'default',
               onPress: () => {
-                Linking.openURL(url).catch(_ => {});
+                Linking.openURL(url).catch(() => {
+                  Alert.alert(
+                    t('Unable to open download link'),
+                    t('Check your internet connection and try opening the link again.'),
+                  );
+                });
               },
             },
           ],
