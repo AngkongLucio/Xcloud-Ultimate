@@ -111,6 +111,14 @@ export default function XboxProfileScreen({navigation}) {
   const titledActivityCount = Object.values(mostOpenedTitle).reduce((total, count) => total + count, 0);
   const repeatOpenCount = Object.values(mostOpenedTitle).reduce((total, count) => total + Math.max(count - 1, 0), 0);
 
+  const activityTitleGroups = Object.entries(mostOpenedTitle)
+    .sort((a, b) => a[0].localeCompare(b[0]));
+  const activityTitleBreakdown = activityTitleGroups.map(([title, count]) => ({
+    title,
+    count,
+    percentage: titledActivityCount ? Math.round((count / titledActivityCount) * 100) : 0,
+  }));
+
   const activityInsights = {
     totalOpens: activity.length,
     uniqueTitles: uniqueActivityTitles,
@@ -205,6 +213,22 @@ export default function XboxProfileScreen({navigation}) {
                   <Text style={styles.leaderboardRank}>{index + 1}</Text>
                   <Text numberOfLines={1} style={styles.leaderboardTitle}>{title}</Text>
                   <Text style={styles.leaderboardCount}>{count}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+          {activityTitleBreakdown.length > 0 ? (
+            <View style={styles.titleBreakdown}>
+              <Text style={styles.topActivityLabel}>TITLE BREAKDOWN</Text>
+              {activityTitleBreakdown.map(item => (
+                <View key={item.title} style={styles.breakdownRow} accessibilityLabel={item.title + ": " + item.count + " opens, " + item.percentage + " percent of titled entries"}>
+                  <View style={styles.breakdownCopy}>
+                    <Text numberOfLines={1} style={styles.insightLabel}>{item.title}</Text>
+                    <View style={styles.insightTrack}>
+                      <View style={[styles.insightFill, {width: item.percentage + '%'}]} />
+                    </View>
+                  </View>
+                  <Text style={styles.insightValue}>{item.count}</Text>
                 </View>
               ))}
             </View>
@@ -388,6 +412,9 @@ const styles = StyleSheet.create({
   statNumber: {color: '#9cdb8a', fontWeight: '800'},
   statLabel: {color: '#aab5aa', letterSpacing: 1, marginTop: 4},
   activityInsights: {backgroundColor: '#202920', borderRadius: 12, padding: 12, marginTop: 10, borderWidth: 1, borderColor: '#354136'},
+  titleBreakdown: {backgroundColor: '#202920', borderRadius: 12, padding: 12, marginTop: 10, borderWidth: 1, borderColor: '#354136'},
+  breakdownRow: {flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10},
+  breakdownCopy: {flex: 1},
   insightRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10},
   insightLabel: {color: '#d7dfd5', fontSize: 12},
   insightValue: {color: '#fff', fontWeight: '800', fontSize: 14},
