@@ -52,7 +52,7 @@ export default function XboxFriendsScreen() {
   });
   const [name, setName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('Recent');
+  const [sortOrder, setSortOrder] = useState(() => storage.getString('xbox.friends.sortOrder') === 'A–Z' ? 'A–Z' : 'Recent');
   const [formMessage, setFormMessage] = useState('');
   const [avatar, setAvatar] = useState('🎮');
 
@@ -71,7 +71,17 @@ export default function XboxFriendsScreen() {
     }
   };
 
-  useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
+  useEffect(() => {
+    if (isFocused) {
+      refresh();
+      const storedSort = storage.getString('xbox.friends.sortOrder');
+      const normalizedSort = storedSort === 'A–Z' ? 'A–Z' : 'Recent';
+      setSortOrder(normalizedSort);
+      if (storedSort !== normalizedSort) {
+        storage.set('xbox.friends.sortOrder', normalizedSort);
+      }
+    }
+  }, [isFocused]);
 
   const readLatestFriends = () => {
     try {
@@ -195,7 +205,7 @@ export default function XboxFriendsScreen() {
       <View style={styles.sortRow} accessibilityLabel="Sort local players">
         <Text style={styles.sortLabel}>SORT</Text>
         {['Recent', 'A–Z'].map(item => (
-          <Pressable key={item} accessibilityRole="button" accessibilityLabel={item === 'Recent' ? 'Sort players by recently added' : 'Sort players alphabetically'} accessibilityState={{selected: sortOrder === item}} onPress={() => setSortOrder(item)} style={[styles.sortChip, sortOrder === item && styles.sortChipSelected]}>
+          <Pressable key={item} accessibilityRole="button" accessibilityLabel={item === 'Recent' ? 'Sort players by recently added' : 'Sort players alphabetically'} accessibilityState={{selected: sortOrder === item}} onPress={() => { setSortOrder(item); storage.set('xbox.friends.sortOrder', item); }} style={[styles.sortChip, sortOrder === item && styles.sortChipSelected]}>
             <Text style={[styles.sortText, sortOrder === item && styles.sortTextSelected]}>{item}</Text>
           </Pressable>
         ))}
