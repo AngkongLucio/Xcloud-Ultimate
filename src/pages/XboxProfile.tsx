@@ -114,6 +114,7 @@ export default function XboxProfileScreen({navigation}) {
     repeatOpens: Math.max(activity.length - uniqueActivityTitles, 0),
     repeatRate: activity.length ? Math.round(((activity.length - uniqueActivityTitles) / activity.length) * 100) : 0,
     activeDays,
+    averageOpensPerActiveDay: activeDays ? (activity.length / activeDays).toFixed(1) : '0.0',
   };
 
   useEffect(() => {
@@ -201,6 +202,10 @@ export default function XboxProfileScreen({navigation}) {
             <View style={styles.insightRow}>
               <Text style={styles.insightLabel}>Active days</Text>
               <Text accessibilityLabel={activityInsights.activeDays + " distinct activity days in saved history"} style={styles.insightValue}>{activityInsights.activeDays}</Text>
+            </View>
+            <View style={styles.insightRow}>
+              <Text style={styles.insightLabel}>Average opens / active day</Text>
+              <Text accessibilityLabel={activityInsights.averageOpensPerActiveDay + " average catalog opens per active day"} style={styles.insightValue}>{activityInsights.averageOpensPerActiveDay}</Text>
             </View>
             <View style={styles.insightRow}>
               <Text style={styles.insightLabel}>Current streak</Text>
