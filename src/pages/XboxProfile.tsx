@@ -63,7 +63,7 @@ export default function XboxProfileScreen({navigation}) {
           <Text variant="titleLarge" style={styles.sectionTitle}>Player stats</Text>
           <View style={styles.statsRow}>
             <View style={styles.statTile}>
-              <Text variant="headlineMedium" accessibilityLabel={launchCount + " catalog opens recorded locally"} style={styles.statNumber}>{launchCount}</Text>
+              <Text variant="headlineMedium" accessibilityLiveRegion="polite" accessibilityLabel={launchCount + " catalog opens recorded locally"} style={styles.statNumber}>{launchCount}</Text>
               <Text variant="labelSmall" style={styles.statLabel}>CATALOG OPENS</Text>
             </View>
             <View style={styles.statTile}>
@@ -80,7 +80,7 @@ export default function XboxProfileScreen({navigation}) {
             <View key={item.label} style={styles.milestoneRow}>
               <View style={styles.milestoneCopy}>
                 <Text style={styles.milestoneName}>{item.label}</Text>
-                <Text style={styles.milestoneHint}>{Math.min(launchCount, item.target)} / {item.target} catalog opens</Text>
+                <Text accessibilityLabel={item.label + ": " + Math.min(launchCount, item.target) + " of " + item.target + " catalog opens"} style={styles.milestoneHint}>{Math.min(launchCount, item.target)} / {item.target} catalog opens</Text>
               </View>
               <Text accessibilityLabel={item.label + (launchCount >= item.target ? " completed" : " not yet completed")} style={styles.milestoneStatus}>{launchCount >= item.target ? '✓' : '○'}</Text>
             </View>
@@ -92,7 +92,7 @@ export default function XboxProfileScreen({navigation}) {
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Recent activity</Text>
           {activity.length ? activity.map((entry, index) => (
-            <View key={String(entry.openedAt) + '-' + index} style={styles.activityRow}>
+            <View key={String(entry.openedAt) + '-' + index} accessible accessibilityRole="text" accessibilityLabel={(entry.title || "Xbox Catalog") + (entry.openedAt ? ", opened " + new Date(entry.openedAt).toLocaleString() : ", time unavailable")} style={styles.activityRow}>
               <View style={styles.activityIcon}><Text style={styles.activityEmoji}>▶</Text></View>
               <View style={styles.activityCopy}>
                 <Text accessibilityLabel={"Recently opened catalog item: " + (entry.title || "Xbox Catalog")} style={styles.activityTitle}>{entry.title || 'Xbox Catalog'}</Text>
