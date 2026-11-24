@@ -161,6 +161,26 @@ export default function XboxLibraryScreen({navigation}) {
         ))}
       </ScrollView>
 
+      {(search.trim().length > 0 || category !== 'All' || favoritesOnly) && (
+        <Button
+          mode="text"
+          compact
+          accessibilityRole="button"
+          accessibilityLabel="Reset library search and filters"
+          accessibilityHint="Clears the search, returns to all categories, and turns off favorites-only filtering."
+          onPress={() => {
+            haptic();
+            setSearch('');
+            setCategory('All');
+            setFavoritesOnly(false);
+            setSelectedIndex(0);
+          }}
+          textColor="#9cdb8a"
+          style={styles.resetFilters}>
+          Reset search & filters
+        </Button>
+      )}
+
       <View style={styles.grid}>
         {visibleGames.map((game, index) => (
           <View key={game.title} style={styles.gameCardContainer}>
@@ -236,6 +256,7 @@ const styles = StyleSheet.create({
   searchInput: {color: '#fff'},
   resultCount: {color: '#aab5aa', marginBottom: 10, marginLeft: 4},
   filters: {gap: 8, paddingBottom: 16},
+  resetFilters: {alignSelf: 'flex-start', marginBottom: 8},
   chip: {backgroundColor: '#202920'},
   chipText: {color: '#e6eee6'},
   favoriteFilterRow: {flexDirection: 'row', marginBottom: 8},
