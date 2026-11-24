@@ -30,7 +30,7 @@ export default function XboxAchievementsScreen() {
         <Card.Content>
           <Text style={styles.summaryLabel}>LOCAL BADGES UNLOCKED</Text>
           <Text variant="displaySmall" style={styles.score}>{unlocked} / {BADGES.length}</Text>
-          <ProgressBar progress={unlocked / BADGES.length} color="#9cdb8a" style={styles.progress} />
+          <ProgressBar progress={unlocked / BADGES.length} color="#9cdb8a" style={styles.progress} accessibilityLabel={"Local badge progress: " + unlocked + " of " + BADGES.length + " unlocked"} />
           <Text style={styles.summaryHint}>{count} catalog opens recorded on this device</Text>
         </Card.Content>
       </Card>
@@ -41,18 +41,18 @@ export default function XboxAchievementsScreen() {
           <Card key={item.id} style={[styles.badgeCard, earned && styles.earnedCard]}>
             <Card.Content>
               <View style={styles.badgeRow}>
-                <View style={[styles.iconCircle, earned && styles.earnedIcon]}><Text style={styles.badgeIcon}>{item.icon}</Text></View>
+                <View style={[styles.iconCircle, earned && styles.earnedIcon]} accessible accessibilityLabel={item.title + " badge icon"}><Text style={styles.badgeIcon}>{item.icon}</Text></View>
                 <View style={styles.badgeCopy}>
                   <Text variant="titleMedium" style={styles.badgeTitle}>{item.title}</Text>
                   <Text variant="bodySmall" style={styles.badgeDescription}>{item.description}</Text>
                 </View>
-                <Text style={styles.status}>{earned ? '✓' : '🔒'}</Text>
+                <Text style={styles.status} accessibilityLabel={earned ? "Unlocked" : "Locked"}>{earned ? '✓' : '🔒'}</Text>
               </View>
               <View style={styles.progressMeta}>
                 <Text style={styles.progressText}>{Math.min(count, item.target)} / {item.target}</Text>
                 <Text style={styles.progressText}>{earned ? 'UNLOCKED' : 'IN PROGRESS'}</Text>
               </View>
-              <ProgressBar progress={progress} color={earned ? '#9cdb8a' : '#607560'} style={styles.progress} />
+              <ProgressBar progress={progress} color={earned ? '#9cdb8a' : '#607560'} style={styles.progress} accessibilityLabel={item.title + " progress: " + Math.min(count, item.target) + " of " + item.target + (earned ? ", unlocked" : ", in progress")} />
             </Card.Content>
           </Card>
         );
