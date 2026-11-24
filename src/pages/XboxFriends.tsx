@@ -16,6 +16,7 @@ export default function XboxFriendsScreen() {
     } catch (_) { return []; }
   });
   const [name, setName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [formMessage, setFormMessage] = useState('');
   const [avatar, setAvatar] = useState('🎮');
 
@@ -49,6 +50,8 @@ export default function XboxFriendsScreen() {
     setFormMessage(clean + ' was added to your local list.');
   };
 
+  const filteredFriends = friends.filter(item => item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()));
+
   const removeFriend = id => {
     const removed = friends.find(item => item.id === id);
     save(friends.filter(item => item.id !== id));
@@ -80,9 +83,10 @@ export default function XboxFriendsScreen() {
 
       <View style={styles.listHeader}>
         <Text variant="titleLarge" style={styles.sectionTitle}>My players</Text>
-        <Text style={styles.count} accessibilityLiveRegion="polite" accessibilityLabel={"Local friends list contains " + friends.length + (friends.length === 1 ? " player" : " players")}>{friends.length}</Text>
+        <Text style={styles.count} accessibilityLiveRegion="polite" accessibilityLabel={filteredFriends.length + " of " + friends.length + " local players shown"}>{filteredFriends.length}{searchQuery.trim() ? " / " + friends.length : ""}</Text>
       </View>
-      {friends.length ? friends.map(friend => (
+      <TextInput mode="outlined" label="Search local players" accessibilityLabel="Search local friends list" accessibilityHint="Filters saved local player names as you type." value={searchQuery} onChangeText={setSearchQuery} autoCapitalize="none" clearButtonMode="while-editing" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.input} />
+      {filteredFriends.length ? filteredFriends.map(friend => (
         <Card key={friend.id} style={styles.friendCard} accessible accessibilityLabel={"Local player " + friend.name + (friend.addedAt ? ", added " + new Date(friend.addedAt).toLocaleDateString() : "")}>
           <Card.Content style={styles.friendRow}>
             <View style={styles.friendAvatar}><Text style={styles.friendEmoji}>{friend.avatar || '🎮'}</Text></View>
@@ -96,9 +100,10 @@ export default function XboxFriendsScreen() {
       )) : (
         <Card style={styles.emptyCard}>
           <Card.Content style={styles.emptyContent}>
-            <Text style={styles.emptyIcon}>👥</Text>
-            <Text variant="titleMedium" style={styles.friendName}>Your list is empty</Text>
-            <Text variant="bodySmall" style={styles.friendStatus}>Add display names above to create your local player list.</Text>
+            <Text style={styles.emptyIcon}>{friends.length ? "🔎" : "👥"}</Text>
+            <Text variant="titleMedium" style={styles.friendName}>{friends.length ? "No matching players" : "Your list is empty"}</Text>
+            <Text variant="bodySmall" accessibilityLiveRegion="polite" style={styles.friendStatus}>{friends.length ? "Try another name or clear the search." : "Add display names above to create your local player list."}</Text>
+            {friends.length && searchQuery ? <Button compact mode="text" textColor="#a8e69a" accessibilityLabel="Clear player search" onPress={() => setSearchQuery("")}>Clear search</Button> : null}
           </Card.Content>
         </Card>
       )}
