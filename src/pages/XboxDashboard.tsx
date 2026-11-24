@@ -10,7 +10,7 @@ const quickLinks = [
   {title: 'Recently played', subtitle: 'Continue where you left off', icon: '▶️'},
 ];
 
-export default function XboxDashboardScreen() {
+export default function XboxDashboardScreen({navigation}) {
   const openCloud = () => Linking.openURL(XBOX_PLAY).catch(() => {});
 
   return (
@@ -37,6 +37,9 @@ export default function XboxDashboardScreen() {
       </Card>
 
       <Text variant="titleLarge" style={styles.sectionTitle}>Explore</Text>
+      <Button mode="outlined" icon="view-grid" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxLibrary')} style={styles.libraryButton}>
+        Open Game Library
+      </Button>
       {quickLinks.map(item => (
         <Card key={item.title} style={styles.linkCard} mode="outlined">
           <Card.Content style={styles.linkContent}>
@@ -70,6 +73,7 @@ const styles = StyleSheet.create({
   heroCopy: {color: '#d6e8d5', marginTop: 8, marginBottom: 18, maxWidth: 440},
   playButton: {alignSelf: 'flex-start', backgroundColor: '#107c10'},
   sectionTitle: {color: '#fff', fontWeight: '700', marginBottom: 12},
+  libraryButton: {alignSelf: 'flex-start', borderColor: '#527b52', marginBottom: 14},
   linkCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderRadius: 14, marginBottom: 10},
   linkContent: {flexDirection: 'row', alignItems: 'center', gap: 14},
   linkText: {flex: 1},
