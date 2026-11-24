@@ -27,6 +27,7 @@ export default function XboxDashboardScreen({navigation}) {
   const [lastOpenedAt, setLastOpenedAt] = useState(() => storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
   const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
   const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
+  const [dashboardSelection, setDashboardSelection] = useState(0);
   useEffect(() => {
     Animated.parallel([
       Animated.timing(bootScale, {toValue: 1, duration: 650, useNativeDriver: true}),
@@ -61,9 +62,28 @@ export default function XboxDashboardScreen({navigation}) {
   const openGamePass = () => Linking.openURL('https://www.xbox.com/xbox-game-pass').catch(() => {});
   const openGuideRoute = route => { haptic('impactLight'); setGuideVisible(false); if (route === 'CloudGaming') { openCloud(); } else { navigation.navigate(route); } };
   const handleQuickLink = title => {
+    haptic('impactLight');
     if (title === 'Cloud Gaming') { openCloud(); }
     else if (title === 'Game Pass') { openGamePass(); }
     else { navigation.navigate('XboxLibrary'); }
+  };
+  const dashboardActions = [
+    {label: 'Cloud Gaming', run: openCloud},
+    {label: 'Game Library', run: () => navigation.navigate('XboxLibrary')},
+    {label: 'Player Profile', run: () => navigation.navigate('XboxProfile')},
+    {label: 'Settings', run: () => navigation.navigate('XboxSettings')},
+    {label: 'Friends', run: () => navigation.navigate('XboxFriends')},
+    {label: 'Messages', run: () => navigation.navigate('XboxMessages')},
+    {label: 'Achievements', run: () => navigation.navigate('XboxAchievements')},
+    {label: 'Notifications', run: () => navigation.navigate('XboxNotifications')},
+  ];
+  const moveDashboardSelection = offset => {
+    haptic();
+    setDashboardSelection(current => (current + offset + dashboardActions.length) % dashboardActions.length);
+  };
+  const openDashboardSelection = () => {
+    const selected = dashboardActions[dashboardSelection];
+    if (selected) { haptic('impactLight'); selected.run(); }
   };
 
   return (
@@ -161,6 +181,16 @@ export default function XboxDashboardScreen({navigation}) {
           </Card.Content>
       </Card>
 
+      <View style={styles.dashboardController}>
+        <Text style={styles.dashboardControllerTitle}>DASHBOARD CONTROLLER</Text>
+        <Text style={styles.dashboardSelected}>{dashboardActions[dashboardSelection]?.label}</Text>
+        <View style={styles.dashboardDpadRow}>
+          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveDashboardSelection(-1)}>‹ Previous</Button>
+          <Button compact mode="contained" buttonColor="#107c10" onPress={openDashboardSelection}>A · Open</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveDashboardSelection(1)}>Next ›</Button>
+        </View>
+        <Text style={styles.dashboardControllerHint}>On-screen controls navigate the dashboard shortcuts. Physical controller input is not directly captured here.</Text>
+      </View>
       <View style={styles.actionRow}>
         <Button mode="outlined" icon="account-circle" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxProfile')} style={styles.actionButton}>Profile</Button>
         <Button mode="outlined" icon="view-grid" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxLibrary')} style={styles.actionButton}>
@@ -294,6 +324,11 @@ const styles = StyleSheet.create({
   recentTitle: {color: '#fff', fontWeight: '700', marginTop: 7, marginBottom: 4},
   recentButton: {alignSelf: 'flex-start', marginTop: 5},
   libraryButton: {alignSelf: 'flex-start', borderColor: '#527b52', marginBottom: 14},
+  dashboardController: {marginBottom: 18, padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#405640', backgroundColor: '#18221a'},
+  dashboardControllerTitle: {color: '#8fbc8f', fontSize: 10, fontWeight: '900', letterSpacing: 1.6, textAlign: 'center'},
+  dashboardSelected: {color: '#fff', fontSize: 19, fontWeight: '800', textAlign: 'center', marginVertical: 10},
+  dashboardDpadRow: {flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, flexWrap: 'wrap'},
+  dashboardControllerHint: {color: '#9eae9d', fontSize: 11, textAlign: 'center', lineHeight: 16, marginTop: 10},
   actionRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14},
   actionButton: {borderColor: '#527b52'},
   linkCardPressable: {borderRadius: 14, marginBottom: 10},
