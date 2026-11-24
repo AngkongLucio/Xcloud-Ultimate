@@ -29,6 +29,7 @@ export default function XboxDashboardScreen({navigation}) {
   const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
   const [dashboardSelection, setDashboardSelection] = useState(0);
   const [guideSelection, setGuideSelection] = useState(0);
+  const [quickSelection, setQuickSelection] = useState(0);
   useEffect(() => {
     Animated.parallel([
       Animated.timing(bootScale, {toValue: 1, duration: 650, useNativeDriver: true}),
@@ -104,6 +105,22 @@ export default function XboxDashboardScreen({navigation}) {
     const selected = dashboardActions[dashboardSelection];
     if (selected) { haptic('impactLight'); selected.run(); }
   };
+  const quickActions = [
+    {label: 'Focus highlight', run: () => updateFocusOutline(!focusOutline)},
+    {label: 'Controller feedback', run: () => updateHaptics(!hapticsEnabled)},
+    {label: 'Compact game cards', run: () => updateCompactCards(!compactCards)},
+    {label: 'All settings', run: () => { setQuickSettingsVisible(false); navigation.navigate('XboxSettings'); }},
+    {label: 'Notifications', run: () => { setQuickSettingsVisible(false); navigation.navigate('XboxNotifications'); }},
+    {label: 'Launch cloud', run: () => { setQuickSettingsVisible(false); openCloud(); }},
+  ];
+  const moveQuickSelection = offset => {
+    haptic();
+    setQuickSelection(current => (current + offset + quickActions.length) % quickActions.length);
+  };
+  const openQuickSelection = () => {
+    const selected = quickActions[quickSelection];
+    if (selected) { haptic('impactLight'); selected.run(); }
+  };
 
   return (
     <View style={styles.root}>
@@ -121,7 +138,7 @@ export default function XboxDashboardScreen({navigation}) {
           <Pressable onPress={() => { haptic(); setGuideSelection(0); setGuideVisible(true); }} accessibilityRole="button" accessibilityLabel="Open Xbox guide" style={styles.quickButton}>
             <Text style={styles.quickButtonText}>☰</Text>
           </Pressable>
-          <Pressable onPress={() => { haptic(); setQuickSettingsVisible(value => !value); }} accessibilityRole="button" accessibilityLabel="Toggle quick settings" style={styles.quickButton}>
+          <Pressable onPress={() => { haptic(); setQuickSelection(0); setQuickSettingsVisible(value => !value); }} accessibilityRole="button" accessibilityLabel="Toggle quick settings" style={styles.quickButton}>
             <Text style={styles.quickButtonText}>⚙</Text>
           </Pressable>
           <Text variant="headlineSmall" style={styles.logo}>XBOX</Text>
@@ -186,6 +203,15 @@ export default function XboxDashboardScreen({navigation}) {
             <View style={styles.quickRow}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Compact game cards</Text><Text style={styles.quickHint}>Tighter game library layout</Text></View>
               <Switch value={compactCards} onValueChange={updateCompactCards} />
+            </View>
+            <View style={styles.quickController}>
+              <Text style={styles.quickControllerLabel}>QUICK SETTINGS NAVIGATION</Text>
+              <Text style={styles.quickControllerSelected}>{quickActions[quickSelection]?.label}</Text>
+              <View style={styles.quickControllerButtons}>
+                <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveQuickSelection(-1)}>‹ Previous</Button>
+                <Button compact mode="contained" buttonColor="#107c10" onPress={openQuickSelection}>A · Select</Button>
+                <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveQuickSelection(1)}>Next ›</Button>
+              </View>
             </View>
             <View style={styles.quickActions}>
               <Button compact mode="outlined" textColor="#9cdb8a" onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxSettings'); }}>All settings</Button>
@@ -339,6 +365,10 @@ const styles = StyleSheet.create({
   quickLabel: {color: '#f2f6f1', fontWeight: '700'},
   quickHint: {color: '#aab5aa', fontSize: 12, marginTop: 3},
   quickDivider: {height: 1, backgroundColor: '#354136'},
+  quickController: {marginTop: 14, padding: 11, borderRadius: 12, borderWidth: 1, borderColor: '#456345', backgroundColor: '#1b291e'},
+  quickControllerLabel: {color: '#8fbc8f', fontSize: 9, fontWeight: '900', letterSpacing: 1.2, textAlign: 'center'},
+  quickControllerSelected: {color: '#fff', fontSize: 15, fontWeight: '800', textAlign: 'center', marginVertical: 7},
+  quickControllerButtons: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, flexWrap: 'wrap'},
   quickActions: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12},
   profileAvatar: {fontSize: 25},
   profileTag: {color: '#d6e8d5', fontSize: 11, fontWeight: '700', maxWidth: 74},
