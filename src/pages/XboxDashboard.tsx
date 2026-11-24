@@ -16,11 +16,23 @@ const readLocalAvatar = () => {
 };
 const readLastActivityTitle = () => {
   const value = storage.getString('xbox.activity.lastTitle');
-  return typeof value === 'string' ? value.trim().slice(0, 120) || 'No recent launch' : 'No recent launch';
+  if (typeof value !== 'string' || !value.trim()) {
+    if (value !== undefined) storage.delete('xbox.activity.lastTitle');
+    return 'No recent launch';
+  }
+  const normalized = value.trim().slice(0, 120);
+  if (normalized !== value) storage.set('xbox.activity.lastTitle', normalized);
+  return normalized;
 };
 const readLastActivityTimestamp = () => {
   const value = storage.getNumber('xbox.activity.lastOpenedAt');
-  return Number.isFinite(value) && value > 0 ? value : 0;
+  if (!Number.isFinite(value) || value <= 0) {
+    if (value !== undefined) storage.delete('xbox.activity.lastOpenedAt');
+    return 0;
+  }
+  const normalized = Math.floor(value);
+  if (normalized !== value) storage.set('xbox.activity.lastOpenedAt', normalized);
+  return normalized;
 };
 
 const readUnreadNotifications = () => {
