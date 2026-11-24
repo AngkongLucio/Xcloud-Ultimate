@@ -85,9 +85,9 @@ Due to limitations in the Android kernel drivers, not all Android devices suppor
 ## Local Development
 
 ### Requirements
-- [React Native](https://reactnative.dev/) = 0.74
-- [NodeJs](https://nodejs.org/) >= 20
-- [Yarn](https://yarnpkg.com/) >= 1.22
+- [React Native](https://reactnative.dev/) = 0.72.14 (matches `package.json`)
+- [Node.js](https://nodejs.org/) >= 18.12 (required by the pinned Yarn 4 toolchain)
+- [Yarn](https://yarnpkg.com/) >= 4.2.2 (matches `packageManager` in `package.json`)
 
 ### Steps to get up and running
 
