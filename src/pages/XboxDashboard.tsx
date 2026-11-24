@@ -28,6 +28,7 @@ export default function XboxDashboardScreen({navigation}) {
   const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
   const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
   const [dashboardSelection, setDashboardSelection] = useState(0);
+  const [guideSelection, setGuideSelection] = useState(0);
   useEffect(() => {
     Animated.parallel([
       Animated.timing(bootScale, {toValue: 1, duration: 650, useNativeDriver: true}),
@@ -61,6 +62,24 @@ export default function XboxDashboardScreen({navigation}) {
   const updateCompactCards = value => { haptic(); setCompactCards(value); storage.set('xbox.ui.compactCards', value); };
   const openGamePass = () => Linking.openURL('https://www.xbox.com/xbox-game-pass').catch(() => {});
   const openGuideRoute = route => { haptic('impactLight'); setGuideVisible(false); if (route === 'CloudGaming') { openCloud(); } else { navigation.navigate(route); } };
+  const guideActions = [
+    {label: 'Player Profile', route: 'XboxProfile'},
+    {label: 'Cloud Gaming', route: 'CloudGaming'},
+    {label: 'Game Library', route: 'XboxLibrary'},
+    {label: 'Achievements', route: 'XboxAchievements'},
+    {label: 'Friends', route: 'XboxFriends'},
+    {label: 'Messages', route: 'XboxMessages'},
+    {label: 'Notifications', route: 'XboxNotifications'},
+    {label: 'Settings', route: 'XboxSettings'},
+  ];
+  const moveGuideSelection = offset => {
+    haptic();
+    setGuideSelection(current => (current + offset + guideActions.length) % guideActions.length);
+  };
+  const openGuideSelection = () => {
+    const selected = guideActions[guideSelection];
+    if (selected) openGuideRoute(selected.route);
+  };
   const handleQuickLink = title => {
     haptic('impactLight');
     if (title === 'Cloud Gaming') { openCloud(); }
@@ -99,7 +118,7 @@ export default function XboxDashboardScreen({navigation}) {
           <Text style={styles.profileTag}>{gamertag}</Text>
         </Pressable>
         <View style={styles.topActions}>
-          <Pressable onPress={() => { haptic(); setGuideVisible(true); }} accessibilityRole="button" accessibilityLabel="Open Xbox guide" style={styles.quickButton}>
+          <Pressable onPress={() => { haptic(); setGuideSelection(0); setGuideVisible(true); }} accessibilityRole="button" accessibilityLabel="Open Xbox guide" style={styles.quickButton}>
             <Text style={styles.quickButtonText}>☰</Text>
           </Pressable>
           <Pressable onPress={() => { haptic(); setQuickSettingsVisible(value => !value); }} accessibilityRole="button" accessibilityLabel="Toggle quick settings" style={styles.quickButton}>
@@ -122,6 +141,15 @@ export default function XboxDashboardScreen({navigation}) {
               <View style={{flex: 1}}><Text style={styles.guideName}>{gamertag}</Text><Text style={styles.guideHint}>Local player profile</Text></View>
               <Text style={styles.guideChevron}>›</Text>
             </Pressable>
+            <View style={styles.guideController}>
+              <Text style={styles.guideControllerLabel}>GUIDE NAVIGATION</Text>
+              <Text style={styles.guideControllerSelected}>{guideActions[guideSelection]?.label}</Text>
+              <View style={styles.guideControllerButtons}>
+                <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveGuideSelection(-1)}>‹</Button>
+                <Button compact mode="contained" buttonColor="#107c10" onPress={openGuideSelection}>A · Open</Button>
+                <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveGuideSelection(1)}>›</Button>
+              </View>
+            </View>
             <Text style={styles.guideSection}>GAMING</Text>
             <Pressable style={styles.guideItem} onPress={() => openGuideRoute('CloudGaming')}><Text style={styles.guideIcon}>☁️</Text><Text style={styles.guideItemText}>Cloud Gaming</Text></Pressable>
             <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxLibrary')}><Text style={styles.guideIcon}>🎮</Text><Text style={styles.guideItemText}>Game Library</Text></Pressable>
@@ -281,6 +309,10 @@ const styles = StyleSheet.create({
   guideOverlay: {flex: 1, flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.58)'},
   guideBackdrop: {flex: 1},
   guideDrawer: {width: '82%', maxWidth: 360, backgroundColor: '#151d16', paddingTop: 54, paddingHorizontal: 18, paddingBottom: 24, borderLeftWidth: 1, borderLeftColor: '#456345'},
+  guideController: {padding: 11, borderRadius: 12, borderWidth: 1, borderColor: '#456345', backgroundColor: '#1b291e', marginBottom: 14},
+  guideControllerLabel: {color: '#8fbc8f', fontSize: 9, fontWeight: '900', letterSpacing: 1.3, textAlign: 'center'},
+  guideControllerSelected: {color: '#fff', fontSize: 15, fontWeight: '800', textAlign: 'center', marginVertical: 7},
+  guideControllerButtons: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8},
   guideTop: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22},
   guideEyebrow: {color: '#8fbc8f', fontSize: 10, letterSpacing: 2, fontWeight: '800'},
   guideHeading: {color: '#fff', fontSize: 28, fontWeight: '900', marginTop: 4},
