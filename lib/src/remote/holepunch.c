@@ -471,6 +471,25 @@ static bool response_indicates_invalid_token(const HttpResponseData *response_da
             || str_contains_case_insensitive(response_data->data, "invalid_token");
 }
 
+/* json_tokener_parse_ex may stop at the end of the first value. Require that
+ * everything left in the response is JSON whitespace, not another value or
+ * an arbitrary suffix. */
+static bool json_tokener_consumed_all(
+        json_tokener *tok, const char *data, size_t size)
+{
+    if(!tok || !data)
+        return false;
+
+    size_t parsed_size = json_tokener_get_parse_end(tok);
+    if(parsed_size > size)
+        return false;
+
+    while(parsed_size < size && isspace((unsigned char)data[parsed_size]))
+        parsed_size++;
+
+    return parsed_size == size;
+}
+
 CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_list_devices(
         const char* psn_oauth2_token, ChiakiHolepunchConsoleType console_type,
         ChiakiHolepunchDeviceInfo **devices, size_t *device_count,
@@ -2900,10 +2919,16 @@ static void* websocket_thread_func(void *user) {
             message_buf[message_len] = '\0';
             json_tokener_reset(tok);
             json_object *json = json_tokener_parse_ex(tok, message_buf, (int)message_len);
-            if (json == NULL)
+            enum json_tokener_error message_json_err = json_tokener_get_error(tok);
+            if(!json || message_json_err != json_tokener_success ||
+                    !json_tokener_consumed_all(tok, message_buf, message_len))
             {
-                CHIAKI_LOGE(session->log, "websocket_thread_func: Parsing complete JSON message failed");
+                CHIAKI_LOGE(session->log,
+                        "websocket_thread_func: Parsing complete JSON message failed or left trailing data: %s",
+                        json_tokener_error_desc(message_json_err));
                 CHIAKI_LOGV(session->log, "websocket_thread_func: Payload was:\n%s", message_buf);
+                if(json)
+                    json_object_put(json);
                 message_len = 0;
                 message_buf[0] = '\0';
                 json_tokener_reset(tok);
@@ -3653,6 +3678,15 @@ static ChiakiErrorCode http_create_session(Session *session)
         goto cleanup;
     }
 
+    if(!json_tokener_consumed_all(tok, response_data.data, response_data.size))
+    {
+        CHIAKI_LOGE(session->log, "http_create_session: Unexpected data after JSON response");
+        json_object_put(json);
+        json_tokener_free(tok);
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup;
+    }
+
     json_object *session_id_json = NULL;
     json_object *account_id_json = NULL;
     bool schema_ok =
@@ -3807,6 +3841,15 @@ static ChiakiErrorCode http_check_session(Session *session, bool viewurl)
         CHIAKI_LOGE(session->log, "http_check_session: JSON parsing failed: %s", json_tokener_error_desc(json_err));
         if(json)
             json_object_put(json);
+        json_tokener_free(tok);
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup;
+    }
+
+    if(!json_tokener_consumed_all(tok, response_data.data, response_data.size))
+    {
+        CHIAKI_LOGE(session->log, "http_check_session: Unexpected data after JSON response");
+        json_object_put(json);
         json_tokener_free(tok);
         err = CHIAKI_ERR_INVALID_DATA;
         goto cleanup;
