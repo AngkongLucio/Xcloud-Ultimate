@@ -80,6 +80,9 @@ export default function XboxDashboardScreen({navigation}) {
         <Button mode="outlined" icon="message-text" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxMessages')} style={styles.actionButton}>
           Messages
         </Button>
+        <Button mode="outlined" icon="bell" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxNotifications')} style={styles.actionButton}>
+          Notifications
+        </Button>
       </View>
       <Card style={styles.recentCard} mode="outlined">
         <Card.Content>
