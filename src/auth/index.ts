@@ -27,8 +27,9 @@ export const getTokenFromRedirectUri = (redirectUri: string): Promise<any> => {
     try {
       const redirect = new URL(redirectUri);
       if (
-        redirect.protocol !== 'https:' ||
-        redirect.hostname !== 'remoteplay.dl.playstation.net' ||
+        redirect.origin !== 'https://remoteplay.dl.playstation.net' ||
+        redirect.username !== '' ||
+        redirect.password !== '' ||
         redirect.pathname !== '/remoteplay/redirect'
       ) {
         reject(new Error('PSN redirect URL does not match the official redirect address.'));
