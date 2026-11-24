@@ -2,6 +2,9 @@ name: iOS Shell Preview (TrollStore)
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/xbox-dashboard-ios-prep
 
 permissions:
   contents: read
