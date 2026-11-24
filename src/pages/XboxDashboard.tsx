@@ -170,9 +170,9 @@ export default function XboxDashboardScreen({navigation}) {
           <View style={styles.guideDrawer}>
             <View style={styles.guideTop}>
               <View><Text style={styles.guideEyebrow}>XCLOUD ULTIMATE</Text><Text style={styles.guideHeading}>Guide</Text></View>
-              <Pressable onPress={() => { haptic(); setGuideVisible(false); }} style={styles.guideClose}><Text style={styles.guideCloseText}>✕</Text></Pressable>
+              <Pressable onPress={() => { haptic(); setGuideVisible(false); }} accessibilityRole="button" accessibilityLabel="Close Xbox guide" style={styles.guideClose}><Text style={styles.guideCloseText}>✕</Text></Pressable>
             </View>
-            <Pressable style={[styles.guideProfile, focusOutline && guideSelection === 0 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxProfile')}>
+            <Pressable style={[styles.guideProfile, focusOutline && guideSelection === 0 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxProfile')} accessibilityRole="button" accessibilityLabel={"Open player profile for " + gamertag}>
               <Text style={styles.guideAvatar}>{avatar}</Text>
               <View style={{flex: 1}}><Text style={styles.guideName}>{gamertag}</Text><Text style={styles.guideHint}>Local player profile</Text></View>
               <Text style={styles.guideChevron}>›</Text>
@@ -187,16 +187,16 @@ export default function XboxDashboardScreen({navigation}) {
               </View>
             </View>
             <Text style={styles.guideSection}>GAMING</Text>
-            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 1 && styles.guideItemFocused]} onPress={() => openGuideRoute('CloudGaming')}><Text style={styles.guideIcon}>☁️</Text><Text style={styles.guideItemText}>Cloud Gaming</Text></Pressable>
-            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 2 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxLibrary')}><Text style={styles.guideIcon}>🎮</Text><Text style={styles.guideItemText}>Game Library</Text></Pressable>
-            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 3 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxAchievements')}><Text style={styles.guideIcon}>🏆</Text><Text style={styles.guideItemText}>Achievements</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 1 && styles.guideItemFocused]} onPress={() => openGuideRoute('CloudGaming')} accessibilityRole="button" accessibilityLabel="Open Cloud Gaming"><Text style={styles.guideIcon}>☁️</Text><Text style={styles.guideItemText}>Cloud Gaming</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 2 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxLibrary')} accessibilityRole="button" accessibilityLabel="Open Game Library"><Text style={styles.guideIcon}>🎮</Text><Text style={styles.guideItemText}>Game Library</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 3 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxAchievements')} accessibilityRole="button" accessibilityLabel="Open Achievements"><Text style={styles.guideIcon}>🏆</Text><Text style={styles.guideItemText}>Achievements</Text></Pressable>
             <Text style={styles.guideSection}>COMMUNITY</Text>
-            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 4 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxFriends')}><Text style={styles.guideIcon}>👥</Text><Text style={styles.guideItemText}>Friends</Text></Pressable>
-            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 5 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxMessages')}><Text style={styles.guideIcon}>💬</Text><Text style={styles.guideItemText}>Messages</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 4 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxFriends')} accessibilityRole="button" accessibilityLabel="Open Friends"><Text style={styles.guideIcon}>👥</Text><Text style={styles.guideItemText}>Friends</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 5 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxMessages')} accessibilityRole="button" accessibilityLabel="Open Messages"><Text style={styles.guideIcon}>💬</Text><Text style={styles.guideItemText}>Messages</Text></Pressable>
             <Pressable style={[styles.guideItem, focusOutline && guideSelection === 6 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxNotifications')} accessibilityRole="button" accessibilityLabel={unreadNotifications ? "Notifications, " + unreadNotifications + " unread" : "Notifications"}><Text style={styles.guideIcon}>🔔</Text><Text style={styles.guideItemText}>Notifications</Text>{unreadNotifications > 0 ? <View style={styles.notificationBadge}><Text style={styles.notificationBadgeText}>{unreadNotifications > 99 ? "99+" : unreadNotifications}</Text></View> : null}</Pressable>
             <View style={styles.guideSpacer} />
             <Text style={styles.guideSection}>SYSTEM</Text>
-            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 7 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxSettings')}><Text style={styles.guideIcon}>⚙️</Text><Text style={styles.guideItemText}>Settings</Text></Pressable>
+            <Pressable style={[styles.guideItem, focusOutline && guideSelection === 7 && styles.guideItemFocused]} onPress={() => openGuideRoute('XboxSettings')} accessibilityRole="button" accessibilityLabel="Open Settings"><Text style={styles.guideIcon}>⚙️</Text><Text style={styles.guideItemText}>Settings</Text></Pressable>
             <Text style={styles.guideFoot}>Companion app menu · Xbox sign-in stays official</Text>
           </View>
         </View>
@@ -208,7 +208,7 @@ export default function XboxDashboardScreen({navigation}) {
           <Card.Content>
             <View style={styles.quickHeader}>
               <Text variant="titleLarge" style={styles.quickTitle}>Quick Settings</Text>
-              <Button compact textColor="#9cdb8a" onPress={() => { haptic(); closeQuickSettings(); }}>Close</Button>
+              <Button compact textColor="#9cdb8a" accessibilityLabel="Close quick settings" onPress={() => { haptic(); closeQuickSettings(); }}>Close</Button>
             </View>
             <View style={[styles.quickRow, focusOutline && quickSelection === 0 && styles.quickRowFocused]}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Focus highlight</Text><Text style={styles.quickHint}>Visible keyboard focus outline</Text></View>
@@ -234,9 +234,9 @@ export default function XboxDashboardScreen({navigation}) {
               </View>
             </View>
             <View style={styles.quickActions}>
-              <Button compact mode={quickSelection === 3 ? "contained" : "outlined"} buttonColor={quickSelection === 3 ? "#107c10" : undefined} textColor={quickSelection === 3 ? "#fff" : "#9cdb8a"} onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxSettings'); }}>All settings</Button>
+              <Button compact mode={quickSelection === 3 ? "contained" : "outlined"} buttonColor={quickSelection === 3 ? "#107c10" : undefined} textColor={quickSelection === 3 ? "#fff" : "#9cdb8a"} accessibilityLabel="Open all settings" onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxSettings'); }}>All settings</Button>
               <Button compact mode={quickSelection === 4 ? "contained" : "outlined"} buttonColor={quickSelection === 4 ? "#107c10" : undefined} textColor={quickSelection === 4 ? "#fff" : "#9cdb8a"} accessibilityLabel={unreadNotifications > 0 ? "Open notifications, " + unreadNotifications + " unread" : "Open notifications"} onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxNotifications'); }}>{unreadNotifications > 0 ? "Notifications (" + unreadNotifications + ")" : "Notifications"}</Button>
-              <Button compact mode={quickSelection === 5 ? "contained" : "outlined"} buttonColor={quickSelection === 5 ? "#107c10" : undefined} textColor={quickSelection === 5 ? "#fff" : "#9cdb8a"} onPress={() => { setQuickSettingsVisible(false); openCloud(); }}>Launch cloud</Button>
+              <Button compact mode={quickSelection === 5 ? "contained" : "outlined"} buttonColor={quickSelection === 5 ? "#107c10" : undefined} textColor={quickSelection === 5 ? "#fff" : "#9cdb8a"} accessibilityLabel="Launch official Xbox Cloud Gaming" onPress={() => { setQuickSettingsVisible(false); openCloud(); }}>Launch cloud</Button>
             </View>
           </Card.Content>
         </Card>
