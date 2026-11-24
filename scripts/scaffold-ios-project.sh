@@ -49,12 +49,13 @@ fi
 
 echo "Generating the iOS project with the pinned React Native 0.72.17 template..."
 # React Native CLI 11 invokes `yarn add file://...`; Yarn 4 rejects that
-# local-template form. Install Yarn Classic and put its real JS entrypoint
-# first on PATH so both this script and the spawned CLI use the same version.
-npm install --global yarn@1.22.22
-YARN_CLASSIC_JS="$(npm root --global)/yarn/bin/yarn.js"
+# local-template form. Install Yarn Classic into an isolated temporary prefix
+# so the runner's pre-existing Corepack/Yarn shims are never overwritten.
+YARN_PREFIX="$TMP_DIR/yarn-classic"
+npm install --prefix "$YARN_PREFIX" --no-save --no-audit --no-fund yarn@1.22.22
+YARN_CLASSIC_JS="$YARN_PREFIX/node_modules/yarn/bin/yarn.js"
 if [[ ! -f "$YARN_CLASSIC_JS" ]]; then
-  echo "Error: Yarn Classic 1.22.22 was not installed at the expected npm global path." >&2
+  echo "Error: Yarn Classic 1.22.22 was not installed in the temporary prefix." >&2
   exit 2
 fi
 YARN_SHIM_DIR="$TMP_DIR/yarn-classic-bin"
