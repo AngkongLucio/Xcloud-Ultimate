@@ -115,6 +115,17 @@ export default function XboxProfileScreen({navigation}) {
     repeatRate: activity.length ? Math.round(((activity.length - uniqueActivityTitles) / activity.length) * 100) : 0,
     activeDays,
     averageOpensPerActiveDay: activeDays ? (activity.length / activeDays).toFixed(1) : '0.0',
+    mostActiveDay: (() => {
+      const counts = activity.reduce((days, entry) => {
+        const timestamp = Number(entry?.openedAt);
+        if (!Number.isFinite(timestamp) || timestamp <= 0) return days;
+        const date = new Date(timestamp);
+        const key = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+        days[key] = (days[key] || 0) + 1;
+        return days;
+      }, {});
+      return Object.entries(counts).sort((a, b) => Number(b[1]) - Number(a[1]) || Number(b[0]) - Number(a[0]))[0] || null;
+    })(),
   };
 
   useEffect(() => {
@@ -207,6 +218,16 @@ export default function XboxProfileScreen({navigation}) {
               <Text style={styles.insightLabel}>Average opens / active day</Text>
               <Text accessibilityLabel={activityInsights.averageOpensPerActiveDay + " average catalog opens per active day"} style={styles.insightValue}>{activityInsights.averageOpensPerActiveDay}</Text>
             </View>
+            {activityInsights.mostActiveDay ? (
+              <View style={styles.insightRow}>
+                <Text style={styles.insightLabel}>Most active day</Text>
+                <Text
+                  accessibilityLabel={activityInsights.mostActiveDay[1] + " catalog opens on " + new Date(Number(activityInsights.mostActiveDay[0])).toLocaleDateString()}
+                  style={styles.insightValue}>
+                  {new Date(Number(activityInsights.mostActiveDay[0])).toLocaleDateString()} · {activityInsights.mostActiveDay[1]}
+                </Text>
+              </View>
+            ) : null}
             <View style={styles.insightRow}>
               <Text style={styles.insightLabel}>Current streak</Text>
               <Text accessibilityLabel={activityStreak + " consecutive active days, based on saved history"} style={styles.insightValue}>{activityStreak} {activityStreak === 1 ? 'day' : 'days'}</Text>
