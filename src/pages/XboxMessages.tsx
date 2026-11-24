@@ -77,7 +77,9 @@ const normalizeThreads = value => {
         updatedAt: Number.isFinite(Number(thread.updatedAt)) && Number(thread.updatedAt) > 0 ? Number(thread.updatedAt) : 0,
       };
     })
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort((a, b) => (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0))
+    .slice(0, 100);
 };
 
 const readFriends = () => normalizeFriends(readArray('xbox.friends.local'));
@@ -101,8 +103,9 @@ export default function XboxMessagesScreen() {
   useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
 
   const saveThreads = next => {
-    setThreads(next);
-    storage.set('xbox.messages.local', JSON.stringify(next));
+    const normalized = normalizeThreads(next);
+    setThreads(normalized);
+    storage.set('xbox.messages.local', JSON.stringify(normalized));
   };
 
   const openThread = friend => {
