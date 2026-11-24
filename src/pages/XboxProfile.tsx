@@ -29,6 +29,15 @@ export default function XboxProfileScreen({navigation}) {
     return activitySort === 'Oldest' ? aTime - bTime : bTime - aTime;
   });
 
+  const activityRange = activity.reduce((range, entry) => {
+    const timestamp = Number(entry?.openedAt);
+    if (!Number.isFinite(timestamp) || timestamp <= 0) return range;
+    return {
+      first: range.first === null ? timestamp : Math.min(range.first, timestamp),
+      latest: range.latest === null ? timestamp : Math.max(range.latest, timestamp),
+    };
+  }, {first: null, latest: null});
+
   useEffect(() => {
     if (isFocused) {
       setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
@@ -110,6 +119,15 @@ export default function XboxProfileScreen({navigation}) {
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Recent activity</Text>
           <Text variant="bodySmall" accessibilityLiveRegion="polite" accessibilityLabel={activity.length + (activity.length === 1 ? " recent catalog entry" : " recent catalog entries")} style={styles.statsNote}>{activity.length} {activity.length === 1 ? 'entry' : 'entries'} · Maximum 10 saved</Text>
+          {activityRange.first !== null ? (
+            <Text
+              accessibilityLabel={"Saved activity spans from " + new Date(activityRange.first).toLocaleDateString() + " to " + new Date(activityRange.latest).toLocaleDateString()}
+              style={styles.activityRange}>
+              {activityRange.first === activityRange.latest
+                ? "Activity date: " + new Date(activityRange.first).toLocaleDateString()
+                : "Activity span: " + new Date(activityRange.first).toLocaleDateString() + " – " + new Date(activityRange.latest).toLocaleDateString()}
+            </Text>
+          ) : null}
           {activity.length > 1 ? (
             <View style={styles.activitySortRow} accessibilityLabel="Sort recent activity">
               {['Newest', 'Oldest'].map(option => (
@@ -218,6 +236,7 @@ const styles = StyleSheet.create({
   milestoneProgress: {height: 5, borderRadius: 5, backgroundColor: '#344235', marginTop: 7},
   milestoneStatus: {color: '#9cdb8a', fontSize: 22, fontWeight: '800'},
   statsNote: {color: '#829082', lineHeight: 18, marginTop: 12},
+  activityRange: {color: '#9cdb8a', fontSize: 11, marginTop: 6},
   activitySortRow: {flexDirection: 'row', gap: 8, marginTop: 10, marginBottom: 4},
   activitySortChip: {paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, backgroundColor: '#202920', borderWidth: 1, borderColor: '#354136'},
   activitySortChipSelected: {backgroundColor: '#294d30', borderColor: '#9cdb8a'},
