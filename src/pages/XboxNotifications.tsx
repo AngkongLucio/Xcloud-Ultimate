@@ -5,11 +5,25 @@ import {TextInput} from 'react-native-paper';
 import {Button, Card, Text} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 
+const normalizeNotifications = value => Array.isArray(value)
+  ? value.filter(item => item && typeof item === 'object' && !Array.isArray(item)
+    && typeof item.title === 'string' && typeof item.message === 'string')
+    .map((item, index) => ({
+      id: String(item.id || 'legacy-' + index),
+      title: item.title.trim().slice(0, 120),
+      message: item.message.trim().slice(0, 500),
+      kind: ['message', 'friend'].includes(item.kind) ? item.kind : 'activity',
+      createdAt: Number.isFinite(Number(item.createdAt)) && Number(item.createdAt) > 0 ? Number(item.createdAt) : 0,
+      read: item.read === true,
+    }))
+    .filter(item => item.title.length > 0)
+  : [];
+
 const readNotifications = () => {
   try {
     const raw = storage.getString('xbox.notifications.local');
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    return normalizeNotifications(parsed);
   } catch (_) { return []; }
 };
 
