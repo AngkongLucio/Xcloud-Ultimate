@@ -5483,77 +5483,104 @@ static ChiakiErrorCode decode_customdata1(Session *session, const char *customda
 
 static json_object* session_message_get_payload(ChiakiLog *log, json_object *session_message)
 {
-    json_object *payload_json;
-    if (json_pointer_get(session_message, "/body/data/sessionMessage/payload", &payload_json) < 0)
+    if(!session_message)
+        return NULL;
+
+    json_object *payload_json = NULL;
+    if(json_pointer_get(session_message, "/body/data/sessionMessage/payload", &payload_json) < 0)
     {
         CHIAKI_LOGE(log, "session_message_get_payload: Failed to get payload");
-        CHIAKI_LOGV(log, json_object_to_json_string_ext(session_message, JSON_C_TO_STRING_PRETTY));
         return NULL;
     }
 
-    if (!json_object_is_type(payload_json, json_type_string))
+    if(!payload_json || !json_object_is_type(payload_json, json_type_string))
     {
         CHIAKI_LOGE(log, "session_message_get_payload: Payload is not a string");
-        CHIAKI_LOGV(log, json_object_to_json_string_ext(session_message, JSON_C_TO_STRING_PRETTY));
         return NULL;
     }
 
-    const char* payload_str = json_object_get_string(payload_json);
+    const char *payload_str = json_object_get_string(payload_json);
+    if(!payload_str)
+        return NULL;
 
-    char* body = strstr(payload_str, "body=");
-    if (body == NULL) {
+    char *body = strstr(payload_str, "body=");
+    if(!body)
+    {
         CHIAKI_LOGE(log, "session_message_get_payload: Failed to find body of payload");
-        CHIAKI_LOGV(log, payload_str);
         return NULL;
     }
 
+    const char *json = body + 5;
+    const char *parse_json = json;
+    char *fixed_json = NULL;
+    size_t json_len = strlen(json);
 
-    char *json = body + 5;
-    // The JSON for a session message is kind of peculiar, as it's sometimes invalid JSON.
-    // This happens when there is no value for the `localPeerAddr` field. Instead of the value
-    // being `undefined` or the empty object, the field simply doesn't have a value, i.e. the
-    // colon is immediately followed by a comma. This obviously breaks our parser, so we fix
-    // the JSON if the field value is missing.
-    json_object *message_json;
-    char *peeraddr_key = "\"localPeerAddr\":";
-    char *peeraddr_start = strstr(json, peeraddr_key);
-
-    // No localPeerAddr, nothing to fix
-    if (peeraddr_start == NULL)
-        return json_tokener_parse(json);
-
-    char *peeraddr_end = peeraddr_start + strlen(peeraddr_key);
-    if (*peeraddr_end == '{')
+    /* Some PSN messages omit localPeerAddr's value entirely (":,").
+     * Repair only that malformed empty value; do not rewrite valid strings,
+     * arrays, nulls, or other values for the field. */
+    const char *peeraddr_key = "\"localPeerAddr\":";
+    const char *peeraddr_start = strstr(json, peeraddr_key);
+    if(peeraddr_start)
     {
-        // Valid JSON, we can parse without modifications
-        message_json = json_tokener_parse(json);
-    }
-    else
-    {
-        // Insert empty object as key for localPeerAddr key
-        size_t prefix_len = peeraddr_end - json;
-        size_t suffix_len = strlen(peeraddr_end);
-        char fixed_json[strlen(json) + 3]; // {} + \0
-        memset(fixed_json, 0, sizeof(fixed_json));
-        strncpy(fixed_json, json, prefix_len);
-        fixed_json[prefix_len] = '{';
-        fixed_json[prefix_len + 1] = '}';
-        strncpy(fixed_json + prefix_len + 2, peeraddr_end, suffix_len);
+        const char *value_start = peeraddr_start + strlen(peeraddr_key);
+        while(*value_start && isspace((unsigned char)*value_start))
+            value_start++;
 
-        message_json = json_tokener_parse(fixed_json);
-        if(message_json == NULL)
+        if(*value_start == ',' || *value_start == '}')
         {
-            CHIAKI_LOGE(log, "Couldn't parse the following fixed json: %s", fixed_json);
-            CHIAKI_LOGE(log, json_object_to_json_string_ext(payload_json, JSON_C_TO_STRING_PRETTY));
+            size_t prefix_len = (size_t)(value_start - json);
+            size_t suffix_len = json_len - prefix_len;
+            if(json_len > SIZE_MAX - 3)
+            {
+                CHIAKI_LOGE(log, "session_message_get_payload: Payload is too large to repair");
+                return NULL;
+            }
+
+            fixed_json = malloc(json_len + 3);
+            if(!fixed_json)
+            {
+                CHIAKI_LOGE(log, "session_message_get_payload: Could not allocate repaired payload");
+                return NULL;
+            }
+
+            memcpy(fixed_json, json, prefix_len);
+            fixed_json[prefix_len] = '{';
+            fixed_json[prefix_len + 1] = '}';
+            memcpy(fixed_json + prefix_len + 2, value_start, suffix_len + 1);
+            parse_json = fixed_json;
         }
     }
-    // check if parse fails
-    if(message_json == NULL)
+
+    size_t parse_len = strlen(parse_json);
+    if(parse_len > INT_MAX)
     {
-        CHIAKI_LOGE(log, "Couldn't parse the following json: %s", json);
-        CHIAKI_LOGE(log, json_object_to_json_string_ext(payload_json, JSON_C_TO_STRING_PRETTY));
+        CHIAKI_LOGE(log, "session_message_get_payload: Payload exceeds JSON parser limit");
+        free(fixed_json);
+        return NULL;
     }
 
+    json_tokener *tok = json_tokener_new();
+    if(!tok)
+    {
+        CHIAKI_LOGE(log, "session_message_get_payload: Could not allocate JSON tokener");
+        free(fixed_json);
+        return NULL;
+    }
+
+    json_object *message_json = json_tokener_parse_ex(tok, parse_json, (int)parse_len);
+    enum json_tokener_error parse_err = json_tokener_get_error(tok);
+    if(!message_json || parse_err != json_tokener_success ||
+            !json_tokener_consumed_all(tok, parse_json, parse_len))
+    {
+        CHIAKI_LOGE(log, "session_message_get_payload: JSON parsing failed or left trailing data: %s",
+                json_tokener_error_desc(parse_err));
+        if(message_json)
+            json_object_put(message_json);
+        message_json = NULL;
+    }
+
+    json_tokener_free(tok);
+    free(fixed_json);
     return message_json;
 }
 
