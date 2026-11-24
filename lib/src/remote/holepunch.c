@@ -5625,9 +5625,17 @@ static ChiakiErrorCode wait_for_session_message_ack(
             msg = NULL;
             continue;
         }
+        uint16_t ack_error = msg->error;
         session_message_clear_notification(session, msg);
         session_message_free(msg);
         msg = NULL;
+        if(ack_error != 0)
+        {
+            CHIAKI_LOGE(session->log,
+                    "wait_for_session_message_ack: Server rejected request %d with error %u",
+                    req_id, (unsigned int)ack_error);
+            return CHIAKI_ERR_UNKNOWN;
+        }
         return CHIAKI_ERR_SUCCESS;
     }
 }
