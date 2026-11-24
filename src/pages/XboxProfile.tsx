@@ -51,6 +51,10 @@ export default function XboxProfileScreen({navigation}) {
   }, {});
   const topActivity = Object.entries(mostOpenedTitle).sort((a, b) => b[1] - a[1])[0] || null;
 
+  const activityLeaderboard = Object.entries(mostOpenedTitle)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 3);
+
   useEffect(() => {
     if (isFocused) {
       setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
@@ -113,6 +117,18 @@ export default function XboxProfileScreen({navigation}) {
               <Text style={styles.topActivityLabel}>MOST OPENED IN SAVED HISTORY</Text>
               <Text style={styles.topActivityTitle}>{topActivity[0]}</Text>
               <Text accessibilityLabel={topActivity[1] + " saved catalog entries"} style={styles.topActivityCount}>{topActivity[1]} {topActivity[1] === 1 ? 'entry' : 'entries'}</Text>
+            </View>
+          ) : null}
+          {activityLeaderboard.length > 1 ? (
+            <View style={styles.leaderboard}>
+              <Text style={styles.topActivityLabel}>TOP 3 IN SAVED HISTORY</Text>
+              {activityLeaderboard.map(([title, count], index) => (
+                <View key={title} style={styles.leaderboardRow} accessibilityLabel={"Rank " + (index + 1) + ": " + title + ", " + count + (count === 1 ? " entry" : " entries")}>
+                  <Text style={styles.leaderboardRank}>{index + 1}</Text>
+                  <Text numberOfLines={1} style={styles.leaderboardTitle}>{title}</Text>
+                  <Text style={styles.leaderboardCount}>{count}</Text>
+                </View>
+              ))}
             </View>
           ) : null}
           <Text variant="titleMedium" style={styles.milestoneTitle}>Local milestones</Text>
@@ -252,6 +268,11 @@ const styles = StyleSheet.create({
   statTile: {flex: 1, backgroundColor: '#202920', borderRadius: 12, padding: 14},
   statNumber: {color: '#9cdb8a', fontWeight: '800'},
   statLabel: {color: '#aab5aa', letterSpacing: 1, marginTop: 4},
+  leaderboard: {backgroundColor: '#202920', borderRadius: 12, padding: 12, marginTop: 10, borderWidth: 1, borderColor: '#354136'},
+  leaderboardRow: {flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7},
+  leaderboardRank: {color: '#9cdb8a', fontWeight: '800', width: 18},
+  leaderboardTitle: {color: '#fff', flex: 1, fontSize: 12},
+  leaderboardCount: {color: '#aab5aa', fontSize: 12, fontWeight: '700'},
   topActivity: {backgroundColor: '#202920', borderRadius: 12, padding: 12, marginTop: 14, borderWidth: 1, borderColor: '#354136'},
   topActivityLabel: {color: '#9cdb8a', fontSize: 10, letterSpacing: 1, fontWeight: '700'},
   topActivityTitle: {color: '#fff', fontWeight: '700', marginTop: 6},
