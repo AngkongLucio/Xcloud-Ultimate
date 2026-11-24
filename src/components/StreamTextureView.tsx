@@ -320,7 +320,7 @@ const StreamTextureView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.setLoginPin.toString(),
+          UIManager.StreamTextureView.Commands.setLoginPin.toString(),
           [pin],
         );
       }

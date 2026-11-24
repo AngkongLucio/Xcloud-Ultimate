@@ -58,7 +58,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.startSession.toString(),
+          UIManager.StreamFsrView.Commands.startSession.toString(),
           [viewId],
         );
       }
@@ -70,7 +70,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.stopSession.toString(),
+          UIManager.StreamFsrView.Commands.stopSession.toString(),
           [viewId],
         );
       }
@@ -82,7 +82,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.requestFocus.toString(),
+          UIManager.StreamFsrView.Commands.requestFocus.toString(),
           [viewId],
         );
       }
@@ -94,7 +94,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.pressButton.toString(),
+          UIManager.StreamFsrView.Commands.pressButton.toString(),
           [buttonMask, isPressed],
         );
       }
@@ -106,7 +106,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.pressTrigger.toString(),
+          UIManager.StreamFsrView.Commands.pressTrigger.toString(),
           [name, value],
         );
       }
@@ -118,7 +118,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.moveStick.toString(),
+          UIManager.StreamFsrView.Commands.moveStick.toString(),
           [name, x, y],
         );
       }
@@ -130,7 +130,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.sensorStick.toString(),
+          UIManager.StreamFsrView.Commands.sensorStick.toString(),
           [x, y],
         );
       }
@@ -142,7 +142,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.touchpadTap.toString(),
+          UIManager.StreamFsrView.Commands.touchpadTap.toString(),
           [isPressed, nextId, ...touches],
         );
       }
@@ -154,7 +154,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.touchpad.toString(),
+          UIManager.StreamFsrView.Commands.touchpad.toString(),
           [mask, nextId, ...touches],
         );
       }
@@ -166,7 +166,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.performance.toString(),
+          UIManager.StreamFsrView.Commands.performance.toString(),
           [],
         );
       }
@@ -187,7 +187,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.usbController.toString(),
+          UIManager.StreamFsrView.Commands.usbController.toString(),
           [
             flags,
             leftStickX,
@@ -228,7 +228,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.usbDsController.toString(),
+          UIManager.StreamFsrView.Commands.usbDsController.toString(),
           [
             flags,
             leftStickX,
@@ -260,7 +260,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.gotoBed.toString(),
+          UIManager.StreamFsrView.Commands.gotoBed.toString(),
           [viewId],
         );
       }
@@ -272,7 +272,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.startSensor.toString(),
+          UIManager.StreamFsrView.Commands.startSensor.toString(),
           [viewId],
         );
       }
@@ -284,7 +284,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.stopSensor.toString(),
+          UIManager.StreamFsrView.Commands.stopSensor.toString(),
           [viewId],
         );
       }
@@ -296,7 +296,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.sendText.toString(),
+          UIManager.StreamFsrView.Commands.sendText.toString(),
           [text],
         );
       }
@@ -308,7 +308,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.keyboardSwitch.toString(),
+          UIManager.StreamFsrView.Commands.keyboardSwitch.toString(),
           [isReject],
         );
       }
@@ -320,7 +320,7 @@ const StreamFsrView: ForwardRefRenderFunction<
         UIManager.dispatchViewManagerCommand(
           viewId,
           // @ts-ignore
-          UIManager.StreamView.Commands.setLoginPin.toString(),
+          UIManager.StreamFsrView.Commands.setLoginPin.toString(),
           [pin],
         );
       }
