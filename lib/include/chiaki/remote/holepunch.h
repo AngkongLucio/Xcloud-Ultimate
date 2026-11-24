@@ -248,7 +248,8 @@ CHIAKI_EXPORT void chiaki_holepunch_main_thread_cancel(
  * **IMPORTANT**: This function should be called after the **streaming** session has terminated,
  * not after all sockets have been obtained.
  *
- * Will delete the session on the PSN server and free all resources associated with the session.
+ * Will delete the session on the PSN server and free all resources associated with the session,
+ * including the allocated session handle. The handle is invalid after this call.
  *
  * @param[in] session Handle to the holepunching session
 */
