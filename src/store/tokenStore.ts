@@ -18,8 +18,12 @@ export class TokenStore {
         tokens = '[]';
       }
 
-      this.userTokens = JSON.parse(tokens);
-    } catch {}
+      const parsed: unknown = JSON.parse(tokens);
+      this.userTokens = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      // Ignore malformed persisted data and recover with an empty token list.
+      this.userTokens = [];
+    }
 
     return true;
   }
