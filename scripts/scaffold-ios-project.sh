@@ -31,7 +31,7 @@ fi
 
 echo "Generating a clean React Native 0.72.14 iOS template..."
 cd "$TMP_DIR"
-npx --yes react-native@0.72.14 init Peasyo --version 0.72.14 --skip-install
+npx --yes @react-native-community/cli@11.3.10 init Peasyo --version 0.72.14 --template @react-native-community/template@0.72.14 --skip-install
 
 if [[ ! -d "$TMP_DIR/Peasyo/ios/Peasyo.xcodeproj" || ! -f "$TMP_DIR/Peasyo/ios/Podfile" ]]; then
   echo "Error: React Native CLI did not produce the expected iOS project structure." >&2
@@ -69,6 +69,6 @@ echo "  1. cd \"$ROOT_DIR\""
 echo "  2. yarn install"
 echo "  3. cd ios && pod install"
 echo "  4. Open ios/Peasyo.xcworkspace in Xcode."
-echo
+
 echo "This creates only the React Native iOS shell. Chiaki, VideoToolbox,"
 echo "AudioUnit, controller and other iOS native modules are separate work."
