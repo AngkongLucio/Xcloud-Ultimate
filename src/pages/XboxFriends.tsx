@@ -30,7 +30,8 @@ const normalizeFriends = value => {
           : 0,
       };
     })
-    .filter(item => item.name.length > 0);
+    .filter(item => item.name.length > 0)
+    .slice(-100);
 };
 
 export default function XboxFriendsScreen() {
@@ -73,7 +74,7 @@ export default function XboxFriendsScreen() {
       setFormMessage('That player is already in your local list.');
       return;
     }
-    save([...friends, {id: String(Date.now()), name: clean, avatar, addedAt: Date.now()}]);
+    save([...friends, {id: String(Date.now()), name: clean, avatar, addedAt: Date.now()}].slice(-100));
     setName('');
     setFormMessage(clean + ' was added to your local list.');
   };
