@@ -104,14 +104,25 @@ export default function XboxLibraryScreen({navigation}) {
         style={styles.search}
         inputStyle={styles.searchInput}
         iconColor="#a9c5a9"
+        clearAccessibilityLabel="Clear game search"
       />
+
+      <Text
+        variant="labelSmall"
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={visibleGames.length + (visibleGames.length === 1 ? " matching title" : " matching titles") + (category === "All" ? "" : " in " + category)}
+        style={styles.resultCount}>
+        {visibleGames.length} {visibleGames.length === 1 ? 'title' : 'titles'} · {category}
+      </Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
         {CATEGORIES.map(item => (
           <Chip
             key={item}
+            accessibilityRole="button"
             accessibilityLabel={"Filter games by " + item}
             accessibilityHint={category === item ? "Currently selected category filter." : "Applies the " + item + " category filter."}
+            accessibilityState={{selected: category === item}}
             selected={category === item}
             onPress={() => { haptic(); setCategory(item); setSelectedIndex(0); }}
             style={styles.chip}
@@ -185,6 +196,7 @@ const styles = StyleSheet.create({
   description: {color: '#bdc9bd', marginTop: 8, marginBottom: 16, lineHeight: 21},
   search: {backgroundColor: '#202920', borderRadius: 12, marginBottom: 12},
   searchInput: {color: '#fff'},
+  resultCount: {color: '#aab5aa', marginBottom: 10, marginLeft: 4},
   filters: {gap: 8, paddingBottom: 16},
   chip: {backgroundColor: '#202920'},
   chipText: {color: '#e6eee6'},
