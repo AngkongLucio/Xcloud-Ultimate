@@ -25,7 +25,16 @@ export const getTokenFromRedirectUri = (redirectUri: string): Promise<any> => {
 
     let code: string | null;
     try {
-      code = new URL(redirectUri).searchParams.get('code');
+      const redirect = new URL(redirectUri);
+      if (
+        redirect.protocol !== 'https:' ||
+        redirect.hostname !== 'remoteplay.dl.playstation.net' ||
+        redirect.pathname !== '/remoteplay/redirect'
+      ) {
+        reject(new Error('PSN redirect URL does not match the official redirect address.'));
+        return;
+      }
+      code = redirect.searchParams.get('code');
     } catch (error) {
       reject(new Error('Invalid PSN redirect URL.'));
       return;
@@ -65,11 +74,20 @@ export const getTokenFromRedirectUri = (redirectUri: string): Promise<any> => {
         .then(res => {
           // console.log('[getTokenFromRedirectUri] res:', res.data);
           // {"access_token": "1babdde3-48b7-420a-af97-45afb8", "expires_in": 3599, "refresh_token": "1e82-530e-4506-9453-d4357f89", "scope": "psn:clientapp", "token_type": "bearer"}
-          if (res.data && res.data.access_token) {
-            accessToken = res.data.access_token;
-            refreshToken = res.data.refresh_token;
-            tokenExpiry = new Date().getTime() + res.data.expires_in * 1000;
+          const expiresIn = Number(res.data?.expires_in);
+          if (
+            !res.data?.access_token ||
+            !res.data?.refresh_token ||
+            !Number.isFinite(expiresIn) ||
+            expiresIn <= 0
+          ) {
+            reject(new Error('PSN token response is incomplete or invalid.'));
+            return;
           }
+
+          accessToken = String(res.data.access_token);
+          refreshToken = String(res.data.refresh_token);
+          tokenExpiry = Date.now() + expiresIn * 1000;
           resolve({
             accessToken,
             refreshToken,
@@ -127,15 +145,15 @@ export const getUserInfoFromToken = (
         },
       )
       .then(res => {
-        if (res.data) {
-          const userInfo = res.data as UserInfo;
-          const accountId = extractAccountId(userInfo) || '';
-          userInfo.account_id = accountId;
-
-          resolve(userInfo);
-        } else {
+        if (!res.data || typeof res.data.user_id !== 'string' || !/^\\d+$/.test(res.data.user_id)) {
           resolve(null);
+          return;
         }
+
+        const userInfo = res.data as UserInfo;
+        const accountId = extractAccountId(userInfo);
+        userInfo.account_id = accountId;
+        resolve(userInfo);
       })
       .catch(e => {
         console.log('[getUserInfoFromToken] error:', e);
