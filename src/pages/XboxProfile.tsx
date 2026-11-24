@@ -116,6 +116,8 @@ export default function XboxProfileScreen({navigation}) {
     uniqueTitles: uniqueActivityTitles,
     repeatOpens: repeatOpenCount,
     repeatRate: titledActivityCount ? Math.round((repeatOpenCount / titledActivityCount) * 100) : 0,
+    titledEntries: titledActivityCount,
+    untitledEntries: Math.max(activity.length - titledActivityCount, 0),
     activeDays,
     averageOpensPerActiveDay: activeDays ? (activity.length / activeDays).toFixed(1) : '0.0',
     mostActiveDay: (() => {
@@ -212,6 +214,10 @@ export default function XboxProfileScreen({navigation}) {
             <View style={styles.insightRow}>
               <Text style={styles.insightLabel}>Repeat opens</Text>
               <Text accessibilityLabel={activityInsights.repeatOpens + " repeat opens"} style={styles.insightValue}>{activityInsights.repeatOpens}</Text>
+            </View>
+            <View style={styles.insightRow}>
+              <Text style={styles.insightLabel}>Untitled entries</Text>
+              <Text accessibilityLabel={activityInsights.untitledEntries + " saved entries without a title"} style={styles.insightValue}>{activityInsights.untitledEntries}</Text>
             </View>
             <View style={styles.insightRow}>
               <Text style={styles.insightLabel}>Active days</Text>
