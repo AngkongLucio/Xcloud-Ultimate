@@ -40,7 +40,9 @@ export default function XboxSettingsScreen() {
     });
     const unsubscribe = NetInfo.addEventListener(state => {
       if (active) {
+        // A live update is newer than any pending fetch; it also ends a stale refresh spinner.
         networkRequestId.current += 1;
+        setNetworkRefreshing(false);
         setNetwork({
           type: state.type || 'unknown',
           connected: state.isConnected,
