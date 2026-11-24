@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useIsFocused} from '@react-navigation/native';
-import {Pressable, ScrollView, StyleSheet, View} from 'react-native';
+import {Alert, Pressable, ScrollView, StyleSheet, View} from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Button, Card, Text} from 'react-native-paper';
 import {storage} from '../store/mmkv';
@@ -35,8 +35,23 @@ export default function XboxNotificationsScreen() {
     setItems(next);
   };
   const clearAll = () => {
-    storage.delete('xbox.notifications.local');
-    setItems([]);
+    if (!items.length) return;
+    Alert.alert(
+      'Clear all notifications?',
+      'This permanently deletes all local notifications from this device.',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Clear all',
+          style: 'destructive',
+          onPress: () => {
+            storage.delete('xbox.notifications.local');
+            setItems([]);
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
   const markRead = id => {
