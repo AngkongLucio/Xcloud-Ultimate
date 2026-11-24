@@ -214,6 +214,7 @@ export default function XboxLibraryScreen({navigation}) {
                 {text: 'Cancel', style: 'cancel'},
                 {text: 'Clear favorites', style: 'destructive', onPress: () => {
                   haptic('impactLight');
+                  storage.set('xbox.library.favorites', JSON.stringify([]));
                   setFavoriteTitles([]);
                   setFavoritesOnly(false);
                   setSelectedIndex(0);
