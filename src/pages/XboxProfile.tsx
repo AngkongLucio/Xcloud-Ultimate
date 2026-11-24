@@ -8,7 +8,12 @@ const AVATARS = ['🎮', '🛡️', '🚀', '🐉', '⚡', '👾', '🏎️', '�
 
 const normalizeActivityHistory = value =>
   Array.isArray(value)
-    ? value.filter(entry => entry !== null && typeof entry === 'object' && !Array.isArray(entry))
+    ? value
+      .filter(entry => entry !== null && typeof entry === 'object' && !Array.isArray(entry))
+      .map(entry => ({
+        title: typeof entry.title === 'string' ? entry.title.trim().slice(0, 120) : '',
+        openedAt: entry.openedAt,
+      }))
     : [];
 
 export default function XboxProfileScreen({navigation}) {
