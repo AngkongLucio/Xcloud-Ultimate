@@ -8,16 +8,28 @@ const AVATARS = ['🎮', '👾', '🚀', '🐉', '🏎️', '⚡'];
 
 const normalizeFriends = value => {
   if (!Array.isArray(value)) return [];
+  const seenIds = new Set();
   return value
-    .filter(item => item && typeof item === 'object' && !Array.isArray(item))
-    .map((item, index) => ({
-      id: String(item.id || 'legacy-' + index),
-      name: String(item.name || '').trim().slice(0, 20),
-      avatar: AVATARS.includes(item.avatar) ? item.avatar : '🎮',
-      addedAt: Number.isFinite(Number(item.addedAt)) && Number(item.addedAt) > 0
-        ? Number(item.addedAt)
-        : 0,
-    }))
+    .filter(item => item && typeof item === 'object' && !Array.isArray(item)
+      && typeof item.name === 'string')
+    .map((item, index) => {
+      const baseId = String(item.id || 'legacy-' + index).trim().slice(0, 100) || 'legacy-' + index;
+      let id = baseId;
+      let suffix = 1;
+      while (seenIds.has(id)) {
+        id = (baseId.slice(0, 88) + '-' + suffix).slice(0, 100);
+        suffix += 1;
+      }
+      seenIds.add(id);
+      return {
+        id,
+        name: item.name.trim().slice(0, 20),
+        avatar: AVATARS.includes(item.avatar) ? item.avatar : '🎮',
+        addedAt: Number.isFinite(Number(item.addedAt)) && Number(item.addedAt) > 0
+          ? Number(item.addedAt)
+          : 0,
+      };
+    })
     .filter(item => item.name.length > 0);
 };
 
