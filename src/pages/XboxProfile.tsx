@@ -76,6 +76,7 @@ export default function XboxProfileScreen({navigation}) {
             {label: 'First steps', target: 1},
             {label: 'Explorer', target: 5},
             {label: 'Regular', target: 10},
+            {label: 'Dedicated', target: 25},
           ].map(item => (
             <View key={item.label} style={styles.milestoneRow}>
               <View style={styles.milestoneCopy}>
