@@ -6,20 +6,28 @@ import {storage} from '../store/mmkv';
 
 const AVATARS = ['🎮', '🛡️', '🚀', '🐉', '⚡', '👾', '🏎️', '🌌'];
 
-const normalizeActivityHistory = value =>
-  Array.isArray(value)
-    ? value
-      .filter(entry =>
-        entry !== null && typeof entry === 'object' && !Array.isArray(entry) &&
-        typeof entry.title === 'string' && entry.title.trim().length > 0 &&
-        Number.isFinite(entry.openedAt) && entry.openedAt > 0
-      )
-      .map(entry => ({
-        title: entry.title.trim().slice(0, 120),
-        openedAt: Math.floor(entry.openedAt),
-      }))
-      .slice(-10)
-    : [];
+const normalizeActivityHistory = value => {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set();
+  return value
+    .filter(entry =>
+      entry !== null && typeof entry === 'object' && !Array.isArray(entry) &&
+      typeof entry.title === 'string' && entry.title.trim().length > 0 &&
+      Number.isFinite(entry.openedAt) && entry.openedAt > 0
+    )
+    .map(entry => ({
+      title: entry.title.trim().slice(0, 120),
+      openedAt: Math.floor(entry.openedAt),
+    }))
+    .filter(entry => {
+      const key = entry.title + '|' + entry.openedAt;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => b.openedAt - a.openedAt)
+    .slice(0, 10);
+};
 
 const normalizeLaunchCount = value =>
   Number.isSafeInteger(value) && value > 0
