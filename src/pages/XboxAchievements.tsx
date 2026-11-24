@@ -42,6 +42,12 @@ export default function XboxAchievementsScreen() {
             style={styles.nextBadge}>
             {nextBadge ? 'Next badge: ' + nextBadge.title + ' · ' + remaining + ' more ' + (remaining === 1 ? 'open' : 'opens') : 'All local badges unlocked'}
           </Text>
+          <ProgressBar
+            progress={nextBadge ? Math.min(count / nextBadge.target, 1) : 1}
+            color="#9cdb8a"
+            style={styles.nextProgress}
+            accessibilityLabel={nextBadge ? "Progress toward " + nextBadge.title + ": " + count + " of " + nextBadge.target + " catalog opens" : "All local badge goals completed"}
+          />
         </Card.Content>
       </Card>
       <View style={styles.filterRow} accessibilityLabel="Filter local achievements">
@@ -105,6 +111,7 @@ const styles = StyleSheet.create({
   score: {color: '#fff', fontWeight: '800', marginTop: 6},
   summaryHint: {color: '#c3d4c3', fontSize: 12, marginTop: 10},
   nextBadge: {color: '#9cdb8a', fontSize: 12, fontWeight: '700', marginTop: 8},
+  nextProgress: {height: 6, borderRadius: 6, backgroundColor: '#344235', marginTop: 8},
   progress: {height: 8, borderRadius: 8, backgroundColor: '#344235', marginTop: 8},
   filterRow: {flexDirection: 'row', gap: 8, marginBottom: 8},
   filterChip: {paddingHorizontal: 15, paddingVertical: 9, borderRadius: 18, backgroundColor: '#202920', borderWidth: 1, borderColor: '#354136'},
