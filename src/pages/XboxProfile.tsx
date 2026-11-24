@@ -313,6 +313,7 @@ export default function XboxProfileScreen({navigation}) {
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Recent activity</Text>
           <Text variant="bodySmall" accessibilityLiveRegion="polite" accessibilityLabel={activity.length + (activity.length === 1 ? " recent catalog entry" : " recent catalog entries")} style={styles.statsNote}>{activity.length} {activity.length === 1 ? 'entry' : 'entries'} · Maximum 10 saved</Text>
+          <Text variant="bodySmall" style={styles.statsNote}>Catalog activity only — opening a title does not confirm gameplay or track playtime.</Text>
           {activityRange.first !== null ? (
             <Text
               accessibilityLabel={"Saved activity spans from " + new Date(activityRange.first).toLocaleDateString() + " to " + new Date(activityRange.latest).toLocaleDateString()}
