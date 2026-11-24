@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {ScrollView, View, StyleSheet, Linking, Pressable} from 'react-native';
-import {Button, Card, Text} from 'react-native-paper';
+import {Button, Card, Switch, Text} from 'react-native-paper';
 import {useIsFocused} from '@react-navigation/native';
 import {storage} from '../store/mmkv';
 
@@ -15,6 +15,8 @@ const quickLinks = [
 export default function XboxDashboardScreen({navigation}) {
   const isFocused = useIsFocused();
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
+  const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
+  const [quickSettingsVisible, setQuickSettingsVisible] = useState(false);
   const [lastTitle, setLastTitle] = useState(() => storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
   const [lastOpenedAt, setLastOpenedAt] = useState(() => storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
   const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
@@ -22,6 +24,7 @@ export default function XboxDashboardScreen({navigation}) {
   useEffect(() => {
     if (isFocused) {
       setFocusOutline(storage.getBoolean('xbox.ui.focusOutline') ?? true);
+      setCompactCards(storage.getBoolean('xbox.ui.compactCards') ?? false);
       setLastTitle(storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
       setLastOpenedAt(storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
       setGamertag(storage.getString('xbox.profile.gamertag') ?? 'Player');
@@ -29,6 +32,8 @@ export default function XboxDashboardScreen({navigation}) {
     }
   }, [isFocused]);
   const openCloud = () => Linking.openURL(XBOX_PLAY).catch(() => {});
+  const updateFocusOutline = value => { setFocusOutline(value); storage.set('xbox.ui.focusOutline', value); };
+  const updateCompactCards = value => { setCompactCards(value); storage.set('xbox.ui.compactCards', value); };
   const openGamePass = () => Linking.openURL('https://www.xbox.com/xbox-game-pass').catch(() => {});
   const handleQuickLink = title => {
     if (title === 'Cloud Gaming') { openCloud(); }
@@ -47,8 +52,38 @@ export default function XboxDashboardScreen({navigation}) {
           <Text style={styles.profileAvatar}>{avatar}</Text>
           <Text style={styles.profileTag}>{gamertag}</Text>
         </Pressable>
-        <Text variant="headlineSmall" style={styles.logo}>XBOX</Text>
+        <View style={styles.topActions}>
+          <Pressable onPress={() => setQuickSettingsVisible(value => !value)} accessibilityRole="button" accessibilityLabel="Toggle quick settings" style={styles.quickButton}>
+            <Text style={styles.quickButtonText}>⚙</Text>
+          </Pressable>
+          <Text variant="headlineSmall" style={styles.logo}>XBOX</Text>
+        </View>
       </View>
+
+      {quickSettingsVisible ? (
+        <Card style={styles.quickPanel} mode="outlined">
+          <Card.Content>
+            <View style={styles.quickHeader}>
+              <Text variant="titleLarge" style={styles.quickTitle}>Quick Settings</Text>
+              <Button compact textColor="#9cdb8a" onPress={() => setQuickSettingsVisible(false)}>Close</Button>
+            </View>
+            <View style={styles.quickRow}>
+              <View style={styles.quickCopy}><Text style={styles.quickLabel}>Focus highlight</Text><Text style={styles.quickHint}>Visible keyboard focus outline</Text></View>
+              <Switch value={focusOutline} onValueChange={updateFocusOutline} />
+            </View>
+            <View style={styles.quickDivider} />
+            <View style={styles.quickRow}>
+              <View style={styles.quickCopy}><Text style={styles.quickLabel}>Compact game cards</Text><Text style={styles.quickHint}>Tighter game library layout</Text></View>
+              <Switch value={compactCards} onValueChange={updateCompactCards} />
+            </View>
+            <View style={styles.quickActions}>
+              <Button compact mode="outlined" textColor="#9cdb8a" onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxSettings'); }}>All settings</Button>
+              <Button compact mode="outlined" textColor="#9cdb8a" onPress={() => { setQuickSettingsVisible(false); navigation.navigate('XboxNotifications'); }}>Notifications</Button>
+              <Button compact mode="contained" buttonColor="#107c10" onPress={openCloud}>Launch cloud</Button>
+            </View>
+          </Card.Content>
+        </Card>
+      ) : null}
 
       <Card style={styles.hero} mode="contained">
           <Card.Content>
@@ -127,6 +162,18 @@ const styles = StyleSheet.create({
   content: {padding: 20, paddingBottom: 36},
   topBar: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24},
   profileShortcut: {alignItems: 'center', justifyContent: 'center', minWidth: 52, marginLeft: 'auto', marginRight: 12},
+  topActions: {alignItems: 'center', gap: 8},
+  quickButton: {width: 34, height: 34, borderRadius: 17, backgroundColor: '#26372a', alignItems: 'center', justifyContent: 'center'},
+  quickButtonText: {color: '#b8e7ad', fontSize: 22, fontWeight: '700'},
+  quickPanel: {backgroundColor: '#1b211c', borderColor: '#66845f', borderWidth: 1, borderRadius: 16, marginBottom: 18},
+  quickHeader: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8},
+  quickTitle: {color: '#fff', fontWeight: '800'},
+  quickRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 58, gap: 12},
+  quickCopy: {flex: 1},
+  quickLabel: {color: '#f2f6f1', fontWeight: '700'},
+  quickHint: {color: '#aab5aa', fontSize: 12, marginTop: 3},
+  quickDivider: {height: 1, backgroundColor: '#354136'},
+  quickActions: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12},
   profileAvatar: {fontSize: 25},
   profileTag: {color: '#d6e8d5', fontSize: 11, fontWeight: '700', maxWidth: 74},
   eyebrow: {color: '#8fbc8f', letterSpacing: 2, fontWeight: '700'},
