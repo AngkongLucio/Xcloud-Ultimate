@@ -64,18 +64,18 @@ export default function XboxMessagesScreen() {
           </View>
           <ScrollView style={styles.messageScroll} contentContainerStyle={styles.messageContent}>
             {(threads.find(item => item.friendId === activeFriend.id)?.messages || []).map(message => (
-              <View key={message.id} style={[styles.messageBubble, message.sender === 'me' ? styles.myMessage : styles.theirMessage]}>
+              <View key={message.id} accessible accessibilityRole="text" accessibilityLabel={(message.sender === 'me' ? "You: " : friendNameForMessage(activeFriend, message) + ": ") + message.body + (message.sentAt ? ", " + new Date(message.sentAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : "")} style={[styles.messageBubble, message.sender === 'me' ? styles.myMessage : styles.theirMessage]}>
                 <Text style={styles.messageText}>{message.body}</Text>
                 <Text style={styles.messageTime}>{message.sentAt ? new Date(message.sentAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : ''}</Text>
               </View>
             ))}
             {!threads.some(item => item.friendId === activeFriend.id && item.messages?.length) ? (
-              <Text style={styles.emptyHint}>No messages yet. Send a local test message below.</Text>
+              <Text accessibilityLiveRegion="polite" style={styles.emptyHint}>No messages yet. Send a local test message below.</Text>
             ) : null}
           </ScrollView>
           <View style={styles.composer}>
             <TextInput mode="outlined" value={draft} onChangeText={setDraft} placeholder="Write a message..." accessibilityLabel={"Message to " + activeFriend.name} accessibilityHint="This message is saved locally on this device only." multiline textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.composerInput} />
-            <Button mode="contained" icon="send" accessibilityLabel={"Save local message to " + activeFriend.name} onPress={sendMessage} disabled={!draft.trim()} style={styles.sendButton}>Send</Button>
+            <Button mode="contained" icon="send" accessibilityLabel={"Save local message to " + activeFriend.name} accessibilityHint="Saves this message only on this device. It is not sent over Xbox Network." onPress={sendMessage} disabled={!draft.trim()} style={styles.sendButton}>Send</Button>
           </View>
         </>
       ) : (
