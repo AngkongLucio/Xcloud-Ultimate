@@ -17,11 +17,15 @@ export default function XboxDashboardScreen({navigation}) {
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
   const [lastTitle, setLastTitle] = useState(() => storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
   const [lastOpenedAt, setLastOpenedAt] = useState(() => storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
+  const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
+  const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
   useEffect(() => {
     if (isFocused) {
       setFocusOutline(storage.getBoolean('xbox.ui.focusOutline') ?? true);
       setLastTitle(storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
       setLastOpenedAt(storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
+      setGamertag(storage.getString('xbox.profile.gamertag') ?? 'Player');
+      setAvatar(storage.getString('xbox.profile.avatar') ?? '🎮');
     }
   }, [isFocused]);
   const openCloud = () => Linking.openURL(XBOX_PLAY).catch(() => {});
@@ -39,6 +43,10 @@ export default function XboxDashboardScreen({navigation}) {
           <Text variant="labelLarge" style={styles.eyebrow}>XCLOUD ULTIMATE</Text>
           <Text variant="headlineMedium" style={styles.heading}>Home</Text>
         </View>
+        <Pressable onPress={() => navigation.navigate('XboxProfile')} style={styles.profileShortcut} accessibilityRole="button" accessibilityLabel="Open player profile">
+          <Text style={styles.profileAvatar}>{avatar}</Text>
+          <Text style={styles.profileTag}>{gamertag}</Text>
+        </Pressable>
         <Text variant="headlineSmall" style={styles.logo}>XBOX</Text>
       </View>
 
@@ -56,6 +64,7 @@ export default function XboxDashboardScreen({navigation}) {
       </Card>
 
       <View style={styles.actionRow}>
+        <Button mode="outlined" icon="account-circle" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxProfile')} style={styles.actionButton}>Profile</Button>
         <Button mode="outlined" icon="view-grid" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxLibrary')} style={styles.actionButton}>
           Game Library
         </Button>
@@ -105,6 +114,9 @@ const styles = StyleSheet.create({
   screen: {flex: 1, backgroundColor: '#101510'},
   content: {padding: 20, paddingBottom: 36},
   topBar: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24},
+  profileShortcut: {alignItems: 'center', justifyContent: 'center', minWidth: 52, marginLeft: 'auto', marginRight: 12},
+  profileAvatar: {fontSize: 25},
+  profileTag: {color: '#d6e8d5', fontSize: 11, fontWeight: '700', maxWidth: 74},
   eyebrow: {color: '#8fbc8f', letterSpacing: 2, fontWeight: '700'},
   heading: {color: '#fff', fontWeight: '700', marginTop: 4},
   logo: {color: '#7ed957', fontWeight: '900', letterSpacing: 1},
