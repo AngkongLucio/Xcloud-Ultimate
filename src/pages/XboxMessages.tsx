@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useIsFocused} from '@react-navigation/native';
-import {KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, Pressable} from 'react-native';
+import {Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, Pressable} from 'react-native';
 import {Button, Card, Text, TextInput} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 import {addLocalNotification} from './XboxNotifications';
@@ -56,8 +56,22 @@ export default function XboxMessagesScreen() {
   };
 
   const removeThread = (friendId, friendName) => {
-    saveThreads(threads.filter(item => item.friendId !== friendId));
-    setFeedback('Local conversation with ' + friendName + ' deleted.');
+    Alert.alert(
+      'Delete local conversation?',
+      'This will permanently remove the conversation with ' + friendName + ' from this device.',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            saveThreads(threads.filter(item => item.friendId !== friendId));
+            setFeedback('Local conversation with ' + friendName + ' deleted.');
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
   const orderedThreads = [...threads].sort((a, b) => inboxSort === 'A–Z'
     ? (a.friendName || '').localeCompare(b.friendName || '')
