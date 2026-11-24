@@ -426,6 +426,7 @@ static ChiakiErrorCode wait_for_session_message(
         uint16_t types, uint64_t timeout_ms);
 static ChiakiErrorCode wait_for_session_message_ack(
         Session *session, int req_id, uint64_t timeout_ms);
+static ChiakiErrorCode holepunch_check_cancelled(Session *session);
 static ChiakiErrorCode session_message_parse(
         ChiakiLog *log, json_object *message_json, SessionMessage **out);
 static ChiakiErrorCode session_message_serialize(
@@ -1790,10 +1791,30 @@ cleanup:
     return err;
 }
 
+static ChiakiErrorCode holepunch_check_cancelled(Session *session)
+{
+    if(!session)
+        return CHIAKI_ERR_INVALID_DATA;
+    ChiakiErrorCode err = chiaki_mutex_lock(&session->stop_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
+    bool cancelled = session->main_should_stop;
+    if(cancelled)
+        session->main_should_stop = false;
+    ChiakiErrorCode unlock_err = chiaki_mutex_unlock(&session->stop_mutex);
+    if(unlock_err != CHIAKI_ERR_SUCCESS)
+        return unlock_err;
+    return cancelled ? CHIAKI_ERR_CANCELED : CHIAKI_ERR_SUCCESS;
+}
+
 CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* session, ChiakiHolepunchPortType port_type)
 {
-    ChiakiErrorCode err;
-    chiaki_mutex_lock(&session->state_mutex);
+    if(!session || (port_type != CHIAKI_HOLEPUNCH_PORT_TYPE_CTRL &&
+                    port_type != CHIAKI_HOLEPUNCH_PORT_TYPE_DATA))
+        return CHIAKI_ERR_INVALID_DATA;
+    ChiakiErrorCode err = chiaki_mutex_lock(&session->state_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        return err;
     if (port_type == CHIAKI_HOLEPUNCH_PORT_TYPE_CTRL
         && !(session->state & SESSION_STATE_CUSTOMDATA1_RECEIVED))
     {
@@ -1810,7 +1831,14 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
         err = CHIAKI_ERR_UNKNOWN;
         goto offer_cleanup;
     }
-    chiaki_mutex_unlock(&session->state_mutex);
+    ChiakiErrorCode state_unlock_err = chiaki_mutex_unlock(&session->state_mutex);
+    if(state_unlock_err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(session->log, "chiaki_holepunch_session_punch_hole: Could not unlock state mutex: %d", state_unlock_err);
+        if(err == CHIAKI_ERR_SUCCESS)
+            err = state_unlock_err;
+        return err;
+    }
 
     // NOTE: Needs to be kept around until the end, we're using the candidates in the message later on
     SessionMessage *console_offer_msg = NULL;
@@ -1831,15 +1859,25 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
         goto offer_cleanup;
     }
     ConnectionRequest *console_req = console_offer_msg->conn_request;
+    if(!console_req || (console_req->num_candidates > 0 && !console_req->candidates))
+    {
+        CHIAKI_LOGE(session->log, "chiaki_holepunch_session_punch_hole: OFFER message has invalid connection data");
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup;
+    }
     memcpy(session->hashed_id_console, console_req->local_hashed_id, sizeof(session->hashed_id_console));
     session->sid_console = console_req->sid;
 
-    chiaki_mutex_lock(&session->state_mutex);
+    err = chiaki_mutex_lock(&session->state_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto cleanup;
     if(port_type == CHIAKI_HOLEPUNCH_PORT_TYPE_CTRL)
         session->state |= SESSION_STATE_CTRL_OFFER_RECEIVED;
     else
         session->state |= SESSION_STATE_DATA_OFFER_RECEIVED;
-    chiaki_mutex_unlock(&session->state_mutex);
+    err = chiaki_mutex_unlock(&session->state_mutex);
+    if(err != CHIAKI_ERR_SUCCESS)
+        goto cleanup;
 
     // ACK the message
     SessionMessage ack_msg = {
@@ -1855,16 +1893,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
         CHIAKI_LOGE(session->log, "chiaki_holepunch_session_punch_holes: Couldn't send holepunch session message");
         goto cleanup;
     }
-    chiaki_mutex_lock(&session->stop_mutex);
-    if(session->main_should_stop)
+    err = holepunch_check_cancelled(session);
+    if(err != CHIAKI_ERR_SUCCESS)
     {
-        session->main_should_stop = false;
-        chiaki_mutex_unlock(&session->stop_mutex);
-        CHIAKI_LOGI(session->log, "chiaki_holepunch_session_punch_holes: canceled");
-        err = CHIAKI_ERR_CANCELED;
+        if(err == CHIAKI_ERR_CANCELED)
+            CHIAKI_LOGI(session->log, "chiaki_holepunch_session_punch_holes: canceled");
         goto cleanup;
     }
-    chiaki_mutex_unlock(&session->stop_mutex);
 
     // Find candidate that we can use to connect to the console
     for(size_t i = 0; i < console_req->num_candidates; i++)
@@ -1906,7 +1941,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
         const int our_offer_req_id = session->local_req_id;
         session->local_req_id++;
         session->our_offer_msg->req_id = our_offer_req_id;
-        send_offer(session);
+        err = send_offer(session);
+        if(err != CHIAKI_ERR_SUCCESS)
+        {
+            CHIAKI_LOGE(session->log, "chiaki_holepunch_session_punch_hole: Failed to send OFFER: %s",
+                    chiaki_error_string(err));
+            goto cleanup;
+        }
 
         // Wait for ACK of OFFER, ignore other OFFERs, simply ACK them
         err = wait_for_session_message_ack(
@@ -1926,7 +1967,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
             CHIAKI_LOGE(session->log, "chiaki_holepunch_session_punch_holes: Failed to wait for ACK of our connection offer.");
             goto cleanup;
         }
-        http_check_session(session, true);
+        err = http_check_session(session, true);
+        if(err != CHIAKI_ERR_SUCCESS)
+        {
+            CHIAKI_LOGE(session->log, "chiaki_holepunch_session_punch_hole: Failed to verify PSN session: %s",
+                    chiaki_error_string(err));
+            goto cleanup;
+        }
 
         sock = CHIAKI_INVALID_SOCKET;
         err = check_candidates(session, session->local_candidates, console_req->candidates, console_req->num_candidates, &sock, &selected_candidate);
@@ -1945,16 +1992,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
                     "chiaki_holepunch_session_punch_holes: Failed to find reachable candidate for data connection (attempt %d/%d): %s",
                     attempt, max_attempts, chiaki_error_string(err));
     }
-    chiaki_mutex_lock(&session->stop_mutex);
-    if(session->main_should_stop)
+    err = holepunch_check_cancelled(session);
+    if(err != CHIAKI_ERR_SUCCESS)
     {
-        session->main_should_stop = false;
-        chiaki_mutex_unlock(&session->stop_mutex);
-        CHIAKI_LOGI(session->log, "chiaki_holepunch_session_punch_holes: canceled");
-        err = CHIAKI_ERR_CANCELED;
+        if(err == CHIAKI_ERR_CANCELED)
+            CHIAKI_LOGI(session->log, "chiaki_holepunch_session_punch_holes: canceled");
         goto cleanup;
     }
-    chiaki_mutex_unlock(&session->stop_mutex);
 
     err = send_accept(session, session->local_req_id, &selected_candidate);
     if (err != CHIAKI_ERR_SUCCESS)
@@ -1962,16 +2006,13 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
         CHIAKI_LOGE(session->log, "chiaki_holepunch_session_punch_holes: Failed to send ACCEPT message.");
         goto cleanup;
     }
-    chiaki_mutex_lock(&session->stop_mutex);
-    if(session->main_should_stop)
+    err = holepunch_check_cancelled(session);
+    if(err != CHIAKI_ERR_SUCCESS)
     {
-        session->main_should_stop = false;
-        chiaki_mutex_unlock(&session->stop_mutex);
-        CHIAKI_LOGI(session->log, "chiaki_holepunch_session_punch_holes: canceled");
-        err = CHIAKI_ERR_CANCELED;
+        if(err == CHIAKI_ERR_CANCELED)
+            CHIAKI_LOGI(session->log, "chiaki_holepunch_session_punch_holes: canceled");
         goto cleanup;
     }
-    chiaki_mutex_unlock(&session->stop_mutex);
     session->local_req_id++;
 
     SessionMessage *msg = NULL;
