@@ -1,6 +1,7 @@
 import React, {useMemo, useState} from 'react';
 import {ScrollView, StyleSheet, View, Linking, Pressable} from 'react-native';
 import {Button, Card, Chip, Searchbar, Text} from 'react-native-paper';
+import {storage} from '../store/mmkv';
 
 const XBOX_PLAY = 'https://www.xbox.com/play';
 const GAMES = [
@@ -18,6 +19,8 @@ export default function XboxLibraryScreen({navigation}) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const compactCards = storage.getBoolean('xbox.ui.compactCards') ?? false;
+  const focusOutline = storage.getBoolean('xbox.ui.focusOutline') ?? true;
 
   const visibleGames = useMemo(() => GAMES.filter(game => {
     const matchesSearch = game.title.toLowerCase().includes(search.trim().toLowerCase());
@@ -72,9 +75,9 @@ export default function XboxLibraryScreen({navigation}) {
             accessibilityRole="button"
             accessibilityLabel={game.title + ', ' + game.genre + '. Open Xbox catalog.'}
             onPress={openXbox}
-            style={({focused}) => [styles.gameCardPressable, (focused || selectedIndex === index) && styles.focusedGameCard]}>
-          <Card mode="outlined" style={styles.gameCard}>
-            <Card.Content>
+            style={({focused}) => [styles.gameCardPressable, focusOutline && (focused || selectedIndex === index) && styles.focusedGameCard]}>
+          <Card mode="outlined" style={[styles.gameCard, compactCards && styles.compactGameCard]}>
+            <Card.Content style={compactCards && styles.compactGameContent}>
               <Text variant="displaySmall" style={styles.gameMark}>{game.mark}</Text>
               <Text variant="titleMedium" style={styles.gameTitle}>{game.title}</Text>
               <Text variant="bodySmall" style={styles.genre}>{game.genre}</Text>
@@ -131,6 +134,8 @@ const styles = StyleSheet.create({
   gameCardPressable: {width: '48%', flexGrow: 1, borderRadius: 14},
   focusedGameCard: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 14},
   gameCard: {backgroundColor: '#1b211c', borderColor: '#344235', borderRadius: 14},
+  compactGameCard: {borderRadius: 10},
+  compactGameContent: {paddingVertical: 8},
   gameMark: {marginBottom: 10},
   gameTitle: {color: '#fff', minHeight: 48, fontWeight: '700'},
   genre: {color: '#aab5aa', marginTop: 4},
