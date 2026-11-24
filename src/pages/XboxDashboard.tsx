@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, View, StyleSheet, Linking, Pressable, Modal} from 'react-native';
+import {ScrollView, View, StyleSheet, Linking, Pressable, Modal, Animated} from 'react-native';
 import {Button, Card, Switch, Text} from 'react-native-paper';
 import {useIsFocused} from '@react-navigation/native';
 import {storage} from '../store/mmkv';
@@ -18,10 +18,25 @@ export default function XboxDashboardScreen({navigation}) {
   const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
   const [quickSettingsVisible, setQuickSettingsVisible] = useState(false);
   const [guideVisible, setGuideVisible] = useState(false);
+  const [bootVisible, setBootVisible] = useState(true);
+  const bootOpacity = React.useRef(new Animated.Value(1)).current;
+  const bootScale = React.useRef(new Animated.Value(0.88)).current;
   const [lastTitle, setLastTitle] = useState(() => storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
   const [lastOpenedAt, setLastOpenedAt] = useState(() => storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
   const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
   const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(bootScale, {toValue: 1, duration: 650, useNativeDriver: true}),
+    ]).start();
+    const bootTimer = setTimeout(() => {
+      Animated.timing(bootOpacity, {toValue: 0, duration: 350, useNativeDriver: true}).start(({finished}) => {
+        if (finished) setBootVisible(false);
+      });
+    }, 1150);
+    return () => clearTimeout(bootTimer);
+  }, [bootOpacity, bootScale]);
+
   useEffect(() => {
     if (isFocused) {
       setFocusOutline(storage.getBoolean('xbox.ui.focusOutline') ?? true);
@@ -44,6 +59,7 @@ export default function XboxDashboardScreen({navigation}) {
   };
 
   return (
+    <View style={styles.root}>
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.topBar}>
         <View>
@@ -188,10 +204,32 @@ export default function XboxDashboardScreen({navigation}) {
         This dashboard is a launcher and companion interface. Focusable shortcuts support accessible navigation; actual D-pad behavior depends on the connected device and iPadOS. Xbox sign-in and streaming stay on the official Xbox website.
       </Text>
     </ScrollView>
+    {bootVisible ? (
+      <Animated.View pointerEvents="none" style={[styles.bootScreen, {opacity: bootOpacity}]}>
+        <Animated.View style={[styles.bootBrand, {transform: [{scale: bootScale}]}]}>
+          <View style={styles.bootMark}><Text style={styles.bootX}>X</Text></View>
+          <Text style={styles.bootWord}>XBOX</Text>
+          <Text style={styles.bootSub}>XCLOUD ULTIMATE</Text>
+          <View style={styles.bootTrack}><View style={styles.bootProgress} /></View>
+          <Text style={styles.bootLoading}>STARTING YOUR EXPERIENCE</Text>
+        </Animated.View>
+      </Animated.View>
+    ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {flex: 1, backgroundColor: '#101510'},
+  bootScreen: {position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, backgroundColor: '#050805', alignItems: 'center', justifyContent: 'center'},
+  bootBrand: {alignItems: 'center', justifyContent: 'center'},
+  bootMark: {width: 78, height: 78, borderRadius: 39, borderWidth: 3, borderColor: '#78d64b', alignItems: 'center', justifyContent: 'center', marginBottom: 15, shadowColor: '#63d33b', shadowOpacity: 0.65, shadowRadius: 20, shadowOffset: {width: 0, height: 0}, elevation: 10},
+  bootX: {color: '#8be85d', fontSize: 54, fontWeight: '900', lineHeight: 62},
+  bootWord: {color: '#fff', fontSize: 30, fontWeight: '900', letterSpacing: 5},
+  bootSub: {color: '#8be85d', fontSize: 10, fontWeight: '800', letterSpacing: 3, marginTop: 7},
+  bootTrack: {width: 148, height: 3, backgroundColor: '#253126', borderRadius: 2, overflow: 'hidden', marginTop: 34},
+  bootProgress: {width: '72%', height: 3, backgroundColor: '#78d64b', borderRadius: 2},
+  bootLoading: {color: '#778477', fontSize: 9, letterSpacing: 1.5, marginTop: 13},
   screen: {flex: 1, backgroundColor: '#101510'},
   content: {padding: 20, paddingBottom: 36},
   topBar: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24},
