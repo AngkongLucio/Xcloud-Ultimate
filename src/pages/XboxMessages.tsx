@@ -116,10 +116,12 @@ export default function XboxMessagesScreen() {
     if (!body || !activeFriend) return;
     const existing = threads.find(item => item.friendId === activeFriend.id);
     const messages = existing ? existing.messages : [];
-    const nextMessages = [...messages, {id: String(Date.now()), body, sentAt: Date.now(), sender: 'me'}];
+    const now = Date.now();
+    const messageId = 'message-' + now + '-' + Math.random().toString(36).slice(2, 10);
+    const nextMessages = [...messages, {id: messageId, body: body.slice(0, 500), sentAt: now, sender: 'me'}].slice(-100);
     const next = existing
-      ? threads.map(item => item.friendId === activeFriend.id ? {...item, messages: nextMessages, updatedAt: Date.now()} : item)
-      : [...threads, {friendId: activeFriend.id, friendName: activeFriend.name, avatar: activeFriend.avatar || '🎮', messages: nextMessages, updatedAt: Date.now()}];
+      ? threads.map(item => item.friendId === activeFriend.id ? {...item, messages: nextMessages, updatedAt: now} : item)
+      : [...threads, {friendId: activeFriend.id, friendName: activeFriend.name, avatar: activeFriend.avatar || '🎮', messages: nextMessages, updatedAt: now}];
     saveThreads(next);
     addLocalNotification('Local message saved', 'A message to ' + activeFriend.name + ' was saved on this device.', 'message');
     setDraft('');
