@@ -53,15 +53,23 @@ export default function XboxFriendsScreen() {
     try {
       const raw = storage.getString('xbox.friends.local');
       const parsed = raw ? JSON.parse(raw) : [];
-      setFriends(normalizeFriends(parsed));
-    } catch (_) { setFriends([]); }
+      const normalized = normalizeFriends(parsed);
+      if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+        storage.set('xbox.friends.local', JSON.stringify(normalized));
+      }
+      setFriends(normalized);
+    } catch (_) {
+      storage.delete('xbox.friends.local');
+      setFriends([]);
+    }
   };
 
   useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
 
   const save = next => {
-    setFriends(next);
-    storage.set('xbox.friends.local', JSON.stringify(next));
+    const normalized = normalizeFriends(next);
+    setFriends(normalized);
+    storage.set('xbox.friends.local', JSON.stringify(normalized));
   };
 
   const addFriend = () => {
