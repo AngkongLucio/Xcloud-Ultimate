@@ -895,7 +895,6 @@ CHIAKI_EXPORT Session* chiaki_holepunch_session_init(
     {
         CHIAKI_LOGE(session->log, "Could not initialize secure Holepunch session identifiers: %d", err);
         chiaki_holepunch_session_fini(session);
-        free(session);
         return NULL;
     }
 
@@ -1965,6 +1964,9 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_punch_hole(Session* sessi
 
 CHIAKI_EXPORT void chiaki_holepunch_session_fini(Session* session)
 {
+    if(!session)
+        return;
+
     if(session->ws_open)
     {
         ChiakiErrorCode err = deleteSession(session);
@@ -2018,9 +2020,11 @@ CHIAKI_EXPORT void chiaki_holepunch_session_fini(Session* session)
         chiaki_stop_pipe_stop(&session->select_pipe);
         ChiakiErrorCode join_err = chiaki_thread_join(&session->ws_thread, NULL);
         if(join_err != CHIAKI_ERR_SUCCESS)
-            CHIAKI_LOGE(session->log, "Could not join WebSocket thread: %d", join_err);
-        else
-            session->ws_thread_started = false;
+        {
+            CHIAKI_LOGE(session->log, "Could not join WebSocket thread: %d; retaining session resources", join_err);
+            return;
+        }
+        session->ws_thread_started = false;
     }
     if(session->gw.data)
     {
@@ -2074,6 +2078,10 @@ CHIAKI_EXPORT void chiaki_holepunch_session_fini(Session* session)
     chiaki_mutex_fini(&session->state_mutex);
     chiaki_cond_fini(&session->state_cond);
     chiaki_mutex_fini(&session->stop_mutex);
+
+    // The session is heap-allocated by chiaki_holepunch_session_init().
+    // Keep it alive until the WebSocket worker has been joined.
+    free(session);
 }
 
 CHIAKI_EXPORT void chiaki_holepunch_main_thread_cancel(Session *session, bool stop_thread)
