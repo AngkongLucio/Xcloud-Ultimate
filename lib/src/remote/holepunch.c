@@ -600,6 +600,18 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_list_devices(
         goto cleanup;
     }
 
+    /* Accept trailing JSON whitespace, but reject a second value or arbitrary suffix. */
+    size_t parsed_size = json_tokener_get_parse_end(tok);
+    while(parsed_size < response_data.size &&
+            isspace((unsigned char)response_data.data[parsed_size]))
+        parsed_size++;
+    if(parsed_size != response_data.size)
+    {
+        CHIAKI_LOGE(log, "chiaki_holepunch_list_devices: Unexpected data after JSON response");
+        err = CHIAKI_ERR_INVALID_DATA;
+        goto cleanup;
+    }
+
     json_object *clients = NULL;
     if(!json_object_object_get_ex(json, "clients", &clients) ||
             !json_object_is_type(clients, json_type_array))
