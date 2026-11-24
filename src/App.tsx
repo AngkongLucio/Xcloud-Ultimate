@@ -24,6 +24,7 @@ import customDarkTheme from './theme/index.dark';
 
 import HomeScreen from './pages/Home';
 import XboxCloudScreen from './pages/XboxCloud';
+import XboxDashboardScreen from './pages/XboxDashboard';
 import OptionsScreen from './pages/Options';
 import LoginScreen from './pages/Login';
 import LoginUsernameScreen from './pages/LoginUsername';
@@ -149,6 +150,11 @@ function App() {
                     name="Home"
                     component={HomeScreen}
                     options={{title: t('Consoles')}}
+                  />
+                  <RootStack.Screen
+                    name="XboxDashboard"
+                    component={XboxDashboardScreen}
+                    options={{headerShown: false}}
                   />
                   <RootStack.Screen
                     name="XboxCloud"
