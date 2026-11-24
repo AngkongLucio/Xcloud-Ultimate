@@ -55,6 +55,11 @@ export default function XboxLibraryScreen({navigation}) {
     return matchesSearch && (category === 'All' || game.genre === category) && (!favoritesOnly || favoriteTitles.includes(game.title));
   }), [search, category, favoritesOnly, favoriteTitles]);
 
+  const favoriteCount = useMemo(
+    () => GAMES.filter(game => favoriteTitles.includes(game.title)).length,
+    [favoriteTitles],
+  );
+
   const categoryCount = item => GAMES.filter(game => {
     const matchesSearch = game.title.toLowerCase().includes(search.trim().toLowerCase());
     return matchesSearch && (item === 'All' || game.genre === item) && (!favoritesOnly || favoriteTitles.includes(game.title));
@@ -152,7 +157,7 @@ export default function XboxLibraryScreen({navigation}) {
           onPress={() => { haptic(); setFavoritesOnly(value => !value); setSelectedIndex(0); }}
           style={styles.chip}
           textStyle={styles.chipText}>
-          ★ Favorites ({favoriteTitles.length})
+          ★ Favorites ({favoriteCount})
         </Chip>
       </View>
 
