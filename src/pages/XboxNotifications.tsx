@@ -41,12 +41,20 @@ export default function XboxNotificationsScreen() {
     setItems(next);
   };
   const unread = items.filter(item => !item.read).length;
+  const messageCount = items.filter(item => item.kind === 'message').length;
+  const friendCount = items.filter(item => item.kind === 'friend').length;
+  const activityCount = items.filter(item => item.kind !== 'message' && item.kind !== 'friend').length;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text variant="labelLarge" style={styles.eyebrow}>XCLOUD ULTIMATE</Text>
       <Text variant="headlineMedium" style={styles.heading}>Notifications</Text>
       <Text variant="bodyMedium" style={styles.intro}>Your local activity updates and companion-app alerts.</Text>
+      <View style={styles.summaryRow} accessibilityLabel={"Notification summary: " + activityCount + " activity, " + friendCount + " friends, " + messageCount + " messages"}>
+        <View style={styles.summaryItem}><Text style={styles.summaryNumber}>{activityCount}</Text><Text style={styles.summaryLabel}>ACTIVITY</Text></View>
+        <View style={styles.summaryItem}><Text style={styles.summaryNumber}>{friendCount}</Text><Text style={styles.summaryLabel}>FRIENDS</Text></View>
+        <View style={styles.summaryItem}><Text style={styles.summaryNumber}>{messageCount}</Text><Text style={styles.summaryLabel}>MESSAGES</Text></View>
+      </View>
       <View style={styles.toolbar}>
         <Text accessibilityLiveRegion="polite" accessibilityLabel={unread + (unread === 1 ? " unread notification" : " unread notifications")} style={styles.unread}>{unread} UNREAD</Text>
         <Button compact mode="text" textColor="#9cdb8a" accessibilityLabel="Mark all notifications as read" onPress={markAllRead} disabled={!unread}>Mark all read</Button>
@@ -84,6 +92,10 @@ const styles = StyleSheet.create({
   eyebrow: {color: '#8fbc8f', letterSpacing: 2, fontWeight: '700'},
   heading: {color: '#fff', fontWeight: '800', marginTop: 5},
   intro: {color: '#aebcaf', lineHeight: 21, marginTop: 8, marginBottom: 16},
+  summaryRow: {flexDirection: 'row', gap: 9, marginBottom: 14},
+  summaryItem: {flex: 1, backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 9},
+  summaryNumber: {color: '#fff', fontSize: 20, fontWeight: '800'},
+  summaryLabel: {color: '#9cdb8a', fontSize: 9, fontWeight: '800', letterSpacing: 0.8, marginTop: 3},
   toolbar: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap'},
   unread: {color: '#9cdb8a', fontSize: 11, fontWeight: '800', letterSpacing: 1},
   itemCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 14, marginBottom: 10},
