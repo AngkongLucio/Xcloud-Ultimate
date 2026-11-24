@@ -28,6 +28,7 @@ import XboxDashboardScreen from './pages/XboxDashboard';
 import XboxLibraryScreen from './pages/XboxLibrary';
 import XboxSettingsScreen from './pages/XboxSettings';
 import XboxProfileScreen from './pages/XboxProfile';
+import XboxAchievementsScreen from './pages/XboxAchievements';
 import OptionsScreen from './pages/Options';
 import LoginScreen from './pages/Login';
 import LoginUsernameScreen from './pages/LoginUsername';
@@ -173,6 +174,11 @@ function App() {
                     name="XboxProfile"
                     component={XboxProfileScreen}
                     options={{title: 'Player Profile'}}
+                  />
+                  <RootStack.Screen
+                    name="XboxAchievements"
+                    component={XboxAchievementsScreen}
+                    options={{title: 'Achievements'}}
                   />
                   <RootStack.Screen
                     name="XboxCloud"
