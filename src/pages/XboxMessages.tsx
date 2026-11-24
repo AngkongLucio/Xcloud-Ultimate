@@ -21,6 +21,7 @@ export default function XboxMessagesScreen() {
   const [draft, setDraft] = useState('');
   const [inboxSearch, setInboxSearch] = useState('');
   const [inboxSort, setInboxSort] = useState('Recent');
+  const [chatSearch, setChatSearch] = useState('');
   const [feedback, setFeedback] = useState('');
 
   const refresh = () => {
@@ -76,6 +77,10 @@ export default function XboxMessagesScreen() {
   const orderedThreads = [...threads].sort((a, b) => inboxSort === 'A–Z'
     ? (a.friendName || '').localeCompare(b.friendName || '')
     : (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0));
+  const visibleChatFriends = friends.filter(friend =>
+    friend.name.toLowerCase().includes(chatSearch.trim().toLowerCase()),
+  );
+
   const visibleThreads = orderedThreads.filter(thread => {
     const last = thread.messages?.[thread.messages.length - 1];
     const query = inboxSearch.trim().toLowerCase();
@@ -186,15 +191,38 @@ export default function XboxMessagesScreen() {
             </Card.Content></Card>
           )}
           <Text variant="titleLarge" style={[styles.sectionTitle, styles.playersTitle]}>Start a chat</Text>
-          {friends.length ? friends.map(friend => (
-            <Pressable key={friend.id} onPress={() => openThread(friend)} accessibilityRole="button" accessibilityLabel={"Start local chat with " + friend.name}>
-              <View style={styles.playerRow}>
-                <View style={styles.avatar}><Text style={styles.avatarText}>{friend.avatar || '🎮'}</Text></View>
-                <Text style={styles.friendName}>{friend.name}</Text>
-                <Text style={styles.chevron}>›</Text>
-              </View>
-            </Pressable>
-          )) : <Text style={styles.preview}>Add players in Friends before starting a local chat.</Text>}
+          {friends.length ? (
+            <>
+              <TextInput
+                mode="outlined"
+                label="Search players"
+                accessibilityLabel="Search players to start a local chat"
+                accessibilityHint="Filters your local friends list by display name."
+                value={chatSearch}
+                onChangeText={setChatSearch}
+                autoCapitalize="none"
+                clearButtonMode="while-editing"
+                textColor="#fff"
+                outlineColor="#526552"
+                activeOutlineColor="#9cdb8a"
+                style={styles.composerInput}
+              />
+              <Text accessibilityLiveRegion="polite" accessibilityLabel={visibleChatFriends.length + " of " + friends.length + " players available to chat"} style={styles.conversationCount}>
+                {visibleChatFriends.length} of {friends.length} players
+              </Text>
+              {visibleChatFriends.length ? visibleChatFriends.map(friend => (
+                <Pressable key={friend.id} onPress={() => openThread(friend)} accessibilityRole="button" accessibilityLabel={"Start local chat with " + friend.name}>
+                  <View style={styles.playerRow}>
+                    <View style={styles.avatar}><Text style={styles.avatarText}>{friend.avatar || '🎮'}</Text></View>
+                    <Text style={styles.friendName}>{friend.name}</Text>
+                    <Text style={styles.chevron}>›</Text>
+                  </View>
+                </Pressable>
+              )) : (
+                <Text accessibilityLiveRegion="polite" style={styles.preview}>No matching players. Try another name.</Text>
+              )}
+            </>
+          ) : <Text style={styles.preview}>Add players in Friends before starting a local chat.</Text>}
           <Text style={styles.footer}>Not connected to Xbox Network or Microsoft messaging. No messages are sent to other people; this screen only stores local test messages.</Text>
         </ScrollView>
       )}
