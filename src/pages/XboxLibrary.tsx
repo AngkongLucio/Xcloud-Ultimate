@@ -142,16 +142,16 @@ export default function XboxLibraryScreen({navigation}) {
       <View style={styles.controllerPanel}>
         <Text variant="titleMedium" style={styles.controllerTitle}>Controller navigation</Text>
         <View style={styles.dpadRow}>
-          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection('up')}>↑</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Move selection up" onPress={() => moveSelection('up')}>↑</Button>
         </View>
         <View style={styles.dpadRow}>
-          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection('left')}>←</Button>
-          <Button compact mode="contained" buttonColor="#107c10" onPress={openSelectedGame}>A · Select</Button>
-          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection('right')}>→</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Move selection left" onPress={() => moveSelection('left')}>←</Button>
+          <Button compact mode="contained" buttonColor="#107c10" accessibilityLabel={"Open " + (visibleGames[selectedIndex]?.title ?? "selected game")} onPress={openSelectedGame}>A · Select</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Move selection right" onPress={() => moveSelection('right')}>→</Button>
         </View>
         <View style={styles.dpadRow}>
-          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection('down')}>↓</Button>
-          <Button compact mode="text" textColor="#9cdb8a" onPress={() => { haptic('impactLight'); navigation.goBack(); }}>B · Back</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" accessibilityLabel="Move selection down" onPress={() => moveSelection('down')}>↓</Button>
+          <Button compact mode="text" textColor="#9cdb8a" accessibilityLabel="Go back to previous screen" onPress={() => { haptic('impactLight'); navigation.goBack(); }}>B · Back</Button>
         </View>
         <Text variant="bodySmall" style={styles.controllerHint}>Selected: {visibleGames[selectedIndex]?.title ?? 'No title'}</Text>
         <Text variant="bodySmall" style={styles.controllerHint}>D-pad controls move within the two-column grid; A opens the selected title in the official Xbox catalog. Physical controller input depends on iPadOS and is not directly captured by this screen.</Text>
