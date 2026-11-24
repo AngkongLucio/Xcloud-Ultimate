@@ -66,6 +66,21 @@ export default function XboxFriendsScreen() {
 
   useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
 
+  const readLatestFriends = () => {
+    try {
+      const raw = storage.getString('xbox.friends.local');
+      const parsed = raw ? JSON.parse(raw) : [];
+      const normalized = normalizeFriends(parsed);
+      if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+        storage.set('xbox.friends.local', JSON.stringify(normalized));
+      }
+      return normalized;
+    } catch (_) {
+      storage.delete('xbox.friends.local');
+      return [];
+    }
+  };
+
   const save = next => {
     const normalized = normalizeFriends(next);
     setFriends(normalized);
@@ -78,11 +93,13 @@ export default function XboxFriendsScreen() {
       setFormMessage('Enter a player display name first.');
       return;
     }
-    if (friends.some(item => item.name.toLowerCase() === clean.toLowerCase())) {
+    const latestFriends = readLatestFriends();
+    if (latestFriends.some(item => item.name.toLowerCase() === clean.toLowerCase())) {
+      setFriends(latestFriends);
       setFormMessage('That player is already in your local list.');
       return;
     }
-    save([...friends, {id: String(Date.now()), name: clean, avatar, addedAt: Date.now()}].slice(-100));
+    save([...latestFriends, {id: String(Date.now()) + '-' + Math.random().toString(36).slice(2, 7), name: clean, avatar, addedAt: Date.now()}].slice(-100));
     setName('');
     setFormMessage(clean + ' was added to your local list.');
   };
@@ -106,7 +123,8 @@ export default function XboxFriendsScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            save(friends.filter(item => item.id !== id));
+            const latestFriends = readLatestFriends();
+            save(latestFriends.filter(item => item.id !== id));
             setFormMessage(removed.name + ' was removed from your local list. Saved messages were kept.');
           },
         },
