@@ -111,6 +111,11 @@ export default function XboxFriendsScreen() {
       return;
     }
     const latestFriends = readLatestFriends();
+    if (latestFriends.length >= 100) {
+      setFriends(latestFriends);
+      setFormMessage('Your local list is full (100 players). Remove a player before adding another.');
+      return;
+    }
     if (latestFriends.some(item => item.name.toLowerCase() === clean.toLowerCase())) {
       setFriends(latestFriends);
       setFormMessage('That player is already in your local list.');
@@ -177,7 +182,7 @@ export default function XboxFriendsScreen() {
               </Pressable>
             ))}
           </View>
-          <Button mode="contained" icon="account-plus" accessibilityLabel="Add player to local friends list" onPress={addFriend} disabled={!name.trim()} style={styles.addButton}>Add to local list</Button>
+          <Button mode="contained" icon="account-plus" accessibilityLabel="Add player to local friends list" onPress={addFriend} disabled={!name.trim() || friends.length >= 100} style={styles.addButton}>Add to local list</Button>
           {formMessage ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.formMessage}>{formMessage}</Text> : null}
         </Card.Content>
       </Card>
