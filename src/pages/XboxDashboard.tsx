@@ -3,6 +3,7 @@ import {ScrollView, View, StyleSheet, Linking, Pressable, Modal, Animated} from 
 import {Button, Card, Switch, Text} from 'react-native-paper';
 import {useIsFocused} from '@react-navigation/native';
 import {storage} from '../store/mmkv';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 const XBOX_PLAY = 'https://www.xbox.com/play';
 
@@ -47,11 +48,11 @@ export default function XboxDashboardScreen({navigation}) {
       setAvatar(storage.getString('xbox.profile.avatar') ?? '🎮');
     }
   }, [isFocused]);
-  const openCloud = () => Linking.openURL(XBOX_PLAY).catch(() => {});
-  const updateFocusOutline = value => { setFocusOutline(value); storage.set('xbox.ui.focusOutline', value); };
-  const updateCompactCards = value => { setCompactCards(value); storage.set('xbox.ui.compactCards', value); };
+  const haptic = (type = 'selection') => {\n    try { ReactNativeHapticFeedback.trigger(type, {enableVibrateFallback: true, ignoreAndroidSystemSettings: false}); } catch (_) {}\n  };\n  const openCloud = () => { haptic('impactLight'); Linking.openURL(XBOX_PLAY).catch(() => {}); };
+  const updateFocusOutline = value => { haptic(); setFocusOutline(value); storage.set('xbox.ui.focusOutline', value); };
+  const updateCompactCards = value => { haptic(); setCompactCards(value); storage.set('xbox.ui.compactCards', value); };
   const openGamePass = () => Linking.openURL('https://www.xbox.com/xbox-game-pass').catch(() => {});
-  const openGuideRoute = route => { setGuideVisible(false); if (route === 'CloudGaming') { openCloud(); } else { navigation.navigate(route); } };
+  const openGuideRoute = route => { haptic('impactLight'); setGuideVisible(false); if (route === 'CloudGaming') { openCloud(); } else { navigation.navigate(route); } };
   const handleQuickLink = title => {
     if (title === 'Cloud Gaming') { openCloud(); }
     else if (title === 'Game Pass') { openGamePass(); }
@@ -66,15 +67,15 @@ export default function XboxDashboardScreen({navigation}) {
           <Text variant="labelLarge" style={styles.eyebrow}>XCLOUD ULTIMATE</Text>
           <Text variant="headlineMedium" style={styles.heading}>Home</Text>
         </View>
-        <Pressable onPress={() => navigation.navigate('XboxProfile')} style={styles.profileShortcut} accessibilityRole="button" accessibilityLabel="Open player profile">
+        <Pressable onPress={() => { haptic(); navigation.navigate('XboxProfile'); }} style={styles.profileShortcut} accessibilityRole="button" accessibilityLabel="Open player profile">
           <Text style={styles.profileAvatar}>{avatar}</Text>
           <Text style={styles.profileTag}>{gamertag}</Text>
         </Pressable>
         <View style={styles.topActions}>
-          <Pressable onPress={() => setGuideVisible(true)} accessibilityRole="button" accessibilityLabel="Open Xbox guide" style={styles.quickButton}>
+          <Pressable onPress={() => { haptic(); setGuideVisible(true); }} accessibilityRole="button" accessibilityLabel="Open Xbox guide" style={styles.quickButton}>
             <Text style={styles.quickButtonText}>☰</Text>
           </Pressable>
-          <Pressable onPress={() => setQuickSettingsVisible(value => !value)} accessibilityRole="button" accessibilityLabel="Toggle quick settings" style={styles.quickButton}>
+          <Pressable onPress={() => { haptic(); setQuickSettingsVisible(value => !value); }} accessibilityRole="button" accessibilityLabel="Toggle quick settings" style={styles.quickButton}>
             <Text style={styles.quickButtonText}>⚙</Text>
           </Pressable>
           <Text variant="headlineSmall" style={styles.logo}>XBOX</Text>
@@ -87,7 +88,7 @@ export default function XboxDashboardScreen({navigation}) {
           <View style={styles.guideDrawer}>
             <View style={styles.guideTop}>
               <View><Text style={styles.guideEyebrow}>XCLOUD ULTIMATE</Text><Text style={styles.guideHeading}>Guide</Text></View>
-              <Pressable onPress={() => setGuideVisible(false)} style={styles.guideClose}><Text style={styles.guideCloseText}>✕</Text></Pressable>
+              <Pressable onPress={() => { haptic(); setGuideVisible(false); }} style={styles.guideClose}><Text style={styles.guideCloseText}>✕</Text></Pressable>
             </View>
             <Pressable style={styles.guideProfile} onPress={() => openGuideRoute('XboxProfile')}>
               <Text style={styles.guideAvatar}>{avatar}</Text>
@@ -115,7 +116,7 @@ export default function XboxDashboardScreen({navigation}) {
           <Card.Content>
             <View style={styles.quickHeader}>
               <Text variant="titleLarge" style={styles.quickTitle}>Quick Settings</Text>
-              <Button compact textColor="#9cdb8a" onPress={() => setQuickSettingsVisible(false)}>Close</Button>
+              <Button compact textColor="#9cdb8a" onPress={() => { haptic(); setQuickSettingsVisible(false); }}>Close</Button>
             </View>
             <View style={styles.quickRow}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Focus highlight</Text><Text style={styles.quickHint}>Visible keyboard focus outline</Text></View>
