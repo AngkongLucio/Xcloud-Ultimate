@@ -56,6 +56,10 @@ export default function XboxLibraryScreen({navigation}) {
     return matchesSearch && (item === 'All' || game.genre === item) && (!favoritesOnly || favoriteTitles.includes(game.title));
   }).length;
 
+  useEffect(() => {
+    setSelectedIndex(current => Math.min(current, Math.max(0, visibleGames.length - 1)));
+  }, [visibleGames.length]);
+
   const toggleFavorite = title => {
     setFavoriteTitles(current => {
       const next = current.includes(title) ? current.filter(item => item !== title) : [...current, title];
