@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, View, StyleSheet, Linking, Pressable, Modal, Animated} from 'react-native';
+import {Alert, ScrollView, View, StyleSheet, Linking, Pressable, Modal, Animated} from 'react-native';
 import {Button, Card, Switch, Text} from 'react-native-paper';
 import {useIsFocused} from '@react-navigation/native';
 import {storage} from '../store/mmkv';
@@ -148,10 +148,17 @@ export default function XboxDashboardScreen({navigation}) {
     try { ReactNativeHapticFeedback.trigger(type, {enableVibrateFallback: true, ignoreAndroidSystemSettings: false}); } catch (_) {}
   };
   const updateHaptics = value => { setHapticsEnabled(value); storage.set('xbox.ui.haptics', value); if (value) { try { ReactNativeHapticFeedback.trigger('impactLight', {enableVibrateFallback: true, ignoreAndroidSystemSettings: false}); } catch (_) {} } };
-  const openCloud = () => { haptic('impactLight'); Linking.openURL(XBOX_PLAY).catch(() => {}); };
+  const openExternalPage = async (url, title) => {
+    try {
+      await Linking.openURL(url);
+    } catch (_) {
+      Alert.alert(title, 'Hindi mabuksan ang page. Suriin ang internet connection o buksan ang link sa Safari.');
+    }
+  };
+  const openCloud = () => { haptic('impactLight'); openExternalPage(XBOX_PLAY, 'Xbox Cloud Gaming'); };
   const updateFocusOutline = value => { haptic(); setFocusOutline(value); storage.set('xbox.ui.focusOutline', value); };
   const updateCompactCards = value => { haptic(); setCompactCards(value); storage.set('xbox.ui.compactCards', value); };
-  const openGamePass = () => Linking.openURL('https://www.xbox.com/xbox-game-pass').catch(() => {});
+  const openGamePass = () => openExternalPage('https://www.xbox.com/xbox-game-pass', 'Xbox Game Pass');
   const openGuideRoute = route => { haptic('impactLight'); setGuideVisible(false); if (route === 'CloudGaming') { openCloud(); } else { navigation.navigate(route); } };
   const guideActions = [
     {label: 'Player Profile', route: 'XboxProfile'},
