@@ -13,7 +13,7 @@ const CLIENT_ID = 'ba495a24-818c-472b-b12d-ff231c1b5745';
 const REDIRECT_URI =
   'https://remoteplay.dl.playstation.net/remoteplay/redirect';
 
-const isPsnRedirectUrl = (value: string) => {
+const isPsnRedirectUrl = (value) => {
   try {
     const url = new URL(value);
     return (
