@@ -76,17 +76,17 @@ export default function XboxFriendsScreen() {
 
       <View style={styles.listHeader}>
         <Text variant="titleLarge" style={styles.sectionTitle}>My players</Text>
-        <Text style={styles.count}>{friends.length}</Text>
+        <Text style={styles.count} accessibilityLiveRegion="polite" accessibilityLabel={friends.length + (friends.length === 1 ? " local player" : " local players")}>{friends.length}</Text>
       </View>
       {friends.length ? friends.map(friend => (
-        <Card key={friend.id} style={styles.friendCard}>
+        <Card key={friend.id} style={styles.friendCard} accessible accessibilityLabel={"Local player " + friend.name + (friend.addedAt ? ", added " + new Date(friend.addedAt).toLocaleDateString() : "")}>
           <Card.Content style={styles.friendRow}>
             <View style={styles.friendAvatar}><Text style={styles.friendEmoji}>{friend.avatar || '🎮'}</Text></View>
             <View style={styles.friendCopy}>
               <Text variant="titleMedium" style={styles.friendName}>{friend.name}</Text>
               <Text variant="bodySmall" style={styles.friendStatus}>LOCAL PLAYER · ADDED {friend.addedAt ? new Date(friend.addedAt).toLocaleDateString() : 'RECENTLY'}</Text>
             </View>
-            <Button compact mode="text" textColor="#e5a0a0" accessibilityLabel={"Remove " + friend.name + " from local friends"} onPress={() => removeFriend(friend.id)}>Remove</Button>
+            <Button compact mode="text" textColor="#e5a0a0" accessibilityLabel={"Remove " + friend.name + " from local friends"} accessibilityHint="Removes this entry from the local list on this device." onPress={() => removeFriend(friend.id)}>Remove</Button>
           </Card.Content>
         </Card>
       )) : (
