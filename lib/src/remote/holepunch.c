@@ -745,7 +745,10 @@ CHIAKI_EXPORT void chiaki_holepunch_free_device_list(ChiakiHolepunchDeviceInfo**
 
 CHIAKI_EXPORT ChiakiHolepunchRegistInfo chiaki_get_regist_info(Session *session)
 {
-    ChiakiHolepunchRegistInfo regist_info;
+    ChiakiHolepunchRegistInfo regist_info = {0};
+    if(!session)
+        return regist_info;
+
     memcpy(regist_info.data1, session->data1, sizeof(session->data1));
     memcpy(regist_info.data2, session->data2, sizeof(session->data2));
     memcpy(regist_info.custom_data1, session->custom_data1, sizeof(session->custom_data1));
@@ -755,16 +758,22 @@ CHIAKI_EXPORT ChiakiHolepunchRegistInfo chiaki_get_regist_info(Session *session)
 
 CHIAKI_EXPORT void chiaki_get_ps_selected_addr(Session *session, char *ps_ip)
 {
+    if(!session || !ps_ip)
+        return;
+
     memcpy(ps_ip, session->ps_ip, sizeof(session->ps_ip));
 }
 
 CHIAKI_EXPORT uint16_t chiaki_get_ps_ctrl_port(Session *session)
 {
-    return session->ctrl_port;
+    return session ? session->ctrl_port : 0;
 }
 
 CHIAKI_EXPORT chiaki_socket_t *chiaki_get_holepunch_sock(ChiakiHolepunchSession session, ChiakiHolepunchPortType type)
 {
+    if(!session)
+        return NULL;
+
     switch(type)
     {
         case CHIAKI_HOLEPUNCH_PORT_TYPE_CTRL:
@@ -979,6 +988,9 @@ init_failed:
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_upnp_discover(Session *session)
 {
+    if(!session)
+        return CHIAKI_ERR_INVALID_DATA;
+
     session->gw.data = calloc(1, sizeof(struct IGDdatas));
     if(!session->gw.data)
     {
@@ -2139,6 +2151,9 @@ CHIAKI_EXPORT void chiaki_holepunch_session_fini(Session* session)
 
 CHIAKI_EXPORT void chiaki_holepunch_main_thread_cancel(Session *session, bool stop_thread)
 {
+    if(!session)
+        return;
+
     chiaki_mutex_lock(&session->stop_mutex);
     if(stop_thread)
     {
