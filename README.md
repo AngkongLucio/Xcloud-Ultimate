@@ -10,6 +10,21 @@
 
 ---
 
+## Xcloud Ultimate branch scope
+
+This branch adds an Xbox-inspired companion dashboard to the PeaSyo codebase. It is not an official Xbox product and is not an Xbox Cloud Gaming streaming client.
+
+- **Xbox Cloud Gaming:** opens Microsoft's official `https://www.xbox.com/play` website in the device browser. Microsoft sign-in, subscription checks, game streaming, and service availability remain on Microsoft's website.
+- **Game Library:** the listed titles are shortcuts to the official Xbox Cloud Gaming website/catalog; this app does not host or launch game binaries.
+- **Local dashboard features:** profile, achievements, friends, messages, notifications, favorites, and recent activity are stored locally on the device. They are not synced with Xbox Network accounts or Xbox servers.
+- **Network information:** reports device connectivity only. It does not measure Xbox server latency, stream bitrate, or cloud-stream quality.
+- **Controller and feedback:** the dashboard has on-screen navigation and supported menu haptics. Physical controller input is not yet mapped to every dashboard screen, and dashboard sound effects are not implemented.
+- **iOS preview:** the iOS shell workflow is for building an unsigned UI preview. It does not provide a completed iOS streaming implementation.
+
+The original PeaSyo PlayStation Remote Play functionality and its platform requirements remain separate from these Xbox-inspired additions.
+
+---
+
 <p align="center">
   <a href="https://github.com/Geocld/PeaSyo">
     <img src="https://raw.githubusercontent.com/Geocld/PeaSyo/main/images/logo.png" width="100">
