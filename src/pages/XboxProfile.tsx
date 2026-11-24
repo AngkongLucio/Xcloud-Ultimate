@@ -119,6 +119,7 @@ export default function XboxProfileScreen({navigation}) {
               </Pressable>
             ))}
           </View>
+          <Text variant="bodySmall" accessibilityLiveRegion="polite" accessibilityLabel={'Selected profile avatar: ' + avatar} style={styles.hint}>Selected avatar: {avatar}</Text>
           <Text variant="titleLarge" style={[styles.sectionTitle, styles.nameHeading]}>Gamertag</Text>
           <TextInput
             mode="outlined"
