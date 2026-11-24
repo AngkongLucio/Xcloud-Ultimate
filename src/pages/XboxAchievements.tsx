@@ -13,7 +13,11 @@ const BADGES = [
 
 const readLaunchCount = () => {
   const stored = storage.getNumber('xbox.activity.launchCount');
-  const normalized = Number.isFinite(stored) && stored > 0 ? Math.floor(stored) : 0;
+  const normalized = Number.isSafeInteger(stored) && stored > 0
+    ? stored
+    : Number.isFinite(stored) && stored > 0
+      ? Number.MAX_SAFE_INTEGER
+      : 0;
   if (stored !== normalized) storage.set('xbox.activity.launchCount', normalized);
   return normalized;
 };
