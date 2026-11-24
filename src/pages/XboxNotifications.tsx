@@ -90,18 +90,27 @@ export default function XboxNotificationsScreen() {
     setItems(next);
   };
   const clearAll = () => {
-    if (!items.length) return;
+    const latest = readNotifications();
+    setItems(latest);
+    if (!latest.length) return;
+    const idsToClear = new Set(latest.map(item => item.id));
     Alert.alert(
       'Clear all notifications?',
-      'This permanently deletes all local notifications from this device.',
+      'This deletes the notifications currently listed. New notifications received while this confirmation is open will be kept.',
       [
         {text: 'Cancel', style: 'cancel'},
         {
           text: 'Clear all',
           style: 'destructive',
           onPress: () => {
-            storage.delete('xbox.notifications.local');
-            setItems([]);
+            const current = readNotifications();
+            const remaining = current.filter(item => !idsToClear.has(item.id));
+            if (remaining.length) {
+              storage.set('xbox.notifications.local', JSON.stringify(remaining));
+            } else {
+              storage.delete('xbox.notifications.local');
+            }
+            setItems(remaining);
           },
         },
       ],
