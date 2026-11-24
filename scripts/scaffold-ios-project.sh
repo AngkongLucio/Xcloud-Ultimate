@@ -85,9 +85,12 @@ fi
 # The custom template's package.json pins React Native 0.72.17. The CLI
 # rejects combining --version with --template, so the template is the
 # single source of truth for the React Native version.
-npx --yes @react-native-community/cli@11.4.1 init Peasyo \
-  --template "$CUSTOM_TEMPLATE" \
-  --skip-install
+(
+  cd "$TMP_DIR"
+  npx --yes @react-native-community/cli@11.4.1 init Peasyo \
+    --template "$CUSTOM_TEMPLATE" \
+    --skip-install
+)
 
 if [[ ! -d "$TMP_DIR/Peasyo/ios/Peasyo.xcodeproj" || ! -f "$TMP_DIR/Peasyo/ios/Podfile" ]]; then
   echo "Error: React Native CLI did not produce the expected iOS project structure." >&2
