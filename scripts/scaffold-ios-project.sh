@@ -49,13 +49,26 @@ fi
 
 echo "Generating the iOS project with the pinned React Native 0.72.17 template..."
 # React Native CLI 11 invokes `yarn add file://...`; Yarn 4 rejects that
-# local-template form, so pin the compatible Yarn Classic CLI for scaffolding.
-if command -v corepack >/dev/null 2>&1; then
-  corepack prepare yarn@1.22.22 --activate
+# local-template form. Install Yarn Classic and put its real JS entrypoint
+# first on PATH so both this script and the spawned CLI use the same version.
+npm install --global yarn@1.22.22
+YARN_CLASSIC_JS="$(npm root --global)/yarn/bin/yarn.js"
+if [[ ! -f "$YARN_CLASSIC_JS" ]]; then
+  echo "Error: Yarn Classic 1.22.22 was not installed at the expected npm global path." >&2
+  exit 2
 fi
+YARN_SHIM_DIR="$TMP_DIR/yarn-classic-bin"
+mkdir -p "$YARN_SHIM_DIR"
+cat > "$YARN_SHIM_DIR/yarn" <<'YARN_SHIM'
+#!/usr/bin/env bash
+exec node "${YARN_CLASSIC_JS:?}" "$@"
+YARN_SHIM
+chmod +x "$YARN_SHIM_DIR/yarn"
+export YARN_CLASSIC_JS
+export PATH="$YARN_SHIM_DIR:$PATH"
 cd "$TMP_DIR"
-if ! yarn --version | grep -q "^1\\."; then
-  echo "Error: React Native 0.72.17 scaffolding requires Yarn Classic 1.x." >&2
+if [[ "$(yarn --version)" != "1.22.22" ]]; then
+  echo "Error: React Native 0.72.17 scaffolding requires Yarn Classic 1.22.22." >&2
   exit 2
 fi
 # The custom template's package.json pins React Native 0.72.17. The CLI
