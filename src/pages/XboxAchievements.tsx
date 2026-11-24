@@ -54,6 +54,16 @@ export default function XboxAchievementsScreen() {
           );
         })}
       </View>
+      {filter !== 'All' ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Reset achievement filter to All"
+          accessibilityHint="Shows all local badges again."
+          onPress={() => setFilter('All')}
+          style={styles.resetFilter}>
+          <Text style={styles.resetFilterText}>Show all badges</Text>
+        </Pressable>
+      ) : null}
       <Text accessibilityLiveRegion="polite" accessibilityLabel={visibleBadges.length + " " + filter.toLowerCase() + " badges shown"} style={styles.filterCount}>{visibleBadges.length} {filter.toLowerCase()} badges</Text>
       {visibleBadges.map(item => {
         const earned = count >= item.target;
@@ -102,6 +112,8 @@ const styles = StyleSheet.create({
   filterText: {color: '#aab5aa', fontSize: 12, fontWeight: '700'},
   filterTextSelected: {color: '#fff'},
   filterCount: {color: '#aab5aa', fontSize: 11, marginBottom: 12},
+  resetFilter: {alignSelf: 'flex-start', paddingVertical: 5, marginBottom: 4},
+  resetFilterText: {color: '#9cdb8a', fontSize: 12, fontWeight: '700'},
   badgeCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 14, marginBottom: 12},
   earnedCard: {borderColor: '#789d70'},
   badgeRow: {flexDirection: 'row', alignItems: 'center', gap: 12},
