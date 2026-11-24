@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   chipText: {color: '#e6eee6'},
   grid: {flexDirection: 'row', flexWrap: 'wrap', gap: 12},
   gameCardPressable: {width: '48%', flexGrow: 1, borderRadius: 14},
-  focusedGameCard: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 14},
+  focusedGameCard: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 14, transform: [{scale: 1.015}]},
   gameCard: {backgroundColor: '#1b211c', borderColor: '#344235', borderRadius: 14},
   compactGameCard: {borderRadius: 10},
   compactGameContent: {paddingVertical: 8},
