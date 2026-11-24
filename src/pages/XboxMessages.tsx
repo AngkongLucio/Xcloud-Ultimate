@@ -82,7 +82,20 @@ const normalizeThreads = value => {
     .slice(0, 100);
 };
 
-const readFriends = () => normalizeFriends(readArray('xbox.friends.local'));
+const readFriends = () => {
+  try {
+    const raw = storage.getString('xbox.friends.local');
+    const parsed = raw ? JSON.parse(raw) : [];
+    const normalized = normalizeFriends(parsed);
+    if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+      storage.set('xbox.friends.local', JSON.stringify(normalized));
+    }
+    return normalized;
+  } catch (_) {
+    storage.delete('xbox.friends.local');
+    return [];
+  }
+};
 const readThreads = () => {
   try {
     const raw = storage.getString('xbox.messages.local');
