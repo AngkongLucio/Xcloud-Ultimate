@@ -11,13 +11,20 @@ const BADGES = [
   {id: 'veteran', title: 'Dedicated', description: 'Open the catalog twenty-five times.', target: 25, icon: '🏆'},
 ];
 
+const readLaunchCount = () => {
+  const stored = storage.getNumber('xbox.activity.launchCount');
+  const normalized = Number.isFinite(stored) && stored > 0 ? Math.floor(stored) : 0;
+  if (stored !== normalized) storage.set('xbox.activity.launchCount', normalized);
+  return normalized;
+};
+
 export default function XboxAchievementsScreen() {
   const isFocused = useIsFocused();
-  const [count, setCount] = useState(() => storage.getNumber('xbox.activity.launchCount') ?? 0);
+  const [count, setCount] = useState(readLaunchCount);
   const [filter, setFilter] = useState('All');
 
   useEffect(() => {
-    if (isFocused) setCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
+    if (isFocused) setCount(readLaunchCount());
   }, [isFocused]);
 
   const unlocked = BADGES.filter(item => count >= item.target).length;
