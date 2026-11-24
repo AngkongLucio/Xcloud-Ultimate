@@ -65,11 +65,23 @@ export default function XboxNotificationsScreen() {
   const isFocused = useIsFocused();
   const [items, setItems] = useState(readNotifications);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState(() => ['All', 'Unread', 'Read'].includes(storage.getString('xbox.notifications.statusFilter')) ? storage.getString('xbox.notifications.statusFilter') : 'All');
+  const [categoryFilter, setCategoryFilter] = useState(() => ['All', 'Activity', 'Friends', 'Messages'].includes(storage.getString('xbox.notifications.categoryFilter')) ? storage.getString('xbox.notifications.categoryFilter') : 'All');
   const refresh = () => setItems(readNotifications());
 
-  useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
+  useEffect(() => {
+    if (isFocused) {
+      refresh();
+      const storedStatus = storage.getString('xbox.notifications.statusFilter');
+      const normalizedStatus = ['All', 'Unread', 'Read'].includes(storedStatus) ? storedStatus : 'All';
+      const storedCategory = storage.getString('xbox.notifications.categoryFilter');
+      const normalizedCategory = ['All', 'Activity', 'Friends', 'Messages'].includes(storedCategory) ? storedCategory : 'All';
+      setStatusFilter(normalizedStatus);
+      setCategoryFilter(normalizedCategory);
+      if (storedStatus !== normalizedStatus) storage.set('xbox.notifications.statusFilter', normalizedStatus);
+      if (storedCategory !== normalizedCategory) storage.set('xbox.notifications.categoryFilter', normalizedCategory);
+    }
+  }, [isFocused]);
 
   const markAllRead = () => {
     const latest = readNotifications();
@@ -135,7 +147,7 @@ export default function XboxNotificationsScreen() {
         {['All', 'Unread', 'Read'].map(item => {
           const filterCount = item === 'All' ? items.length : item === 'Unread' ? unread : items.length - unread;
           return (
-            <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " notifications, " + filterCount + " available"} accessibilityState={{selected: statusFilter === item}} onPress={() => setStatusFilter(item)} style={[styles.filterChip, statusFilter === item && styles.filterChipSelected]}>
+            <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " notifications, " + filterCount + " available"} accessibilityState={{selected: statusFilter === item}} onPress={() => { setStatusFilter(item); storage.set('xbox.notifications.statusFilter', item); }} style={[styles.filterChip, statusFilter === item && styles.filterChipSelected]}>
               <Text style={[styles.filterText, statusFilter === item && styles.filterTextSelected]}>{item} ({filterCount})</Text>
             </Pressable>
           );
@@ -145,7 +157,7 @@ export default function XboxNotificationsScreen() {
         {['All', 'Activity', 'Friends', 'Messages'].map(item => {
           const filterCount = item === 'All' ? items.length : item === 'Activity' ? activityCount : item === 'Friends' ? friendCount : messageCount;
           return (
-            <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " category notifications, " + filterCount + " available"} accessibilityState={{selected: categoryFilter === item}} onPress={() => setCategoryFilter(item)} style={[styles.filterChip, categoryFilter === item && styles.filterChipSelected]}>
+            <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " category notifications, " + filterCount + " available"} accessibilityState={{selected: categoryFilter === item}} onPress={() => { setCategoryFilter(item); storage.set('xbox.notifications.categoryFilter', item); }} style={[styles.filterChip, categoryFilter === item && styles.filterChipSelected]}>
               <Text style={[styles.filterText, categoryFilter === item && styles.filterTextSelected]}>{item} ({filterCount})</Text>
             </Pressable>
           );
@@ -162,6 +174,8 @@ export default function XboxNotificationsScreen() {
             setSearchQuery('');
             setStatusFilter('All');
             setCategoryFilter('All');
+            storage.set('xbox.notifications.statusFilter', 'All');
+            storage.set('xbox.notifications.categoryFilter', 'All');
           }}
           style={styles.resetButton}>
           Reset search & filters
