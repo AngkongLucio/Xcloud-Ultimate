@@ -505,7 +505,7 @@ function AndroidStreamScreen({navigation, route}) {
       'android.permission.POST_NOTIFICATIONS',
     ).catch(() => {});
 
-    navigation.addListener('beforeRemove', e => {
+    const unsubscribeBeforeRemove = navigation.addListener('beforeRemove', e => {
       GamepadManager.vibrate(0, 0, 0, 0, 0, 3);
       if (e.data.action.type !== 'GO_BACK') {
         navigation.dispatch(e.data.action);
@@ -1126,6 +1126,7 @@ function AndroidStreamScreen({navigation, route}) {
     return () => {
       Orientation.unlockAllOrientations();
       FullScreenManager.immersiveModeOff();
+      unsubscribeBeforeRemove();
       stateEventListener.current && stateEventListener.current.remove();
       extDisplayListener.current && extDisplayListener.current.remove();
       extPseudoListener.current && extPseudoListener.current.remove();
