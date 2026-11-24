@@ -69,7 +69,7 @@ export default function XboxProfileScreen({navigation}) {
         .filter(timestamp => Number.isFinite(timestamp) && timestamp > 0)
         .map(timestamp => {
           const date = new Date(timestamp);
-          return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
         }),
     )].sort((a, b) => b - a);
 
@@ -77,12 +77,16 @@ export default function XboxProfileScreen({navigation}) {
 
     const today = new Date();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-    const yesterdayStart = todayStart - 86400000;
+    const yesterday = new Date(todayStart);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStart = yesterday.getTime();
     if (dayStarts[0] !== todayStart && dayStarts[0] !== yesterdayStart) return 0;
 
     let streak = 1;
     for (let index = 1; index < dayStarts.length; index += 1) {
-      if (dayStarts[index - 1] - dayStarts[index] !== 86400000) break;
+      const previousDay = new Date(dayStarts[index - 1]);
+      previousDay.setDate(previousDay.getDate() - 1);
+      if (dayStarts[index] !== previousDay.getTime()) break;
       streak += 1;
     }
     return streak;
@@ -95,14 +99,16 @@ export default function XboxProfileScreen({navigation}) {
         .filter(timestamp => Number.isFinite(timestamp) && timestamp > 0)
         .map(timestamp => {
           const date = new Date(timestamp);
-          return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
         }),
     )].sort((a, b) => a - b);
 
     let longest = 0;
     let current = 0;
     dayStarts.forEach((day, index) => {
-      current = index > 0 && day - dayStarts[index - 1] === 86400000 ? current + 1 : 1;
+      const previousDay = index > 0 ? new Date(dayStarts[index - 1]) : null;
+      if (previousDay) previousDay.setDate(previousDay.getDate() + 1);
+      current = previousDay && day === previousDay.getTime() ? current + 1 : 1;
       longest = Math.max(longest, current);
     });
     return longest;
