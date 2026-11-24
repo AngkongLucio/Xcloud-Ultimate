@@ -36,13 +36,19 @@ export default function XboxLibraryScreen({navigation}) {
     return matchesSearch && (category === 'All' || game.genre === category);
   }), [search, category]);
 
-  const openXbox = () => Linking.openURL(XBOX_PLAY).catch(() => {});
+  const openXbox = title => {
+    if (title) {
+      storage.set('xbox.activity.lastTitle', title);
+      storage.set('xbox.activity.lastOpenedAt', Date.now());
+    }
+    Linking.openURL(XBOX_PLAY).catch(() => {});
+  };
   const moveSelection = offset => {
     if (!visibleGames.length) { return; }
     setSelectedIndex(current => (current + offset + visibleGames.length) % visibleGames.length);
   };
   const openSelectedGame = () => {
-    if (visibleGames.length) { openXbox(); }
+    if (visibleGames.length) { openXbox(visibleGames[selectedIndex]?.title); }
   };
 
   return (
@@ -83,7 +89,7 @@ export default function XboxLibraryScreen({navigation}) {
             accessible
             accessibilityRole="button"
             accessibilityLabel={game.title + ', ' + game.genre + '. Open Xbox catalog.'}
-            onPress={openXbox}
+            onPress={() => openXbox(game.title)}
             style={({focused}) => [styles.gameCardPressable, focusOutline && (focused || selectedIndex === index) && styles.focusedGameCard]}>
           <Card mode="outlined" style={[styles.gameCard, compactCards && styles.compactGameCard]}>
             <Card.Content style={compactCards && styles.compactGameContent}>
@@ -118,7 +124,7 @@ export default function XboxLibraryScreen({navigation}) {
         <Text variant="bodyMedium" style={styles.empty}>No matching titles. Try another search.</Text>
       )}
 
-      <Button mode="contained" icon="microsoft-xbox" onPress={openXbox} style={styles.catalogButton}>
+      <Button mode="contained" icon="microsoft-xbox" onPress={() => openXbox('Xbox Catalog')} style={styles.catalogButton}>
         Browse Official Xbox Catalog
       </Button>
       <Text variant="bodySmall" style={styles.footer}>
