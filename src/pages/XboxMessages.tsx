@@ -113,7 +113,8 @@ export default function XboxMessagesScreen() {
           </ScrollView>
           <View style={styles.composer}>
             <View style={styles.composerFields}>
-            <TextInput mode="outlined" value={draft} onChangeText={setDraft} placeholder="Write a message..." accessibilityLabel={"Message to " + activeFriend.name} accessibilityHint="This message is saved locally on this device only." multiline textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.composerInput} />
+            <TextInput mode="outlined" value={draft} onChangeText={value => { setDraft(value.slice(0, 500)); setFeedback(''); }} placeholder="Write a message..." accessibilityLabel={"Message to " + activeFriend.name} accessibilityHint="Enter up to 500 characters. This message is saved locally on this device only." multiline maxLength={500} textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.composerInput} />
+            <Text accessibilityLiveRegion="polite" accessibilityLabel={draft.length + " of 500 characters"} style={styles.characterCount}>{draft.length}/500 characters</Text>
             <Text accessibilityRole="alert" accessibilityLiveRegion="polite" accessibilityLabel={feedback} style={styles.feedback}>{feedback}</Text>
             </View>
             <Button mode="contained" icon="send" accessibilityLabel={"Save local message to " + activeFriend.name} accessibilityHint="Saves this message only on this device. It is not sent over Xbox Network." onPress={sendMessage} disabled={!draft.trim()} style={styles.sendButton}>Send</Button>
@@ -243,6 +244,7 @@ const styles = StyleSheet.create({
   composer: {flexDirection: 'row', alignItems: 'flex-end', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: '#354136'},
   composerFields: {flex: 1},
   feedback: {color: '#9cdb8a', fontSize: 11, marginTop: 5},
+  characterCount: {color: '#829082', fontSize: 10, textAlign: 'right', marginTop: 3},
   inboxFeedback: {color: '#9cdb8a', fontSize: 12, marginBottom: 10},
   composerInput: {flex: 1, maxHeight: 110, backgroundColor: '#1b211c'},
   sendButton: {backgroundColor: '#107c10', marginBottom: 5},
