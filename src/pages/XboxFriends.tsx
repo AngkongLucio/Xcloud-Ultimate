@@ -16,6 +16,7 @@ export default function XboxFriendsScreen() {
     } catch (_) { return []; }
   });
   const [name, setName] = useState('');
+  const [formMessage, setFormMessage] = useState('');
   const [avatar, setAvatar] = useState('🎮');
 
   const refresh = () => {
@@ -35,10 +36,17 @@ export default function XboxFriendsScreen() {
 
   const addFriend = () => {
     const clean = name.trim().slice(0, 20);
-    if (!clean) return;
-    if (friends.some(item => item.name.toLowerCase() === clean.toLowerCase())) return;
+    if (!clean) {
+      setFormMessage('Enter a player display name first.');
+      return;
+    }
+    if (friends.some(item => item.name.toLowerCase() === clean.toLowerCase())) {
+      setFormMessage('That player is already in your local list.');
+      return;
+    }
     save([...friends, {id: String(Date.now()), name: clean, avatar, addedAt: Date.now()}]);
     setName('');
+    setFormMessage(clean + ' was added to your local list.');
   };
 
   const removeFriend = id => save(friends.filter(item => item.id !== id));
@@ -52,16 +60,17 @@ export default function XboxFriendsScreen() {
       <Card style={styles.addCard}>
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Add a player</Text>
-          <TextInput mode="outlined" label="Player display name" value={name} onChangeText={setName} maxLength={20} autoCapitalize="words" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.input} />
+          <TextInput mode="outlined" label="Player display name" accessibilityLabel="Player display name" value={name} onChangeText={value => {setName(value); setFormMessage("");}} maxLength={20} autoCapitalize="words" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.input} />
           <Text style={styles.avatarLabel}>Choose avatar</Text>
           <View style={styles.avatarRow}>
             {AVATARS.map(item => (
-              <Pressable key={item} accessibilityRole="button" accessibilityLabel={'Choose ' + item} onPress={() => setAvatar(item)} style={[styles.avatarChoice, avatar === item && styles.avatarSelected]}>
+              <Pressable key={item} accessibilityRole="button" accessibilityLabel={'Choose avatar ' + item} accessibilityState={{selected: avatar === item}} onPress={() => setAvatar(item)} style={[styles.avatarChoice, avatar === item && styles.avatarSelected]}>
                 <Text style={styles.avatarText}>{item}</Text>
               </Pressable>
             ))}
           </View>
-          <Button mode="contained" icon="account-plus" onPress={addFriend} disabled={!name.trim()} style={styles.addButton}>Add to local list</Button>
+          <Button mode="contained" icon="account-plus" accessibilityLabel="Add player to local friends list" onPress={addFriend} disabled={!name.trim()} style={styles.addButton}>Add to local list</Button>
+          {formMessage ? <Text accessibilityRole="alert" style={styles.formMessage}>{formMessage}</Text> : null}
         </Card.Content>
       </Card>
 
@@ -77,7 +86,7 @@ export default function XboxFriendsScreen() {
               <Text variant="titleMedium" style={styles.friendName}>{friend.name}</Text>
               <Text variant="bodySmall" style={styles.friendStatus}>LOCAL PLAYER · ADDED {friend.addedAt ? new Date(friend.addedAt).toLocaleDateString() : 'RECENTLY'}</Text>
             </View>
-            <Button compact mode="text" textColor="#e5a0a0" onPress={() => removeFriend(friend.id)}>Remove</Button>
+            <Button compact mode="text" textColor="#e5a0a0" accessibilityLabel={"Remove " + friend.name + " from local friends"} onPress={() => removeFriend(friend.id)}>Remove</Button>
           </Card.Content>
         </Card>
       )) : (
@@ -109,6 +118,7 @@ const styles = StyleSheet.create({
   avatarSelected: {borderColor: '#9cdb8a', borderWidth: 2, backgroundColor: '#294d30'},
   avatarText: {fontSize: 23},
   addButton: {alignSelf: 'flex-start', backgroundColor: '#107c10', marginTop: 18},
+  formMessage: {color: '#9cdb8a', fontSize: 12, marginTop: 10, lineHeight: 18},
   listHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12},
   count: {color: '#9cdb8a', fontWeight: '800', fontSize: 16},
   friendCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 14, marginBottom: 10},
