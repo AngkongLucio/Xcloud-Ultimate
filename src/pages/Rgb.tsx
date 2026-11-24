@@ -2,7 +2,7 @@ import React from 'react';
 import {StyleSheet, View, ScrollView, Alert} from 'react-native';
 import ColorPicker from 'react-native-wheel-color-picker';
 
-import {Button, Text} from 'react-native-paper';
+import {Button} from 'react-native-paper';
 import {useTranslation} from 'react-i18next';
 
 import {getSettings, saveSettings} from '../store/settingStore';
