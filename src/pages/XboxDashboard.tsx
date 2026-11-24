@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   actionRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14},
   actionButton: {borderColor: '#527b52'},
   linkCardPressable: {borderRadius: 14, marginBottom: 10},
-  focusedCard: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 14},
+  focusedCard: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 14, transform: [{scale: 1.012}]},
   linkCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderRadius: 14},
   linkContent: {flexDirection: 'row', alignItems: 'center', gap: 14},
   linkText: {flex: 1},
