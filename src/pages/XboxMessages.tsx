@@ -142,6 +142,20 @@ export default function XboxMessagesScreen() {
                 <Text style={[styles.sortText, inboxSort === item && styles.sortTextSelected]}>{item}</Text>
               </Pressable>
             ))}
+            {inboxSearch || inboxSort !== 'Recent' ? (
+              <Button
+                compact
+                mode="text"
+                textColor="#a8e69a"
+                accessibilityLabel="Reset conversation search and sorting"
+                accessibilityHint="Clears the search and returns conversations to recent activity order."
+                onPress={() => {
+                  setInboxSearch('');
+                  setInboxSort('Recent');
+                }}>
+                Reset
+              </Button>
+            ) : null}
           </View>
           {visibleThreads.length ? visibleThreads.map(thread => {
             const friend = friends.find(item => item.id === thread.friendId) || {id: thread.friendId, name: thread.friendName || 'Player', avatar: thread.avatar || '🎮'};
