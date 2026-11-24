@@ -199,8 +199,8 @@ export default function XboxNotificationsScreen() {
       )) : (
         <Card style={styles.emptyCard}><Card.Content style={styles.emptyContent}>
           <Text style={styles.emptyIcon}>{items.length ? "🔎" : "🔔"}</Text>
-          <Text accessibilityLiveRegion="polite" variant="titleMedium" style={styles.itemTitle}>{items.length ? "No matching notifications" : "You're all caught up"}</Text>
-          <Text style={styles.itemMessage}>{items.length ? "Try another search term or clear the search." : "New local activity notifications will appear here."}</Text>
+          <Text accessibilityLiveRegion="polite" accessibilityLabel={items.length ? "No notifications match the current search and filters." : "You're all caught up. No local notifications."} variant="titleMedium" style={styles.itemTitle}>{items.length ? "No matching notifications" : "You're all caught up"}</Text>
+          <Text style={styles.itemMessage}>{items.length ? "Try another search term, change the read-status or category filters, or use Reset search & filters." : "New local activity notifications will appear here."}</Text>
 
         </Card.Content></Card>
       )}
