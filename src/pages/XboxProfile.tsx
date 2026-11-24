@@ -18,8 +18,14 @@ const normalizeActivityHistory = value =>
 
 export default function XboxProfileScreen({navigation}) {
   const isFocused = useIsFocused();
-  const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
-  const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
+  const [gamertag, setGamertag] = useState(() => {
+    const stored = storage.getString('xbox.profile.gamertag');
+    return typeof stored === 'string' ? stored.trim().slice(0, 16) || 'Player' : 'Player';
+  });
+  const [avatar, setAvatar] = useState(() => {
+    const stored = storage.getString('xbox.profile.avatar');
+    return AVATARS.includes(stored) ? stored : '🎮';
+  });
   const [saved, setSaved] = useState(false);
   const [launchCount, setLaunchCount] = useState(() => storage.getNumber('xbox.activity.launchCount') ?? 0);
   const [activity, setActivity] = useState(() => {
@@ -172,6 +178,10 @@ export default function XboxProfileScreen({navigation}) {
 
   useEffect(() => {
     if (isFocused) {
+      const storedTag = storage.getString('xbox.profile.gamertag');
+      const storedAvatar = storage.getString('xbox.profile.avatar');
+      setGamertag(typeof storedTag === 'string' ? storedTag.trim().slice(0, 16) || 'Player' : 'Player');
+      setAvatar(AVATARS.includes(storedAvatar) ? storedAvatar : '🎮');
       setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
       try {
         const saved = storage.getString('xbox.activity.history');
@@ -184,10 +194,12 @@ export default function XboxProfileScreen({navigation}) {
   }, [isFocused]);
 
   const saveProfile = () => {
-    const cleanTag = gamertag.trim().slice(0, 16) || 'Player';
+    const cleanTag = (typeof gamertag === 'string' ? gamertag.trim() : '').slice(0, 16) || 'Player';
+    const cleanAvatar = AVATARS.includes(avatar) ? avatar : '🎮';
     setGamertag(cleanTag);
+    setAvatar(cleanAvatar);
     storage.set('xbox.profile.gamertag', cleanTag);
-    storage.set('xbox.profile.avatar', avatar);
+    storage.set('xbox.profile.avatar', cleanAvatar);
     setSaved(true);
   };
 
