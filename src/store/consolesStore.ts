@@ -4,48 +4,38 @@ const log = debugFactory('consolesStore');
 
 const STORE_KEY = 'user.consoles';
 
-export const saveConsoles = (consoles: any) => {
-  log.info('saveConsoles:', JSON.stringify(consoles));
-
-  storage.set(STORE_KEY, JSON.stringify(consoles));
-};
-
-export const deleteConsole = (consoleId: string) => {
-  log.info('deleteConsole consoleId:', consoleId);
-  let consoles: any = storage.getString(STORE_KEY);
-
-  if (!consoles) {
-    consoles = [];
-  } else {
-    try {
-      consoles = JSON.parse(consoles);
-    } catch (e) {
-      consoles = [];
-    }
-  }
-
-  let newConsoles: any[] = [];
-  consoles.forEach((_console: any) => {
-    if (_console.consoleId !== consoleId) {
-      newConsoles.push(_console);
-    }
-  });
-
-  storage.set(STORE_KEY, JSON.stringify(newConsoles));
-};
-
-export const getConsoles = (): any => {
-  let consoles = storage.getString(STORE_KEY);
-  if (!consoles) {
+const readConsoles = (): any[] => {
+  const stored = storage.getString(STORE_KEY);
+  if (!stored) {
     return [];
   }
   try {
-    const _consoles = JSON.parse(consoles);
-    return _consoles;
+    const parsed: unknown = JSON.parse(stored);
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          item => item !== null && typeof item === 'object' && !Array.isArray(item),
+        )
+      : [];
   } catch {
     return [];
   }
 };
+
+export const saveConsoles = (consoles: any) => {
+  const safeConsoles = Array.isArray(consoles) ? consoles : [];
+  log.info('saveConsoles:', JSON.stringify(safeConsoles));
+  storage.set(STORE_KEY, JSON.stringify(safeConsoles));
+};
+
+export const deleteConsole = (consoleId: string) => {
+  log.info('deleteConsole consoleId:', consoleId);
+  const newConsoles = readConsoles().filter(
+    item => item.consoleId !== consoleId,
+  );
+  storage.set(STORE_KEY, JSON.stringify(newConsoles));
+};
+
+export const getConsoles = (): any[] => readConsoles();
 
 export const cleanConsoles = () => {
   storage.set(STORE_KEY, JSON.stringify([]));
