@@ -26,10 +26,14 @@ export default function XboxLibraryScreen({navigation}) {
     try {
       const raw = storage.getString('xbox.library.favorites');
       const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      return Array.isArray(parsed) ? [...new Set(parsed.filter(title => GAMES.some(game => game.title === title)))] : [];
     } catch (_) { return []; }
   });
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  useEffect(() => {
+    storage.set('xbox.library.favorites', JSON.stringify(favoriteTitles));
+  }, [favoriteTitles]);
   const libraryScrollRef = useRef(null);
   const isFocused = useIsFocused();
   const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
@@ -63,7 +67,6 @@ export default function XboxLibraryScreen({navigation}) {
   const toggleFavorite = title => {
     setFavoriteTitles(current => {
       const next = current.includes(title) ? current.filter(item => item !== title) : [...current, title];
-      storage.set('xbox.library.favorites', JSON.stringify(next));
       return next;
     });
   };
