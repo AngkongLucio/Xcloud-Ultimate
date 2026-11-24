@@ -45,6 +45,23 @@ export default function XboxLibraryScreen({navigation}) {
   }, [favoriteTitles]);
   const libraryScrollRef = useRef(null);
   const isFocused = useIsFocused();
+  useEffect(() => {
+    if (!isFocused) return;
+    try {
+      const raw = storage.getString('xbox.library.favorites');
+      const parsed = raw ? JSON.parse(raw) : [];
+      const normalized = Array.isArray(parsed)
+        ? [...new Set(parsed.filter(title => typeof title === 'string' && GAMES.some(game => game.title === title)))]
+        : [];
+      if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+        storage.set('xbox.library.favorites', JSON.stringify(normalized));
+      }
+      setFavoriteTitles(normalized);
+    } catch (_) {
+      storage.delete('xbox.library.favorites');
+      setFavoriteTitles([]);
+    }
+  }, [isFocused]);
   const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
   const haptic = (type = 'selection') => {
