@@ -110,9 +110,10 @@ export default function XboxLibraryScreen({navigation}) {
       storage.set('xbox.activity.lastTitle', title);
       storage.set('xbox.activity.lastOpenedAt', openedAt);
       const launchCount = storage.getNumber('xbox.activity.launchCount') ?? 0;
-      storage.set('xbox.activity.launchCount', Number.isFinite(launchCount) && launchCount >= 0
-        ? Math.floor(launchCount) + 1
-        : 1);
+      const safeLaunchCount = Number.isSafeInteger(launchCount) && launchCount >= 0
+        ? launchCount
+        : 0;
+      storage.set('xbox.activity.launchCount', Math.min(safeLaunchCount + 1, Number.MAX_SAFE_INTEGER));
       let history = [];
       try {
         const storedHistory = storage.getString('xbox.activity.history');
