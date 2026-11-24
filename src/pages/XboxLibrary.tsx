@@ -207,20 +207,46 @@ export default function XboxLibraryScreen({navigation}) {
             accessibilityRole="button"
             accessibilityLabel={"Clear all " + favoriteCount + " saved favorites"}
             accessibilityHint="Asks for confirmation before removing every saved favorite."
-            onPress={() => Alert.alert(
-              'Clear all favorites?',
-              'This removes all saved favorites from this device. Your game catalog and activity history will stay unchanged.',
-              [
-                {text: 'Cancel', style: 'cancel'},
-                {text: 'Clear favorites', style: 'destructive', onPress: () => {
-                  haptic('impactLight');
-                  storage.set('xbox.library.favorites', JSON.stringify([]));
-                  setFavoriteTitles([]);
-                  setFavoritesOnly(false);
-                  setSelectedIndex(0);
-                }},
-              ],
-            )}
+            onPress={() => {
+              let current = [];
+              try {
+                const raw = storage.getString('xbox.library.favorites');
+                const parsed = raw ? JSON.parse(raw) : [];
+                current = Array.isArray(parsed)
+                  ? [...new Set(parsed.filter(title => typeof title === 'string' && GAMES.some(game => game.title === title)))]
+                  : [];
+              } catch (_) {
+                current = [];
+              }
+              setFavoriteTitles(current);
+              if (!current.length) return;
+              const titlesToClear = new Set(current);
+              Alert.alert(
+                'Clear all favorites?',
+                'This clears the favorites currently listed. New favorites added while this confirmation is open will be kept. Your game catalog and activity history remain unchanged.',
+                [
+                  {text: 'Cancel', style: 'cancel'},
+                  {text: 'Clear favorites', style: 'destructive', onPress: () => {
+                    haptic('impactLight');
+                    let latest = [];
+                    try {
+                      const raw = storage.getString('xbox.library.favorites');
+                      const parsed = raw ? JSON.parse(raw) : [];
+                      latest = Array.isArray(parsed)
+                        ? [...new Set(parsed.filter(title => typeof title === 'string' && GAMES.some(game => game.title === title)))]
+                        : [];
+                    } catch (_) {
+                      latest = [];
+                    }
+                    const remaining = latest.filter(title => !titlesToClear.has(title));
+                    storage.set('xbox.library.favorites', JSON.stringify(remaining));
+                    setFavoriteTitles(remaining);
+                    setFavoritesOnly(false);
+                    setSelectedIndex(0);
+                  }},
+                ],
+              );
+            }}
             style={styles.clearFavoritesButton}>
             <Text style={styles.clearFavoritesText}>Clear favorites</Text>
           </Pressable>
