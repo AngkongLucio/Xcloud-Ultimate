@@ -202,6 +202,7 @@ export default function XboxFriendsScreen() {
           onPress={() => {
             setSearchQuery('');
             setSortOrder('Recent');
+            storage.set('xbox.friends.sortOrder', 'Recent');
           }}
           style={styles.resetFriendsButton}>
           Reset search & sorting
