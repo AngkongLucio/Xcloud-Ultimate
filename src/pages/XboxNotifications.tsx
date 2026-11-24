@@ -23,6 +23,7 @@ export default function XboxNotificationsScreen() {
   const isFocused = useIsFocused();
   const [items, setItems] = useState(readNotifications);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
   const refresh = () => setItems(readNotifications());
 
   useEffect(() => { if (isFocused) refresh(); }, [isFocused]);
@@ -48,7 +49,9 @@ export default function XboxNotificationsScreen() {
   const activityCount = items.filter(item => item.kind !== 'message' && item.kind !== 'friend').length;
   const visibleItems = items.filter(item => {
     const query = searchQuery.trim().toLowerCase();
-    return !query || [item.title, item.message, item.kind].some(value => String(value || '').toLowerCase().includes(query));
+    const matchesSearch = !query || [item.title, item.message, item.kind].some(value => String(value || '').toLowerCase().includes(query));
+    const matchesStatus = statusFilter === 'All' || (statusFilter === 'Unread' ? !item.read : item.read);
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -67,6 +70,13 @@ export default function XboxNotificationsScreen() {
         <Button compact mode="text" textColor="#e5a0a0" accessibilityLabel="Clear all local notifications" onPress={clearAll} disabled={!items.length}>Clear all</Button>
       </View>
       <TextInput mode="outlined" label="Search notifications" accessibilityLabel="Search local notifications" accessibilityHint="Filters by notification title, message, or category." value={searchQuery} onChangeText={setSearchQuery} autoCapitalize="none" clearButtonMode="while-editing" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.searchInput} />
+      <View style={styles.filterRow} accessibilityLabel="Filter notifications by read status">
+        {['All', 'Unread', 'Read'].map(item => (
+          <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " notifications"} accessibilityState={{selected: statusFilter === item}} onPress={() => setStatusFilter(item)} style={[styles.filterChip, statusFilter === item && styles.filterChipSelected]}>
+            <Text style={[styles.filterText, statusFilter === item && styles.filterTextSelected]}>{item}</Text>
+          </Pressable>
+        ))}
+      </View>
       <Text accessibilityLiveRegion="polite" accessibilityLabel={visibleItems.length + " of " + items.length + " notifications shown"} style={styles.unread}>{visibleItems.length} / {items.length} SHOWN</Text>
       {visibleItems.length ? visibleItems.map(item => (
         <Pressable key={item.id} accessible accessibilityRole="button" accessibilityLabel={(item.read ? "Read notification: " : "Unread notification: ") + item.title + ". " + item.message + (item.createdAt ? ". " + new Date(item.createdAt).toLocaleString() : "")} accessibilityHint={item.read ? "This notification has already been read." : "Marks this notification as read on this device."} onPress={() => markRead(item.id)}>
@@ -107,6 +117,11 @@ const styles = StyleSheet.create({
   summaryLabel: {color: '#9cdb8a', fontSize: 9, fontWeight: '800', letterSpacing: 0.8, marginTop: 3},
   toolbar: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap'},
   searchInput: {backgroundColor: '#1b211c', marginBottom: 10},
+  filterRow: {flexDirection: 'row', gap: 8, marginBottom: 10},
+  filterChip: {paddingHorizontal: 15, paddingVertical: 9, borderRadius: 18, backgroundColor: '#202920', borderWidth: 1, borderColor: '#354136'},
+  filterChipSelected: {backgroundColor: '#294d30', borderColor: '#9cdb8a'},
+  filterText: {color: '#aab5aa', fontSize: 12, fontWeight: '700'},
+  filterTextSelected: {color: '#fff'},
   unread: {color: '#9cdb8a', fontSize: 11, fontWeight: '800', letterSpacing: 1},
   itemCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 14, marginBottom: 10},
   unreadCard: {borderColor: '#789d70', backgroundColor: '#1d2a1e'},
