@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, View, StyleSheet, Linking, Pressable} from 'react-native';
+import {ScrollView, View, StyleSheet, Linking, Pressable, Modal} from 'react-native';
 import {Button, Card, Switch, Text} from 'react-native-paper';
 import {useIsFocused} from '@react-navigation/native';
 import {storage} from '../store/mmkv';
@@ -17,6 +17,7 @@ export default function XboxDashboardScreen({navigation}) {
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
   const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
   const [quickSettingsVisible, setQuickSettingsVisible] = useState(false);
+  const [guideVisible, setGuideVisible] = useState(false);
   const [lastTitle, setLastTitle] = useState(() => storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
   const [lastOpenedAt, setLastOpenedAt] = useState(() => storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
   const [gamertag, setGamertag] = useState(() => storage.getString('xbox.profile.gamertag') ?? 'Player');
@@ -35,6 +36,7 @@ export default function XboxDashboardScreen({navigation}) {
   const updateFocusOutline = value => { setFocusOutline(value); storage.set('xbox.ui.focusOutline', value); };
   const updateCompactCards = value => { setCompactCards(value); storage.set('xbox.ui.compactCards', value); };
   const openGamePass = () => Linking.openURL('https://www.xbox.com/xbox-game-pass').catch(() => {});
+  const openGuideRoute = route => { setGuideVisible(false); if (route === 'CloudGaming') { openCloud(); } else { navigation.navigate(route); } };
   const handleQuickLink = title => {
     if (title === 'Cloud Gaming') { openCloud(); }
     else if (title === 'Game Pass') { openGamePass(); }
@@ -53,12 +55,44 @@ export default function XboxDashboardScreen({navigation}) {
           <Text style={styles.profileTag}>{gamertag}</Text>
         </Pressable>
         <View style={styles.topActions}>
+          <Pressable onPress={() => setGuideVisible(true)} accessibilityRole="button" accessibilityLabel="Open Xbox guide" style={styles.quickButton}>
+            <Text style={styles.quickButtonText}>☰</Text>
+          </Pressable>
           <Pressable onPress={() => setQuickSettingsVisible(value => !value)} accessibilityRole="button" accessibilityLabel="Toggle quick settings" style={styles.quickButton}>
             <Text style={styles.quickButtonText}>⚙</Text>
           </Pressable>
           <Text variant="headlineSmall" style={styles.logo}>XBOX</Text>
         </View>
       </View>
+
+      <Modal visible={guideVisible} transparent animationType="fade" onRequestClose={() => setGuideVisible(false)}>
+        <View style={styles.guideOverlay}>
+          <Pressable style={styles.guideBackdrop} onPress={() => setGuideVisible(false)} accessibilityRole="button" accessibilityLabel="Close guide" />
+          <View style={styles.guideDrawer}>
+            <View style={styles.guideTop}>
+              <View><Text style={styles.guideEyebrow}>XCLOUD ULTIMATE</Text><Text style={styles.guideHeading}>Guide</Text></View>
+              <Pressable onPress={() => setGuideVisible(false)} style={styles.guideClose}><Text style={styles.guideCloseText}>✕</Text></Pressable>
+            </View>
+            <Pressable style={styles.guideProfile} onPress={() => openGuideRoute('XboxProfile')}>
+              <Text style={styles.guideAvatar}>{avatar}</Text>
+              <View style={{flex: 1}}><Text style={styles.guideName}>{gamertag}</Text><Text style={styles.guideHint}>Local player profile</Text></View>
+              <Text style={styles.guideChevron}>›</Text>
+            </Pressable>
+            <Text style={styles.guideSection}>GAMING</Text>
+            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('CloudGaming')}><Text style={styles.guideIcon}>☁️</Text><Text style={styles.guideItemText}>Cloud Gaming</Text></Pressable>
+            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxLibrary')}><Text style={styles.guideIcon}>🎮</Text><Text style={styles.guideItemText}>Game Library</Text></Pressable>
+            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxAchievements')}><Text style={styles.guideIcon}>🏆</Text><Text style={styles.guideItemText}>Achievements</Text></Pressable>
+            <Text style={styles.guideSection}>COMMUNITY</Text>
+            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxFriends')}><Text style={styles.guideIcon}>👥</Text><Text style={styles.guideItemText}>Friends</Text></Pressable>
+            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxMessages')}><Text style={styles.guideIcon}>💬</Text><Text style={styles.guideItemText}>Messages</Text></Pressable>
+            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxNotifications')}><Text style={styles.guideIcon}>🔔</Text><Text style={styles.guideItemText}>Notifications</Text></Pressable>
+            <View style={styles.guideSpacer} />
+            <Text style={styles.guideSection}>SYSTEM</Text>
+            <Pressable style={styles.guideItem} onPress={() => openGuideRoute('XboxSettings')}><Text style={styles.guideIcon}>⚙️</Text><Text style={styles.guideItemText}>Settings</Text></Pressable>
+            <Text style={styles.guideFoot}>Companion app menu · Xbox sign-in stays official</Text>
+          </View>
+        </View>
+      </Modal>
 
       {quickSettingsVisible ? (
         <Card style={styles.quickPanel} mode="outlined">
@@ -163,6 +197,25 @@ const styles = StyleSheet.create({
   topBar: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24},
   profileShortcut: {alignItems: 'center', justifyContent: 'center', minWidth: 52, marginLeft: 'auto', marginRight: 12},
   topActions: {alignItems: 'center', gap: 8},
+  guideOverlay: {flex: 1, flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.58)'},
+  guideBackdrop: {flex: 1},
+  guideDrawer: {width: '82%', maxWidth: 360, backgroundColor: '#151d16', paddingTop: 54, paddingHorizontal: 18, paddingBottom: 24, borderLeftWidth: 1, borderLeftColor: '#456345'},
+  guideTop: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22},
+  guideEyebrow: {color: '#8fbc8f', fontSize: 10, letterSpacing: 2, fontWeight: '800'},
+  guideHeading: {color: '#fff', fontSize: 28, fontWeight: '900', marginTop: 4},
+  guideClose: {width: 36, height: 36, borderRadius: 18, backgroundColor: '#29372b', alignItems: 'center', justifyContent: 'center'},
+  guideCloseText: {color: '#d9ead7', fontSize: 17},
+  guideProfile: {flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13, backgroundColor: '#223126', borderRadius: 13, marginBottom: 22},
+  guideAvatar: {fontSize: 29},
+  guideName: {color: '#fff', fontWeight: '800', fontSize: 15},
+  guideHint: {color: '#9eae9d', fontSize: 11, marginTop: 3},
+  guideChevron: {color: '#9cdb8a', fontSize: 25},
+  guideSection: {color: '#85ad7e', fontSize: 10, letterSpacing: 1.5, fontWeight: '800', marginBottom: 8, marginTop: 8},
+  guideItem: {height: 49, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 12, borderRadius: 10},
+  guideIcon: {fontSize: 20, width: 26},
+  guideItemText: {color: '#f1f5ef', fontSize: 15, fontWeight: '600'},
+  guideSpacer: {height: 12},
+  guideFoot: {color: '#788879', fontSize: 10, marginTop: 16, lineHeight: 15},
   quickButton: {width: 34, height: 34, borderRadius: 17, backgroundColor: '#26372a', alignItems: 'center', justifyContent: 'center'},
   quickButtonText: {color: '#b8e7ad', fontSize: 22, fontWeight: '700'},
   quickPanel: {backgroundColor: '#1b211c', borderColor: '#66845f', borderWidth: 1, borderRadius: 16, marginBottom: 18},
