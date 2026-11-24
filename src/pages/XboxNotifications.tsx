@@ -88,18 +88,24 @@ export default function XboxNotificationsScreen() {
       </View>
       <TextInput mode="outlined" label="Search notifications" accessibilityLabel="Search local notifications" accessibilityHint="Filters by notification title, message, or category." value={searchQuery} onChangeText={setSearchQuery} autoCapitalize="none" clearButtonMode="while-editing" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.searchInput} />
       <View style={styles.filterRow} accessibilityLabel="Filter notifications by read status">
-        {['All', 'Unread', 'Read'].map(item => (
-          <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " notifications"} accessibilityState={{selected: statusFilter === item}} onPress={() => setStatusFilter(item)} style={[styles.filterChip, statusFilter === item && styles.filterChipSelected]}>
-            <Text style={[styles.filterText, statusFilter === item && styles.filterTextSelected]}>{item}</Text>
-          </Pressable>
-        ))}
+        {['All', 'Unread', 'Read'].map(item => {
+          const filterCount = item === 'All' ? items.length : item === 'Unread' ? unread : items.length - unread;
+          return (
+            <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " notifications, " + filterCount + " available"} accessibilityState={{selected: statusFilter === item}} onPress={() => setStatusFilter(item)} style={[styles.filterChip, statusFilter === item && styles.filterChipSelected]}>
+              <Text style={[styles.filterText, statusFilter === item && styles.filterTextSelected]}>{item} ({filterCount})</Text>
+            </Pressable>
+          );
+        })}
       </View>
       <View style={styles.filterRow} accessibilityLabel="Filter notifications by category">
-        {['All', 'Activity', 'Friends', 'Messages'].map(item => (
-          <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " category notifications"} accessibilityState={{selected: categoryFilter === item}} onPress={() => setCategoryFilter(item)} style={[styles.filterChip, categoryFilter === item && styles.filterChipSelected]}>
-            <Text style={[styles.filterText, categoryFilter === item && styles.filterTextSelected]}>{item}</Text>
-          </Pressable>
-        ))}
+        {['All', 'Activity', 'Friends', 'Messages'].map(item => {
+          const filterCount = item === 'All' ? items.length : item === 'Activity' ? activityCount : item === 'Friends' ? friendCount : messageCount;
+          return (
+            <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " category notifications, " + filterCount + " available"} accessibilityState={{selected: categoryFilter === item}} onPress={() => setCategoryFilter(item)} style={[styles.filterChip, categoryFilter === item && styles.filterChipSelected]}>
+              <Text style={[styles.filterText, categoryFilter === item && styles.filterTextSelected]}>{item} ({filterCount})</Text>
+            </Pressable>
+          );
+        })}
       </View>
       <Text accessibilityLiveRegion="polite" accessibilityLabel={visibleItems.length + " of " + items.length + " notifications shown"} style={styles.unread}>{visibleItems.length} / {items.length} SHOWN</Text>
       {visibleItems.length ? visibleItems.map(item => (
