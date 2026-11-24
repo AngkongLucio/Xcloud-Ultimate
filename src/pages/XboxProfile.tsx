@@ -22,7 +22,11 @@ const normalizeActivityHistory = value =>
     : [];
 
 const normalizeLaunchCount = value =>
-  Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+  Number.isSafeInteger(value) && value > 0
+    ? value
+    : Number.isFinite(value) && value > 0
+      ? Number.MAX_SAFE_INTEGER
+      : 0;
 
 export default function XboxProfileScreen({navigation}) {
   const isFocused = useIsFocused();
