@@ -936,6 +936,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_upnp_discover(Session *session)
     if(!session->gw.urls)
     {
         free(session->gw.data);
+        session->gw.data = NULL;
         return CHIAKI_ERR_MEMORY;
     }
     ChiakiErrorCode err = upnp_get_gateway_info(session->log, &session->gw);
