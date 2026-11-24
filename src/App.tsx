@@ -170,7 +170,7 @@ function App() {
                   <RootStack.Screen
                     name="XboxDashboard"
                     component={XboxDashboardScreen}
-                    options={{...xboxTransition, eaderShown: false}}
+                    options={{...xboxTransition, headerShown: false}}
                   />
                   <RootStack.Screen
                     name="XboxLibrary"
