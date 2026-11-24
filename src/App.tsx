@@ -129,6 +129,10 @@ function App() {
           },
         ],
       );
+    }).catch((error: unknown) => {
+      // Update checks are optional; network failures must not become
+      // unhandled promise rejections or interrupt app startup.
+      console.warn('Unable to check for app updates:', error);
     });
   }, [settings.check_update, t]);
 
