@@ -1,5 +1,5 @@
 import React, {useCallback, useRef, useState} from 'react';
-import {ActivityIndicator, Alert, BackHandler, Platform, StyleSheet, View} from 'react-native';
+import {ActivityIndicator, Alert, BackHandler, Linking, Platform, StyleSheet, View} from 'react-native';
 import {Button, IconButton, Text} from 'react-native-paper';
 import {WebView, WebViewNavigation} from 'react-native-webview';
 
@@ -46,8 +46,9 @@ export default function XboxCloudScreen() {
         {
           text: 'Open Safari',
           onPress: () => {
-            // Linking is intentionally loaded only when the user chooses this fallback.
-            import('react-native').then(({Linking}) => Linking.openURL(XBOX_CLOUD_URL));
+            Linking.openURL(XBOX_CLOUD_URL).catch(() => {
+              Alert.alert('Unable to open Safari', 'Open https://www.xbox.com/play in Safari manually.');
+            });
           },
         },
       ],
