@@ -50,6 +50,7 @@ jobs:
       - name: Build unsigned device app
         run: |
           set -o pipefail
+          mkdir -p build
           xcodebuild \
             -workspace ios/Peasyo.xcworkspace \
             -scheme Peasyo \
