@@ -781,21 +781,32 @@ CHIAKI_EXPORT chiaki_socket_t *chiaki_get_holepunch_sock(ChiakiHolepunchSession 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_generate_client_device_uid(
         char *out, size_t *out_size)
 {
-    if (*out_size < CHIAKI_DUID_STR_SIZE)
+    if(!out || !out_size)
+        return CHIAKI_ERR_INVALID_DATA;
+
+    const size_t required_size = CHIAKI_DUID_STR_SIZE;
+    if(*out_size < required_size)
     {
+        *out_size = required_size;
         return CHIAKI_ERR_BUF_TOO_SMALL;
     }
+
     uint8_t random_bytes[16];
     ChiakiErrorCode err = chiaki_random_bytes_crypt(random_bytes, sizeof(random_bytes));
-    if (err != CHIAKI_ERR_SUCCESS)
+    if(err != CHIAKI_ERR_SUCCESS)
         return err;
 
-    *out_size += sprintf(out, "%s", DUID_PREFIX);
-    for (int i = 0; i < sizeof(random_bytes); i++)
+    static const char hex[] = "0123456789abcdef";
+    const size_t prefix_len = sizeof(DUID_PREFIX) - 1;
+    memcpy(out, DUID_PREFIX, prefix_len);
+    size_t offset = prefix_len;
+    for(size_t i = 0; i < sizeof(random_bytes); i++)
     {
-        *out_size += sprintf(out + strlen(out), "%02x", random_bytes[i]);
+        out[offset++] = hex[random_bytes[i] >> 4];
+        out[offset++] = hex[random_bytes[i] & 0x0f];
     }
-
+    out[offset] = '\0';
+    *out_size = offset + 1;
     return CHIAKI_ERR_SUCCESS;
 }
 
