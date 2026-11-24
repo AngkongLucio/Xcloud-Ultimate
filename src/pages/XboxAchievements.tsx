@@ -29,9 +29,9 @@ export default function XboxAchievementsScreen() {
       <Card style={styles.summary}>
         <Card.Content>
           <Text style={styles.summaryLabel}>LOCAL BADGES UNLOCKED</Text>
-          <Text variant="displaySmall" style={styles.score}>{unlocked} / {BADGES.length}</Text>
+          <Text variant="displaySmall" accessibilityLiveRegion="polite" accessibilityLabel={unlocked + " of " + BADGES.length + " local badges unlocked"} style={styles.score}>{unlocked} / {BADGES.length}</Text>
           <ProgressBar progress={unlocked / BADGES.length} color="#9cdb8a" style={styles.progress} accessibilityLabel={"Local badge progress: " + unlocked + " of " + BADGES.length + " unlocked"} />
-          <Text style={styles.summaryHint}>{count} catalog opens recorded on this device</Text>
+          <Text accessibilityLiveRegion="polite" accessibilityLabel={count + (count === 1 ? " catalog open recorded on this device" : " catalog opens recorded on this device")} style={styles.summaryHint}>{count} catalog opens recorded on this device</Text>
         </Card.Content>
       </Card>
       {BADGES.map(item => {
@@ -49,7 +49,7 @@ export default function XboxAchievementsScreen() {
                 <Text style={styles.status} accessibilityLabel={earned ? "Unlocked" : "Locked"}>{earned ? '✓' : '🔒'}</Text>
               </View>
               <View style={styles.progressMeta}>
-                <Text style={styles.progressText}>{Math.min(count, item.target)} / {item.target}</Text>
+                <Text accessibilityLabel={item.title + ": " + Math.min(count, item.target) + " of " + item.target + " catalog opens"} style={styles.progressText}>{Math.min(count, item.target)} / {item.target}</Text>
                 <Text style={styles.progressText}>{earned ? 'UNLOCKED' : 'IN PROGRESS'}</Text>
               </View>
               <ProgressBar progress={progress} color={earned ? '#9cdb8a' : '#607560'} style={styles.progress} accessibilityLabel={item.title + " progress: " + Math.min(count, item.target) + " of " + item.target + (earned ? ", unlocked" : ", in progress")} />
