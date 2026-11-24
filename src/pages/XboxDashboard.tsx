@@ -42,10 +42,15 @@ export default function XboxDashboardScreen({navigation}) {
           </Card.Content>
       </Card>
 
+      <View style={styles.actionRow}>
+        <Button mode="outlined" icon="view-grid" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxLibrary')} style={styles.actionButton}>
+          Game Library
+        </Button>
+        <Button mode="outlined" icon="cog" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxSettings')} style={styles.actionButton}>
+          Settings
+        </Button>
+      </View>
       <Text variant="titleLarge" style={styles.sectionTitle}>Explore</Text>
-      <Button mode="outlined" icon="view-grid" textColor="#9cdb8a" onPress={() => navigation.navigate('XboxLibrary')} style={styles.libraryButton}>
-        Open Game Library
-      </Button>
       {quickLinks.map(item => (
         <Pressable
           key={item.title}
@@ -89,6 +94,8 @@ const styles = StyleSheet.create({
   playButton: {alignSelf: 'flex-start', backgroundColor: '#107c10'},
   sectionTitle: {color: '#fff', fontWeight: '700', marginBottom: 12},
   libraryButton: {alignSelf: 'flex-start', borderColor: '#527b52', marginBottom: 14},
+  actionRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14},
+  actionButton: {borderColor: '#527b52'},
   linkCardPressable: {borderRadius: 14, marginBottom: 10},
   focusedCard: {borderWidth: 2, borderColor: '#9cdb8a', borderRadius: 14},
   linkCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderRadius: 14},
