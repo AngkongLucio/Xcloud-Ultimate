@@ -19,25 +19,48 @@ const normalizeFriends = value => Array.isArray(value)
     .map(item => ({...item, name: item.name.trim(), avatar: typeof item.avatar === 'string' ? item.avatar : '🎮'}))
   : [];
 
-const normalizeThreads = value => Array.isArray(value)
-  ? value.filter(thread => thread && typeof thread === 'object' && !Array.isArray(thread)
-    && thread.friendId !== undefined && Array.isArray(thread.messages))
-    .map(thread => ({
-      ...thread,
-      friendId: String(thread.friendId),
-      friendName: typeof thread.friendName === 'string' && thread.friendName.trim() ? thread.friendName.trim() : 'Player',
-      avatar: typeof thread.avatar === 'string' ? thread.avatar : '🎮',
-      messages: thread.messages.filter(message => message && typeof message === 'object' && !Array.isArray(message)
-        && typeof message.body === 'string').map((message, index) => ({
-          ...message,
-          id: String(message.id || 'legacy-' + index),
-          body: message.body.slice(0, 500),
-          sender: message.sender === 'me' ? 'me' : 'them',
-          sentAt: Number.isFinite(Number(message.sentAt)) && Number(message.sentAt) > 0 ? Number(message.sentAt) : 0,
-        })),
-      updatedAt: Number.isFinite(Number(thread.updatedAt)) && Number(thread.updatedAt) > 0 ? Number(thread.updatedAt) : 0,
-    }))
-  : [];
+const normalizeThreads = value => {
+  if (!Array.isArray(value)) return [];
+  const seenFriendIds = new Set();
+  return value
+    .filter(thread => thread && typeof thread === 'object' && !Array.isArray(thread)
+      && thread.friendId !== undefined && Array.isArray(thread.messages))
+    .map(thread => {
+      const friendId = String(thread.friendId).trim().slice(0, 100);
+      const messagesSeen = new Set();
+      const messages = thread.messages
+        .filter(message => message && typeof message === 'object' && !Array.isArray(message)
+          && typeof message.body === 'string')
+        .map((message, index) => {
+          const baseId = String(message.id || 'legacy-' + index).trim().slice(0, 100) || 'legacy-' + index;
+          let id = baseId;
+          let suffix = 1;
+          while (messagesSeen.has(id)) {
+            id = (baseId.slice(0, 88) + '-' + suffix).slice(0, 100);
+            suffix += 1;
+          }
+          messagesSeen.add(id);
+          return {
+            ...message,
+            id,
+            body: message.body.slice(0, 500),
+            sender: message.sender === 'me' ? 'me' : 'them',
+            sentAt: Number.isFinite(Number(message.sentAt)) && Number(message.sentAt) > 0 ? Number(message.sentAt) : 0,
+          };
+        });
+      if (!friendId || seenFriendIds.has(friendId)) return null;
+      seenFriendIds.add(friendId);
+      return {
+        ...thread,
+        friendId,
+        friendName: typeof thread.friendName === 'string' && thread.friendName.trim() ? thread.friendName.trim().slice(0, 20) : 'Player',
+        avatar: typeof thread.avatar === 'string' && thread.avatar.length <= 8 ? thread.avatar : '🎮',
+        messages,
+        updatedAt: Number.isFinite(Number(thread.updatedAt)) && Number(thread.updatedAt) > 0 ? Number(thread.updatedAt) : 0,
+      };
+    })
+    .filter(Boolean);
+};
 
 const readFriends = () => normalizeFriends(readArray('xbox.friends.local'));
 const readThreads = () => normalizeThreads(readArray('xbox.messages.local'));
