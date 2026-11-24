@@ -19,7 +19,11 @@ export class TokenStore {
       }
 
       const parsed: unknown = JSON.parse(tokens);
-      this.userTokens = Array.isArray(parsed) ? parsed : [];
+      this.userTokens = Array.isArray(parsed)
+        ? parsed.filter(
+            item => item !== null && typeof item === 'object' && !Array.isArray(item),
+          )
+        : [];
     } catch {
       // Ignore malformed persisted data and recover with an empty token list.
       this.userTokens = [];
@@ -33,7 +37,11 @@ export class TokenStore {
   }
 
   setToken(data: Array<UserInfo | PsnUsrtInfo>) {
-    this.userTokens = data;
+    this.userTokens = Array.isArray(data)
+      ? data.filter(
+          item => item !== null && typeof item === 'object' && !Array.isArray(item),
+        )
+      : [];
   }
 
   save() {

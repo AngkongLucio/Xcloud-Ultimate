@@ -4,55 +4,35 @@ const log = debugFactory('gamepadStore');
 
 const STORE_KEY = 'user.vgamepad';
 
-const defaultSettings: any = {};
+const defaultSettings: Record<string, any> = {};
+
+const readSettings = (): Record<string, any> => {
+  const stored = storage.getString(STORE_KEY);
+  if (!stored) {
+    return {};
+  }
+  try {
+    const parsed: unknown = JSON.parse(stored);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, any>)
+      : {};
+  } catch {
+    return {};
+  }
+};
 
 export const saveSettings = (name: string, params: any) => {
   log.info('SaveSettings:', name, JSON.stringify(params));
-  let settings: any = storage.getString(STORE_KEY);
-
-  if (!settings) {
-    settings = {};
-  } else {
-    try {
-      settings = JSON.parse(settings);
-    } catch (e) {
-      settings = {};
-    }
-  }
-
+  const settings = readSettings();
   settings[name] = params;
-
   storage.set(STORE_KEY, JSON.stringify(settings));
 };
 
 export const deleteSetting = (name: string) => {
   log.info('deleteSetting:', name);
-  let settings: any = storage.getString(STORE_KEY);
-
-  if (!settings) {
-    settings = {};
-  } else {
-    try {
-      settings = JSON.parse(settings);
-    } catch (e) {
-      settings = {};
-    }
-  }
-
+  const settings = readSettings();
   delete settings[name];
-
   storage.set(STORE_KEY, JSON.stringify(settings));
 };
 
-export const getSettings = (): any => {
-  let settings = storage.getString(STORE_KEY);
-  if (!settings) {
-    return defaultSettings;
-  }
-  try {
-    const _settings = JSON.parse(settings);
-    return _settings;
-  } catch {
-    return defaultSettings;
-  }
-};
+export const getSettings = (): Record<string, any> => readSettings();

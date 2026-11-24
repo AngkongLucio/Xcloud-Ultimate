@@ -140,7 +140,11 @@ const defaultSettings: Settings = {
 
 export const saveSettings = (settings: Settings) => {
   log.info('SaveSettings:', settings);
-  const totalSettings = Object.assign({}, defaultSettings, settings);
+  const safeSettings =
+    settings && typeof settings === 'object' && !Array.isArray(settings)
+      ? settings
+      : {};
+  const totalSettings = Object.assign({}, defaultSettings, safeSettings);
   storage.set(STORE_KEY, JSON.stringify(totalSettings));
 };
 
@@ -150,8 +154,12 @@ export const getSettings = (): Settings => {
     return defaultSettings;
   }
   try {
-    const _settings = JSON.parse(settings) as Settings;
-    const merged = Object.assign({}, defaultSettings, _settings) as Settings;
+    const parsed: unknown = JSON.parse(settings);
+    const safeSettings =
+      parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed
+        : {};
+    const merged = Object.assign({}, defaultSettings, safeSettings) as Settings;
     // 迁移旧版 external_display_output 的值（boolean: true -> 'on'，false -> 'off'；
     // 已移除的 'auto_lock'（真息屏）统一降级为 'auto_pseudo'）
     const legacy = merged as any;
