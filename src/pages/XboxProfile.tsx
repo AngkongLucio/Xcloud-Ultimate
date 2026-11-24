@@ -12,9 +12,27 @@ export default function XboxProfileScreen() {
   const [avatar, setAvatar] = useState(() => storage.getString('xbox.profile.avatar') ?? '🎮');
   const [saved, setSaved] = useState(false);
   const [launchCount, setLaunchCount] = useState(() => storage.getNumber('xbox.activity.launchCount') ?? 0);
+  const [activity, setActivity] = useState(() => {
+    try {
+      const saved = storage.getString('xbox.activity.history');
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+      return [];
+    }
+  });
 
   useEffect(() => {
-    if (isFocused) setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
+    if (isFocused) {
+      setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
+      try {
+        const saved = storage.getString('xbox.activity.history');
+        const parsed = saved ? JSON.parse(saved) : [];
+        setActivity(Array.isArray(parsed) ? parsed : []);
+      } catch (_) {
+        setActivity([]);
+      }
+    }
   }, [isFocused]);
 
   const saveProfile = () => {
@@ -69,6 +87,26 @@ export default function XboxProfileScreen() {
           <Text variant="bodySmall" style={styles.statsNote}>These are local companion-app milestones, not official Xbox achievements or playtime.</Text>
         </Card.Content>
       </Card>
+      <Card style={styles.statsCard}>
+        <Card.Content>
+          <Text variant="titleLarge" style={styles.sectionTitle}>Recent activity</Text>
+          {activity.length ? activity.map((entry, index) => (
+            <View key={String(entry.openedAt) + '-' + index} style={styles.activityRow}>
+              <View style={styles.activityIcon}><Text style={styles.activityEmoji}>▶</Text></View>
+              <View style={styles.activityCopy}>
+                <Text style={styles.activityTitle}>{entry.title || 'Xbox Catalog'}</Text>
+                <Text style={styles.activityTime}>{entry.openedAt ? new Date(entry.openedAt).toLocaleString() : 'Time unavailable'}</Text>
+              </View>
+            </View>
+          )) : <Text style={styles.statsNote}>No catalog activity yet. Open a title from the Library to start your history.</Text>}
+          {activity.length > 0 ? (
+            <Button mode="text" textColor="#a8e69a" compact onPress={() => {
+              storage.delete('xbox.activity.history');
+              setActivity([]);
+            }}>Clear local history</Button>
+          ) : null}
+        </Card.Content>
+      </Card>
       <Card style={styles.card}>
         <Card.Content>
           <Text variant="titleLarge" style={styles.sectionTitle}>Choose avatar</Text>
@@ -121,6 +159,12 @@ const styles = StyleSheet.create({
   milestoneHint: {color: '#aab5aa', fontSize: 12, marginTop: 3},
   milestoneStatus: {color: '#9cdb8a', fontSize: 22, fontWeight: '800'},
   statsNote: {color: '#829082', lineHeight: 18, marginTop: 12},
+  activityRow: {flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#354136', gap: 12},
+  activityIcon: {width: 34, height: 34, borderRadius: 17, backgroundColor: '#294d30', alignItems: 'center', justifyContent: 'center'},
+  activityEmoji: {color: '#9cdb8a', fontWeight: '800'},
+  activityCopy: {flex: 1},
+  activityTitle: {color: '#f2f6f1', fontWeight: '700'},
+  activityTime: {color: '#aab5aa', fontSize: 11, marginTop: 3},
   profileCard: {backgroundColor: '#18351f', borderRadius: 18, marginBottom: 16},
   profileContent: {alignItems: 'center', paddingVertical: 24},
   avatarCircle: {width: 92, height: 92, borderRadius: 46, backgroundColor: '#294d30', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#9cdb8a'},
