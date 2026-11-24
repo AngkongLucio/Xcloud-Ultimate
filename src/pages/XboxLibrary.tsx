@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {ScrollView, StyleSheet, View, Linking, Pressable} from 'react-native';
 import {Button, Card, Chip, Searchbar, Text} from 'react-native-paper';
 import {storage} from '../store/mmkv';
@@ -22,6 +22,7 @@ export default function XboxLibraryScreen({navigation}) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const libraryScrollRef = useRef(null);
   const isFocused = useIsFocused();
   const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
@@ -63,17 +64,31 @@ export default function XboxLibraryScreen({navigation}) {
     }
     Linking.openURL(XBOX_PLAY).catch(() => {});
   };
-  const moveSelection = offset => {
+  const moveSelection = direction => {
     if (!visibleGames.length) { return; }
     haptic();
-    setSelectedIndex(current => (current + offset + visibleGames.length) % visibleGames.length);
+    setSelectedIndex(current => {
+      const rowStart = Math.floor(current / 2) * 2;
+      const rowEnd = Math.min(rowStart + 1, visibleGames.length - 1);
+      if (direction === 'left') return Math.max(rowStart, current - 1);
+      if (direction === 'right') return Math.min(rowEnd, current + 1);
+      if (direction === 'up') return Math.max(0, current - 2);
+      return Math.min(visibleGames.length - 1, current + 2);
+    });
   };
+
+  useEffect(() => {
+    if (libraryScrollRef.current && visibleGames.length) {
+      const row = Math.floor(selectedIndex / 2);
+      libraryScrollRef.current.scrollTo({y: Math.max(0, 235 + row * (compactCards ? 145 : 175) - 80), animated: true});
+    }
+  }, [selectedIndex, visibleGames.length, compactCards]);
   const openSelectedGame = () => {
     if (visibleGames.length) { openXbox(visibleGames[selectedIndex]?.title); }
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView ref={libraryScrollRef} style={styles.screen} contentContainerStyle={styles.content}>
       <Text variant="labelLarge" style={styles.eyebrow}>XCLOUD ULTIMATE</Text>
       <Text variant="headlineMedium" style={styles.heading}>Game Library</Text>
       <Text variant="bodyMedium" style={styles.description}>
@@ -127,18 +142,19 @@ export default function XboxLibraryScreen({navigation}) {
       <View style={styles.controllerPanel}>
         <Text variant="titleMedium" style={styles.controllerTitle}>Controller navigation</Text>
         <View style={styles.dpadRow}>
-          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection(-2)}>↑</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection('up')}>↑</Button>
         </View>
         <View style={styles.dpadRow}>
-          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection(-1)}>←</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection('left')}>←</Button>
           <Button compact mode="contained" buttonColor="#107c10" onPress={openSelectedGame}>A · Select</Button>
-          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection(1)}>→</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection('right')}>→</Button>
         </View>
         <View style={styles.dpadRow}>
-          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection(2)}>↓</Button>
+          <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection('down')}>↓</Button>
           <Button compact mode="text" textColor="#9cdb8a" onPress={() => { haptic('impactLight'); navigation.goBack(); }}>B · Back</Button>
         </View>
-        <Text variant="bodySmall" style={styles.controllerHint}>Use these on-screen controls to move the highlight and open the selected title in Xbox.</Text>
+        <Text variant="bodySmall" style={styles.controllerHint}>Selected: {visibleGames[selectedIndex]?.title ?? 'No title'}</Text>
+        <Text variant="bodySmall" style={styles.controllerHint}>D-pad controls move within the two-column grid; A opens the selected title in the official Xbox catalog. Physical controller input depends on iPadOS and is not directly captured by this screen.</Text>
       </View>
 
       {visibleGames.length === 0 && (
