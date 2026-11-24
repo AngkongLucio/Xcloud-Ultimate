@@ -17,6 +17,7 @@ export default function XboxDashboardScreen({navigation}) {
   const isFocused = useIsFocused();
   const [focusOutline, setFocusOutline] = useState(() => storage.getBoolean('xbox.ui.focusOutline') ?? true);
   const [compactCards, setCompactCards] = useState(() => storage.getBoolean('xbox.ui.compactCards') ?? false);
+  const [hapticsEnabled, setHapticsEnabled] = useState(() => storage.getBoolean('xbox.ui.haptics') ?? true);
   const [quickSettingsVisible, setQuickSettingsVisible] = useState(false);
   const [guideVisible, setGuideVisible] = useState(false);
   const [bootVisible, setBootVisible] = useState(true);
@@ -42,6 +43,7 @@ export default function XboxDashboardScreen({navigation}) {
     if (isFocused) {
       setFocusOutline(storage.getBoolean('xbox.ui.focusOutline') ?? true);
       setCompactCards(storage.getBoolean('xbox.ui.compactCards') ?? false);
+      setHapticsEnabled(storage.getBoolean('xbox.ui.haptics') ?? true);
       setLastTitle(storage.getString('xbox.activity.lastTitle') ?? 'No recent launch');
       setLastOpenedAt(storage.getNumber('xbox.activity.lastOpenedAt') ?? 0);
       setGamertag(storage.getString('xbox.profile.gamertag') ?? 'Player');
@@ -49,8 +51,10 @@ export default function XboxDashboardScreen({navigation}) {
     }
   }, [isFocused]);
   const haptic = (type = 'selection') => {
+    if (!hapticsEnabled) return;
     try { ReactNativeHapticFeedback.trigger(type, {enableVibrateFallback: true, ignoreAndroidSystemSettings: false}); } catch (_) {}
   };
+  const updateHaptics = value => { setHapticsEnabled(value); storage.set('xbox.ui.haptics', value); if (value) { try { ReactNativeHapticFeedback.trigger('impactLight', {enableVibrateFallback: true, ignoreAndroidSystemSettings: false}); } catch (_) {} } };
   const openCloud = () => { haptic('impactLight'); Linking.openURL(XBOX_PLAY).catch(() => {}); };
   const updateFocusOutline = value => { haptic(); setFocusOutline(value); storage.set('xbox.ui.focusOutline', value); };
   const updateCompactCards = value => { haptic(); setCompactCards(value); storage.set('xbox.ui.compactCards', value); };
@@ -124,6 +128,11 @@ export default function XboxDashboardScreen({navigation}) {
             <View style={styles.quickRow}>
               <View style={styles.quickCopy}><Text style={styles.quickLabel}>Focus highlight</Text><Text style={styles.quickHint}>Visible keyboard focus outline</Text></View>
               <Switch value={focusOutline} onValueChange={updateFocusOutline} />
+            </View>
+            <View style={styles.quickDivider} />
+            <View style={styles.quickRow}>
+              <View style={styles.quickCopy}><Text style={styles.quickLabel}>Controller feedback</Text><Text style={styles.quickHint}>Haptic taps for menu actions</Text></View>
+              <Switch value={hapticsEnabled} onValueChange={updateHaptics} />
             </View>
             <View style={styles.quickDivider} />
             <View style={styles.quickRow}>
