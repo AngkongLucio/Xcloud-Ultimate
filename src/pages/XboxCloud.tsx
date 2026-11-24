@@ -1,12 +1,19 @@
 import React from 'react';
-import {View, StyleSheet, Linking} from 'react-native';
+import {View, StyleSheet, Linking, Alert} from 'react-native';
 import {Button, Text} from 'react-native-paper';
 
 const XBOX_CLOUD_URL = 'https://www.xbox.com/play';
 
 export default function XboxCloudScreen() {
-  const openXboxCloud = () => {
-    Linking.openURL(XBOX_CLOUD_URL).catch(() => {});
+  const openXboxCloud = async () => {
+    try {
+      await Linking.openURL(XBOX_CLOUD_URL);
+    } catch (_) {
+      Alert.alert(
+        'Unable to open Xbox Cloud Gaming',
+        'Your device could not open the official Xbox website. Check your internet connection or open https://www.xbox.com/play in Safari.',
+      );
+    }
   };
 
   return (
