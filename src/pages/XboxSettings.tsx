@@ -55,7 +55,7 @@ export default function XboxSettingsScreen() {
               <Text variant="titleMedium" style={styles.itemTitle}>Compact game cards</Text>
               <Text variant="bodySmall" style={styles.muted}>Use a tighter layout in the dashboard preview.</Text>
             </View>
-            <Switch value={compactCards} onValueChange={setCompactCards} />
+            <Switch value={compactCards} onValueChange={value => { setCompactCards(value); storage.set("xbox.ui.compactCards", value); }} accessibilityRole="switch" accessibilityLabel="Compact game cards" accessibilityHint="Changes the game card layout in the library." />
           </View>
           <Divider style={styles.divider} />
           <View style={styles.settingRow}>
@@ -63,7 +63,7 @@ export default function XboxSettingsScreen() {
               <Text variant="titleMedium" style={styles.itemTitle}>Focus highlight</Text>
               <Text variant="bodySmall" style={styles.muted}>Show a visible outline on focused controls.</Text>
             </View>
-            <Switch value={focusOutline} onValueChange={setFocusOutline} />
+            <Switch value={focusOutline} onValueChange={value => { setFocusOutline(value); storage.set("xbox.ui.focusOutline", value); }} accessibilityRole="switch" accessibilityLabel="Focus highlight" accessibilityHint="Shows or hides the visible focus outline." />
           </View>
           <View style={styles.preview}>
             <View style={[styles.previewTile, compactCards && styles.compactTile, focusOutline && styles.focusedTile]}>
@@ -88,7 +88,7 @@ export default function XboxSettingsScreen() {
           <Text variant="bodySmall" style={styles.note}>
             These are device network-status readings, not Xbox latency, stream bitrate, or server diagnostics.
           </Text>
-          <Button mode="outlined" textColor="#a8e69a" onPress={() => Linking.openSettings().catch(() => {})} style={styles.actionButton}>
+          <Button mode="outlined" textColor="#a8e69a" accessibilityLabel="Open iPad device settings" onPress={() => Linking.openSettings().catch(() => {})} style={styles.actionButton}>
             Open device settings
           </Button>
         </Card.Content>
@@ -114,7 +114,7 @@ export default function XboxSettingsScreen() {
           <Text variant="bodySmall" style={styles.note}>
             Xbox account sign-in and cloud streaming remain on the official Xbox website.
           </Text>
-          <Button mode="text" textColor="#a8e69a" onPress={() => Linking.openURL('https://www.xbox.com/play').catch(() => {})}>
+          <Button mode="text" textColor="#a8e69a" accessibilityLabel="Open official Xbox Cloud Gaming website" onPress={() => Linking.openURL('https://www.xbox.com/play').catch(() => {})}>
             Open Xbox Cloud Gaming
           </Button>
         </Card.Content>
