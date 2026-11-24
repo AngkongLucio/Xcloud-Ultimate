@@ -3,6 +3,7 @@ import {ScrollView, StyleSheet, View, Linking, Pressable} from 'react-native';
 import {Button, Card, Chip, Searchbar, Text} from 'react-native-paper';
 import {storage} from '../store/mmkv';
 import {useIsFocused} from '@react-navigation/native';
+import {addLocalNotification} from './XboxNotifications';
 
 const XBOX_PLAY = 'https://www.xbox.com/play';
 const GAMES = [
@@ -39,6 +40,7 @@ export default function XboxLibraryScreen({navigation}) {
   const openXbox = title => {
     if (title) {
       const openedAt = Date.now();
+      addLocalNotification('Catalog opened', 'You opened ' + title + '.', 'activity');
       storage.set('xbox.activity.lastTitle', title);
       storage.set('xbox.activity.lastOpenedAt', openedAt);
       storage.set('xbox.activity.launchCount', (storage.getNumber('xbox.activity.launchCount') ?? 0) + 1);
