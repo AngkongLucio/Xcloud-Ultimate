@@ -18,6 +18,20 @@ const CLIENT_ID = 'ba495a24-818c-472b-b12d-ff231c1b5745';
 const REDIRECT_URI =
   'https://remoteplay.dl.playstation.net/remoteplay/redirect';
 
+const isPsnRedirectUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === 'https:' &&
+      url.hostname === 'remoteplay.dl.playstation.net' &&
+      url.pathname === '/remoteplay/redirect' &&
+      Boolean(url.searchParams.get('code'))
+    );
+  } catch {
+    return false;
+  }
+};
+
 const LOGIN_URL = `https://auth.api.sonyentertainmentnetwork.com/2.0/oauth/authorize?service_entity=urn:service-entity:psn&response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=psn:clientapp referenceDataService:countryConfig.read pushNotification:webSocket.desktop.connect sessionManager:remotePlaySession.system.update&request_locale=en_US&ui=pr&service_logo=ps&layout_type=popup&smcid=remoteplay&prompt=always&PlatformPrivacyWs1=minimal&`;
 
 const {HolepunchManager} = NativeModules;
@@ -101,10 +115,11 @@ function ManualLoginScreen({navigation}) {
           mode="contained"
           disabled={!redirectUrl}
           onPress={() => {
-            if (
-              !redirectUrl.startsWith('https') ||
-              redirectUrl.indexOf('code=') === -1
-            ) {
+            if (!isPsnRedirectUrl(redirectUrl)) {
+              Alert.alert(
+                String(t('Warning')),
+                'Enter the complete redirect URL from the official PlayStation sign-in flow.',
+              );
               return;
             }
             navigation.navigate({
