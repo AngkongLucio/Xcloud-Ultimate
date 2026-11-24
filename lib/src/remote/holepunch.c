@@ -2433,9 +2433,27 @@ static ChiakiErrorCode get_websocket_fqdn(Session *session, char **fqdn)
         goto cleanup;
     }
     json_object *json = json_tokener_parse_ex(tok, response_data.data, (int)response_data.size);
-    if(!json)
+    enum json_tokener_error json_err = json_tokener_get_error(tok);
+    if(!json || json_err != json_tokener_success)
     {
-        CHIAKI_LOGE(session->log, "get_websocket_fqdn: Parsing JSON failed");
+        CHIAKI_LOGE(session->log, "get_websocket_fqdn: Parsing JSON failed: %s",
+                json_tokener_error_desc(json_err));
+        if(json)
+            json_object_put(json);
+        err = CHIAKI_ERR_INVALID_DATA;
+        json_tokener_free(tok);
+        goto cleanup;
+    }
+
+    /* Accept trailing JSON whitespace, but reject extra values or arbitrary suffixes. */
+    size_t parsed_size = json_tokener_get_parse_end(tok);
+    while(parsed_size < response_data.size &&
+            isspace((unsigned char)response_data.data[parsed_size]))
+        parsed_size++;
+    if(parsed_size != response_data.size)
+    {
+        CHIAKI_LOGE(session->log, "get_websocket_fqdn: Unexpected data after JSON response");
+        json_object_put(json);
         err = CHIAKI_ERR_INVALID_DATA;
         json_tokener_free(tok);
         goto cleanup;
