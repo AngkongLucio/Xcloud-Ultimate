@@ -38,6 +38,12 @@ export default function XboxProfileScreen({navigation}) {
     };
   }, {first: null, latest: null});
 
+  const uniqueActivityTitles = new Set(
+    activity
+      .map(entry => String(entry?.title || '').trim())
+      .filter(Boolean),
+  ).size;
+
   useEffect(() => {
     if (isFocused) {
       setLaunchCount(storage.getNumber('xbox.activity.launchCount') ?? 0);
@@ -89,6 +95,10 @@ export default function XboxProfileScreen({navigation}) {
             <View style={styles.statTile}>
               <Text variant="headlineMedium" accessibilityLabel={activity.length + " recent catalog entries saved"} style={styles.statNumber}>{activity.length}</Text>
               <Text variant="labelSmall" style={styles.statLabel}>SAVED ENTRIES</Text>
+            </View>
+            <View style={styles.statTile}>
+              <Text variant="headlineMedium" accessibilityLabel={uniqueActivityTitles + " unique catalog titles in saved history"} style={styles.statNumber}>{uniqueActivityTitles}</Text>
+              <Text variant="labelSmall" style={styles.statLabel}>UNIQUE TITLES</Text>
             </View>
           </View>
           <Text variant="titleMedium" style={styles.milestoneTitle}>Local milestones</Text>
