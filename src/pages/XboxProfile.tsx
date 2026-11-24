@@ -9,10 +9,14 @@ const AVATARS = ['🎮', '🛡️', '🚀', '🐉', '⚡', '👾', '🏎️', '�
 const normalizeActivityHistory = value =>
   Array.isArray(value)
     ? value
-      .filter(entry => entry !== null && typeof entry === 'object' && !Array.isArray(entry))
+      .filter(entry =>
+        entry !== null && typeof entry === 'object' && !Array.isArray(entry) &&
+        typeof entry.title === 'string' && entry.title.trim().length > 0 &&
+        Number.isFinite(entry.openedAt) && entry.openedAt > 0
+      )
       .map(entry => ({
-        title: typeof entry.title === 'string' ? entry.title.trim().slice(0, 120) : '',
-        openedAt: entry.openedAt,
+        title: entry.title.trim().slice(0, 120),
+        openedAt: Math.floor(entry.openedAt),
       }))
       .slice(-10)
     : [];
