@@ -445,22 +445,47 @@ export default function XboxProfileScreen({navigation}) {
             </View>
           )) : <Text style={styles.statsNote}>No catalog activity yet. Open a title from the Library to start your history.</Text>}
           {activity.length > 0 ? (
-            <Button mode="text" textColor="#a8e69a" compact accessibilityLabel="Clear local activity history" onPress={() => Alert.alert(
-              'Clear activity history?',
-              'This permanently deletes the saved local history entries. Your catalog open count and local badges will remain unchanged.',
-              [
-                {text: 'Cancel', style: 'cancel'},
-                {
-                  text: 'Clear history',
-                  style: 'destructive',
-                  onPress: () => {
-                    storage.delete('xbox.activity.history');
-                    setActivity([]);
+            <Button mode="text" textColor="#a8e69a" compact accessibilityLabel="Clear local activity history" onPress={() => {
+              const current = normalizeActivityHistory((() => {
+                try {
+                  const raw = storage.getString('xbox.activity.history');
+                  return raw ? JSON.parse(raw) : [];
+                } catch (_) {
+                  return [];
+                }
+              })());
+              setActivity(current);
+              if (!current.length) return;
+              const keysToClear = new Set(current.map(entry => entry.title + '|' + entry.openedAt));
+              Alert.alert(
+                'Clear activity history?',
+                'This clears the history entries currently listed. New activity recorded while this confirmation is open will be kept. Your catalog open count and local badges remain unchanged.',
+                [
+                  {text: 'Cancel', style: 'cancel'},
+                  {
+                    text: 'Clear history',
+                    style: 'destructive',
+                    onPress: () => {
+                      let latest = [];
+                      try {
+                        const raw = storage.getString('xbox.activity.history');
+                        latest = normalizeActivityHistory(raw ? JSON.parse(raw) : []);
+                      } catch (_) {
+                        latest = [];
+                      }
+                      const remaining = latest.filter(entry => !keysToClear.has(entry.title + '|' + entry.openedAt));
+                      if (remaining.length) {
+                        storage.set('xbox.activity.history', JSON.stringify(remaining));
+                      } else {
+                        storage.delete('xbox.activity.history');
+                      }
+                      setActivity(remaining);
+                    },
                   },
-                },
-              ],
-              {cancelable: true},
-            )}>Clear local history</Button>
+                ],
+                {cancelable: true},
+              );
+            }}>Clear local history</Button>
           ) : null}
         </Card.Content>
       </Card>
