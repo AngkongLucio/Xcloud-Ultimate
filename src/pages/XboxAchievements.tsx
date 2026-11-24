@@ -45,11 +45,14 @@ export default function XboxAchievementsScreen() {
         </Card.Content>
       </Card>
       <View style={styles.filterRow} accessibilityLabel="Filter local achievements">
-        {['All', 'Unlocked', 'Locked'].map(item => (
-          <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " badges"} accessibilityState={{selected: filter === item}} onPress={() => setFilter(item)} style={[styles.filterChip, filter === item && styles.filterChipSelected]}>
-            <Text style={[styles.filterText, filter === item && styles.filterTextSelected]}>{item}</Text>
-          </Pressable>
-        ))}
+        {['All', 'Unlocked', 'Locked'].map(item => {
+          const badgeCount = item === 'All' ? BADGES.length : item === 'Unlocked' ? unlocked : BADGES.length - unlocked;
+          return (
+            <Pressable key={item} accessibilityRole="button" accessibilityLabel={"Show " + item.toLowerCase() + " badges, " + badgeCount + " available"} accessibilityState={{selected: filter === item}} onPress={() => setFilter(item)} style={[styles.filterChip, filter === item && styles.filterChipSelected]}>
+              <Text style={[styles.filterText, filter === item && styles.filterTextSelected]}>{item} ({badgeCount})</Text>
+            </Pressable>
+          );
+        })}
       </View>
       <Text accessibilityLiveRegion="polite" accessibilityLabel={visibleBadges.length + " " + filter.toLowerCase() + " badges shown"} style={styles.filterCount}>{visibleBadges.length} {filter.toLowerCase()} badges</Text>
       {visibleBadges.map(item => {
