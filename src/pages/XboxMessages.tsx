@@ -136,6 +136,21 @@ export default function XboxMessagesScreen() {
             </Text>
           </View>
           <TextInput mode="outlined" label="Search conversations" accessibilityLabel="Search local conversations" accessibilityHint="Filters conversations by player name or the latest message text." value={inboxSearch} onChangeText={setInboxSearch} autoCapitalize="none" clearButtonMode="while-editing" textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.composerInput} />
+          {(inboxSearch.trim() || inboxSort !== 'Recent') ? (
+            <Button
+              compact
+              mode="text"
+              textColor="#a8e69a"
+              accessibilityLabel="Reset conversation search and sorting"
+              accessibilityHint="Clears the search and returns conversations to recent activity order."
+              onPress={() => {
+                setInboxSearch('');
+                setInboxSort('Recent');
+              }}
+              style={styles.resetInboxButton}>
+              Reset search & sorting
+            </Button>
+          ) : null}
           <View style={styles.sortRow} accessibilityLabel="Sort conversations">
             <Text style={styles.sortLabel}>SORT</Text>
             {['Recent', 'A–Z'].map(item => (
@@ -143,20 +158,7 @@ export default function XboxMessagesScreen() {
                 <Text style={[styles.sortText, inboxSort === item && styles.sortTextSelected]}>{item}</Text>
               </Pressable>
             ))}
-            {inboxSearch || inboxSort !== 'Recent' ? (
-              <Button
-                compact
-                mode="text"
-                textColor="#a8e69a"
-                accessibilityLabel="Reset conversation search and sorting"
-                accessibilityHint="Clears the search and returns conversations to recent activity order."
-                onPress={() => {
-                  setInboxSearch('');
-                  setInboxSort('Recent');
-                }}>
-                Reset
-              </Button>
-            ) : null}
+
           </View>
           {visibleThreads.length ? visibleThreads.map(thread => {
             const friend = friends.find(item => item.id === thread.friendId) || {id: thread.friendId, name: thread.friendName || 'Player', avatar: thread.avatar || '🎮'};
@@ -211,6 +213,7 @@ const styles = StyleSheet.create({
   conversationCount: {color: '#9cdb8a', fontSize: 12, fontWeight: '700'},
   sortRow: {flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, marginBottom: 12},
   sortLabel: {color: '#829082', fontSize: 10, fontWeight: '800', letterSpacing: 1},
+  resetInboxButton: {alignSelf: 'flex-start', marginTop: 2, marginBottom: 4},
   sortChip: {paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, backgroundColor: '#202920', borderWidth: 1, borderColor: '#354136'},
   sortChipSelected: {backgroundColor: '#294d30', borderColor: '#9cdb8a'},
   sortText: {color: '#aab5aa', fontSize: 11, fontWeight: '700'},
