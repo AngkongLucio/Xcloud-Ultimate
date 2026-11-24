@@ -26,6 +26,7 @@ import HomeScreen from './pages/Home';
 import XboxCloudScreen from './pages/XboxCloud';
 import XboxDashboardScreen from './pages/XboxDashboard';
 import XboxLibraryScreen from './pages/XboxLibrary';
+import XboxSettingsScreen from './pages/XboxSettings';
 import OptionsScreen from './pages/Options';
 import LoginScreen from './pages/Login';
 import LoginUsernameScreen from './pages/LoginUsername';
@@ -161,6 +162,11 @@ function App() {
                     name="XboxLibrary"
                     component={XboxLibraryScreen}
                     options={{title: 'Game Library'}}
+                  />
+                  <RootStack.Screen
+                    name="XboxSettings"
+                    component={XboxSettingsScreen}
+                    options={{title: 'Console Settings'}}
                   />
                   <RootStack.Screen
                     name="XboxCloud"
