@@ -114,6 +114,20 @@ export default function XboxFriendsScreen() {
             <Text style={[styles.sortText, sortOrder === item && styles.sortTextSelected]}>{item}</Text>
           </Pressable>
         ))}
+        {searchQuery || sortOrder !== 'Recent' ? (
+          <Button
+            compact
+            mode="text"
+            textColor="#a8e69a"
+            accessibilityLabel="Reset player search and sorting"
+            accessibilityHint="Clears the search and returns the list to recently added order."
+            onPress={() => {
+              setSearchQuery('');
+              setSortOrder('Recent');
+            }}>
+            Reset
+          </Button>
+        ) : null}
       </View>
       {filteredFriends.length ? filteredFriends.map(friend => (
         <Card key={friend.id} style={styles.friendCard} accessible accessibilityLabel={"Local player " + friend.name + (friend.addedAt ? ", added " + new Date(friend.addedAt).toLocaleDateString() : "")}>
