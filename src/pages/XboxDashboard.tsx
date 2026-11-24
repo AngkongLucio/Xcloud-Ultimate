@@ -39,13 +39,29 @@ const readUnreadNotifications = () => {
   try {
     const raw = storage.getString('xbox.notifications.local');
     const parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed)) return 0;
-    return parsed.filter(item =>
-      item && typeof item === 'object' && !Array.isArray(item)
-      && typeof item.title === 'string' && item.title.trim().length > 0
-      && typeof item.message === 'string' && item.read !== true,
-    ).length;
-  } catch (_) { return 0; }
+    if (!Array.isArray(parsed)) {
+      storage.set('xbox.notifications.local', JSON.stringify([]));
+      return 0;
+    }
+    const normalized = parsed
+      .filter(item => item && typeof item === 'object' && !Array.isArray(item)
+        && typeof item.title === 'string' && item.title.trim()
+        && typeof item.message === 'string' && item.message.trim())
+      .map(item => ({
+        ...item,
+        title: item.title.trim().slice(0, 120),
+        message: item.message.trim().slice(0, 500),
+        read: item.read === true,
+      }))
+      .slice(0, 30);
+    if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+      storage.set('xbox.notifications.local', JSON.stringify(normalized));
+    }
+    return normalized.filter(item => !item.read).length;
+  } catch (_) {
+    storage.delete('xbox.notifications.local');
+    return 0;
+  }
 };
 
 const XBOX_PLAY = 'https://www.xbox.com/play';
