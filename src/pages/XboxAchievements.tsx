@@ -20,6 +20,8 @@ export default function XboxAchievementsScreen() {
   }, [isFocused]);
 
   const unlocked = BADGES.filter(item => count >= item.target).length;
+  const nextBadge = BADGES.find(item => count < item.target);
+  const remaining = nextBadge ? Math.max(0, nextBadge.target - count) : 0;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -32,6 +34,12 @@ export default function XboxAchievementsScreen() {
           <Text variant="displaySmall" accessibilityLiveRegion="polite" accessibilityLabel={unlocked + " of " + BADGES.length + " local badges unlocked"} style={styles.score}>{unlocked} / {BADGES.length}</Text>
           <ProgressBar progress={unlocked / BADGES.length} color="#9cdb8a" style={styles.progress} accessibilityLabel={"Local badge progress: " + unlocked + " of " + BADGES.length + " unlocked"} />
           <Text accessibilityLiveRegion="polite" accessibilityLabel={count + (count === 1 ? " catalog open recorded on this device" : " catalog opens recorded on this device")} style={styles.summaryHint}>{count} catalog opens recorded on this device</Text>
+          <Text
+            accessibilityLiveRegion="polite"
+            accessibilityLabel={nextBadge ? nextBadge.title + " is the next badge. " + remaining + (remaining === 1 ? " more catalog open needed." : " more catalog opens needed.") : "All local badges unlocked."}
+            style={styles.nextBadge}>
+            {nextBadge ? 'Next badge: ' + nextBadge.title + ' · ' + remaining + ' more ' + (remaining === 1 ? 'open' : 'opens') : 'All local badges unlocked'}
+          </Text>
         </Card.Content>
       </Card>
       {BADGES.map(item => {
@@ -72,6 +80,7 @@ const styles = StyleSheet.create({
   summaryLabel: {color: '#9cdb8a', letterSpacing: 1.2, fontWeight: '700'},
   score: {color: '#fff', fontWeight: '800', marginTop: 6},
   summaryHint: {color: '#c3d4c3', fontSize: 12, marginTop: 10},
+  nextBadge: {color: '#9cdb8a', fontSize: 12, fontWeight: '700', marginTop: 8},
   progress: {height: 8, borderRadius: 8, backgroundColor: '#344235', marginTop: 8},
   badgeCard: {backgroundColor: '#1b211c', borderColor: '#303b31', borderWidth: 1, borderRadius: 14, marginBottom: 12},
   earnedCard: {borderColor: '#789d70'},
