@@ -4,12 +4,16 @@ import pkg from '../../package.json';
 
 const CHECK_URL = 'https://api.github.com/repos/Geocld/PeaSyo/releases';
 
-const formatMdString = (md: string) => {
+const formatMdString = (md: string | null | undefined) => {
+  if (typeof md !== 'string' || !md.trim()) {
+    return 'No release notes provided.';
+  }
+
   return md
-    .replace(/##\s/g, '')
-    .replace(/\r\n---\r\n/g, '\n')
-    .replace(/\[([^\]]+)\]$([^)]+)$/g, '$1')
     .replace(/\r\n/g, '\n')
+    .replace(/^##\s+/gm, '')
+    .replace(/^---\s*$/gm, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/^-\s/gm, '• ');
 };
 
