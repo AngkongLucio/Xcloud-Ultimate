@@ -58,7 +58,7 @@ export default function XboxMessagesScreen() {
       {activeFriend ? (
         <>
           <View style={styles.chatHeader}>
-            <Button compact mode="text" textColor="#9cdb8a" onPress={() => setActiveFriend(null)} icon="arrow-left">Inbox</Button>
+            <Button compact mode="text" textColor="#9cdb8a" accessibilityLabel="Return to messages inbox" onPress={() => setActiveFriend(null)} icon="arrow-left">Inbox</Button>
             <Text variant="titleLarge" style={styles.headerName}>{activeFriend.avatar || '🎮'}  {activeFriend.name}</Text>
             <Text style={styles.localTag}>LOCAL CHAT</Text>
           </View>
@@ -74,8 +74,8 @@ export default function XboxMessagesScreen() {
             ) : null}
           </ScrollView>
           <View style={styles.composer}>
-            <TextInput mode="outlined" value={draft} onChangeText={setDraft} placeholder="Write a message..." multiline textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.composerInput} />
-            <Button mode="contained" icon="send" onPress={sendMessage} disabled={!draft.trim()} style={styles.sendButton}>Send</Button>
+            <TextInput mode="outlined" value={draft} onChangeText={setDraft} placeholder="Write a message..." accessibilityLabel={"Message to " + activeFriend.name} accessibilityHint="This message is saved locally on this device only." multiline textColor="#fff" outlineColor="#526552" activeOutlineColor="#9cdb8a" style={styles.composerInput} />
+            <Button mode="contained" icon="send" accessibilityLabel={"Save local message to " + activeFriend.name} onPress={sendMessage} disabled={!draft.trim()} style={styles.sendButton}>Send</Button>
           </View>
         </>
       ) : (
@@ -88,18 +88,18 @@ export default function XboxMessagesScreen() {
             const friend = friends.find(item => item.id === thread.friendId) || {id: thread.friendId, name: thread.friendName || 'Player', avatar: thread.avatar || '🎮'};
             const last = thread.messages?.[thread.messages.length - 1];
             return (
-              <Pressable key={thread.friendId} onPress={() => openThread(friend)} accessibilityRole="button">
-                <Card style={styles.threadCard}>
-                  <Card.Content style={styles.threadRow}>
+              <Card key={thread.friendId} style={styles.threadCard}>
+                <Card.Content style={styles.threadRow}>
+                  <Pressable style={styles.threadOpen} onPress={() => openThread(friend)} accessibilityRole="button" accessibilityLabel={"Open conversation with " + friend.name + (last?.body ? ". Last message: " + last.body : "")}>
                     <View style={styles.avatar}><Text style={styles.avatarText}>{friend.avatar}</Text></View>
                     <View style={styles.threadCopy}>
                       <Text variant="titleMedium" style={styles.friendName}>{friend.name}</Text>
                       <Text numberOfLines={1} style={styles.preview}>{last?.body || 'Start a conversation'}</Text>
                     </View>
-                    <Button compact mode="text" textColor="#e5a0a0" onPress={() => removeThread(thread.friendId)}>Delete</Button>
-                  </Card.Content>
-                </Card>
-              </Pressable>
+                  </Pressable>
+                  <Button compact mode="text" textColor="#e5a0a0" accessibilityLabel={"Delete conversation with " + friend.name} onPress={() => removeThread(thread.friendId)}>Delete</Button>
+                </Card.Content>
+              </Card>
             );
           }) : (
             <Card style={styles.emptyCard}><Card.Content style={styles.emptyContent}>
@@ -110,7 +110,7 @@ export default function XboxMessagesScreen() {
           )}
           <Text variant="titleLarge" style={[styles.sectionTitle, styles.playersTitle]}>Start a chat</Text>
           {friends.length ? friends.map(friend => (
-            <Pressable key={friend.id} onPress={() => openThread(friend)} accessibilityRole="button">
+            <Pressable key={friend.id} onPress={() => openThread(friend)} accessibilityRole="button" accessibilityLabel={"Start local chat with " + friend.name}>
               <View style={styles.playerRow}>
                 <View style={styles.avatar}><Text style={styles.avatarText}>{friend.avatar || '🎮'}</Text></View>
                 <Text style={styles.friendName}>{friend.name}</Text>
@@ -136,6 +136,7 @@ const styles = StyleSheet.create({
   threadRow: {flexDirection: 'row', alignItems: 'center', gap: 11},
   avatar: {width: 46, height: 46, borderRadius: 23, backgroundColor: '#294d30', alignItems: 'center', justifyContent: 'center'},
   avatarText: {fontSize: 24},
+  threadOpen: {flex: 1, flexDirection: 'row', alignItems: 'center', gap: 11},
   threadCopy: {flex: 1},
   friendName: {color: '#fff', fontWeight: '700'},
   preview: {color: '#aab5aa', fontSize: 12, marginTop: 4},
