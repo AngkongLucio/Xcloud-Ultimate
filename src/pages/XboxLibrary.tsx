@@ -14,7 +14,7 @@ const GAMES = [
 
 const CATEGORIES = ['All', 'Action', 'Adventure', 'Racing', 'Simulation'];
 
-export default function XboxLibraryScreen() {
+export default function XboxLibraryScreen({navigation}) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -32,7 +32,6 @@ export default function XboxLibraryScreen() {
   const openSelectedGame = () => {
     if (visibleGames.length) { openXbox(); }
   };
-  const resetSelection = () => setSelectedIndex(0);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -45,7 +44,7 @@ export default function XboxLibraryScreen() {
       <Searchbar
         placeholder="Search games"
         value={search}
-        onChangeText={setSearch}
+        onChangeText={value => { setSearch(value); setSelectedIndex(0); }}
         style={styles.search}
         inputStyle={styles.searchInput}
         iconColor="#a9c5a9"
@@ -56,7 +55,7 @@ export default function XboxLibraryScreen() {
           <Chip
             key={item}
             selected={category === item}
-            onPress={() => setCategory(item)}
+            onPress={() => { setCategory(item); setSelectedIndex(0); }}
             style={styles.chip}
             textStyle={styles.chipText}>
             {item}
@@ -98,7 +97,7 @@ export default function XboxLibraryScreen() {
         </View>
         <View style={styles.dpadRow}>
           <Button compact mode="outlined" textColor="#dce9dc" onPress={() => moveSelection(2)}>↓</Button>
-          <Button compact mode="text" textColor="#9cdb8a" onPress={resetSelection}>B · Back</Button>
+          <Button compact mode="text" textColor="#9cdb8a" onPress={() => navigation.goBack()}>B · Back</Button>
         </View>
         <Text variant="bodySmall" style={styles.controllerHint}>Use these on-screen controls to move the highlight and open the selected title in Xbox.</Text>
       </View>
