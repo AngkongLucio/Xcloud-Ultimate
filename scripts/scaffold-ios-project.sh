@@ -102,8 +102,8 @@ cp -R "$TMP_DIR/Peasyo/ios" "$IOS_DIR"
 # Match the existing Android application ID and AppRegistry name.
 find "$IOS_DIR" -type f \( -name '*.pbxproj' -o -name '*.plist' -o -name '*.mm' -o -name '*.h' -o -name '*.m' -o -name 'Podfile' \) -print0 |
 while IFS= read -r -d '' file; do
-  /usr/bin/sed -i '' 's/org\\.reactjs\\.native\\.example\\.[^; ]*/com.peasyo/g' "$file"
-  /usr/bin/sed -i '' 's/self\\.moduleName = @"Peasyo";/self.moduleName = @"peasyo";/' "$file"
+  /usr/bin/sed -i '' 's/org\.reactjs\.native\.example\.[^; ]*/com.peasyo/g' "$file"
+  /usr/bin/sed -i '' 's/self\.moduleName = @"Peasyo";/self.moduleName = @"peasyo";/' "$file"
 done
 
 APP_INFO_PLIST="$IOS_DIR/Peasyo/Info.plist"
