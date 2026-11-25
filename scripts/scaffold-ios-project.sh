@@ -112,6 +112,13 @@ if [[ ! -f "$APP_INFO_PLIST" ]]; then
   exit 3
 fi
 
+# Set the user-facing iOS Home Screen name; keep the internal AppRegistry key unchanged.
+if /usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP_INFO_PLIST" >/dev/null 2>&1; then
+  /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Xcloud Ultimate" "$APP_INFO_PLIST"
+else
+  /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string Xcloud Ultimate" "$APP_INFO_PLIST"
+fi
+
 # UDP console discovery needs iOS Local Network authorization. Do not add
 # Bonjour service declarations unless the final implementation uses Bonjour.
 if ! /usr/libexec/PlistBuddy -c 'Print :NSLocalNetworkUsageDescription' "$APP_INFO_PLIST" >/dev/null 2>&1; then
@@ -121,6 +128,7 @@ fi
 echo
 echo "Created $IOS_DIR from the official React Native 0.72.17 source template."
 echo "Bundle identifier: com.peasyo"
+echo "Display name: Xcloud Ultimate"
 echo "AppRegistry module name: peasyo"
 echo
 echo "Next steps:"
