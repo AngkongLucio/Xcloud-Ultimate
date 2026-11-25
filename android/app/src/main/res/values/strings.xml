@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PeaSyo</string>
+    <string name="app_name">Xcloud Ultimate</string>
     <string name="ext_display_channel_name">External display output</string>
     <string name="ext_display_notif_text">Streaming to external display</string>
     <string name="ext_display_pseudo_action">Pseudo screen off (double tap to wake)</string>
