@@ -9036,27 +9036,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-reanimated@npm:3.5.4":
-  version: 3.5.4
-  resolution: "react-native-reanimated@npm:3.5.4"
-  dependencies:
-    "@babel/plugin-transform-object-assign": "npm:^7.16.7"
-    "@babel/preset-typescript": "npm:^7.16.7"
-    convert-source-map: "npm:^2.0.0"
-    invariant: "npm:^2.2.4"
-  peerDependencies:
-    "@babel/core": ^7.0.0-0
-    "@babel/plugin-proposal-nullish-coalescing-operator": ^7.0.0-0
-    "@babel/plugin-proposal-optional-chaining": ^7.0.0-0
-    "@babel/plugin-transform-arrow-functions": ^7.0.0-0
-    "@babel/plugin-transform-shorthand-properties": ^7.0.0-0
-    "@babel/plugin-transform-template-literals": ^7.0.0-0
-    react: "*"
-    react-native: "*"
-  checksum: 10c0/68182fdc5725bee1220f06a850eb94d81f119d8e661d55be601d83ebfd01268e84529ab5677691dc3d5f408378b30ef059834f8859c3e4584c5e97754619d3f5
-  languageName: node
-  linkType: hard
-
 "react-native-restart@npm:^0.0.27":
   version: 0.0.27
   resolution: "react-native-restart@npm:0.0.27"
