@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {Alert, Linking, Platform, useColorScheme, NativeModules} from 'react-native';
+import {Alert, Linking, Platform, useColorScheme, NativeModules, StatusBar} from 'react-native';
 import {
   PaperProvider,
   MD3DarkTheme,
@@ -65,7 +65,6 @@ import updater from './utils/updater';
 import {useTranslation} from 'react-i18next';
 import {A11yProvider} from 'react-native-a11y';
 
-import {SystemBars} from 'react-native-edge-to-edge';
 
 import './i18n';
 
@@ -379,7 +378,7 @@ function App() {
         </A11yProvider>
       </Provider>
       {Platform.OS === 'android' ? (
-        <SystemBars style="light" hidden={false} />
+        <StatusBar barStyle="light-content" hidden={false} />
       ) : null}
     </>
   );
